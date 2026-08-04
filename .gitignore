@@ -1,0 +1,100 @@
+# =========================================
+# 1. DEPENDENCIES & CACHE
+# =========================================
+node_modules/
+.pnp
+.pnp.js
+.pnpm-store/
+.yarn/
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# =========================================
+# 2. NEXT.JS & BUILD OUTPUT
+# =========================================
+/.next/
+/out/
+/build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# =========================================
+# 3. ENVIRONMENT VARIABLES (CRITICAL)
+# =========================================
+# Never commit your database URLs or secret keys.
+.env
+.env*.local
+.env.development
+.env.production
+!.env.example
+
+# =========================================
+# 4. PRISMA & DATABASE
+# =========================================
+/prisma/generated/
+/prisma/db.sqlite
+/prisma/db.sqlite-journal
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================================
+# 5. VERCEL & DEPLOYMENT
+# =========================================
+.vercel/
+.now/
+
+# =========================================
+# 6. AI AGENTS, SKILLS, & IDE CONFIGS
+# =========================================
+# Cursor IDE
+.cursor/
+!.cursor/rules/
+.cursorrules
+
+# Claude Code & Custom Skills
+.claude/
+!.claude/hooks/
+.claude/settings.local.json
+.claude/skills/
+.agents/skills/
+skills-lock.json
+CLAUDE.local.md
+.codex-artifacts/
+
+# Devin / Windsurf
+.devin/
+.windsurf/
+
+# General IDEs
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# =========================================
+# 7. OS FILES & LOGS
+# =========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# =========================================
+# 8. TESTING & COVERAGE
+# =========================================
+/coverage/
+/.nyc_output/
+test-results/
