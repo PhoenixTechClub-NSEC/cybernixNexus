@@ -1,0 +1,112 @@
+@import "tailwindcss";
+@import "lenis/dist/lenis.css";
+
+@theme {
+  --color-golden-sand: #FFE3A8;
+  --color-tomato-jam: #FF9F1C;
+  --color-pine-teal: #684931;
+  --color-dark-amethyst: #3A2719;
+  --color-onyx: #2C1F14;
+
+  /* Explicit names from the premium palette */
+  --color-espresso-brown: #2C1F14;
+  --color-mango-orange: #FF9F1C;
+  --color-vanilla-light: #FFF1D6;
+}
+
+@layer base {
+  :root {
+    --background: #FFF1D6;
+    --foreground: #2C1F14;
+    --card: #ffffff;
+    --card-foreground: #2C1F14;
+    --primary: #FF9F1C;
+    --primary-foreground: #2C1F14;
+    --secondary: #684931;
+    --secondary-foreground: #ffffff;
+    --muted: #FFE3A8;
+    --muted-foreground: rgba(44, 31, 20, 0.65);
+    --accent: #FF9F1C;
+    --accent-foreground: #2C1F14;
+    --border: rgba(44, 31, 20, 0.12);
+    --radius: 0.75rem;
+  }
+
+  body {
+    background-color: #FFF1D6;
+    color: #2C1F14;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Ensure Mango Orange buttons & badges have high-contrast Espresso Brown text */
+.bg-tomato-jam {
+  background-color: #FF9F1C !important;
+  color: #2C1F14 !important;
+}
+.text-tomato-jam {
+  color: #FF9F1C !important;
+}
+.border-tomato-jam {
+  border-color: #FF9F1C !important;
+}
+
+/* Glass & Flame Glow Utility Effects */
+.glass-card {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(44, 31, 20, 0.12);
+}
+
+.flame-glow-sm {
+  box-shadow: 0 4px 14px 0 rgba(255, 159, 28, 0.25);
+}
+
+.flame-glow-md {
+  box-shadow: 0 10px 25px -5px rgba(255, 159, 28, 0.35), 0 8px 10px -6px rgba(255, 159, 28, 0.22);
+}
+
+.flame-glow-lg {
+  box-shadow: 0 20px 35px -10px rgba(255, 159, 28, 0.45);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #FFF1D6;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #684931;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #2C1F14;
+}
+
+/* Modern Web Guidance: Defer rendering for below-the-fold heavy cards and lists */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}
+
+/* GPU-accelerated smooth animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Smooth hover transitions without layout reflow */
+.smooth-hover {
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+.smooth-hover:hover {
+  transform: translateY(-2px);
+}
