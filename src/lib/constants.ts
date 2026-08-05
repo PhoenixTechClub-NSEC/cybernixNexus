@@ -110,10 +110,10 @@ export const DSA_TOPICS: DSATopicStat[] = [
 
 export const CURRENT_USER: UserProfile = {
   id: 'usr-001',
-  name: 'Rudra Pratap',
-  username: 'rudra_pratap',
+  name: 'Test',
+  username: 'test_user',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  email: 'rudra.pratap@nsec.ac.in',
+  email: 'test@nsec.ac.in',
   bio: "Competitive Programmer & Full-Stack Developer | CSE '26 @ NSEC | Dept Rank #1",
   department: 'CSE',
   year: '3rd Year',
@@ -135,7 +135,7 @@ export const CURRENT_USER: UserProfile = {
   platforms: [
     {
       platform: 'Codeforces',
-      handle: 'rudra_nsec',
+      handle: 'test_cf',
       rating: 1740,
       solvedCount: 192,
       weight: 1.75,
@@ -143,7 +143,7 @@ export const CURRENT_USER: UserProfile = {
     },
     {
       platform: 'LeetCode',
-      handle: 'rudra_p',
+      handle: 'test_lc',
       rating: 1985,
       solvedCount: 520,
       weight: 1.5,
@@ -151,7 +151,7 @@ export const CURRENT_USER: UserProfile = {
     },
     {
       platform: 'CodeChef',
-      handle: 'rudra_cc',
+      handle: 'test_cc',
       rating: 1820,
       solvedCount: 127,
       weight: 1.25,
@@ -159,7 +159,7 @@ export const CURRENT_USER: UserProfile = {
     },
     {
       platform: 'HackerRank',
-      handle: 'rudra_hr',
+      handle: 'test_hr',
       rating: 2100,
       solvedCount: 165,
       weight: 1.0,
@@ -167,7 +167,7 @@ export const CURRENT_USER: UserProfile = {
     },
     {
       platform: 'GFG',
-      handle: 'rudragfg',
+      handle: 'test_gfg',
       rating: 1650,
       solvedCount: 35,
       weight: 1.0,
@@ -273,7 +273,7 @@ export const LEADERBOARD_USERS: UserProfile[] = [
     solvedByDifficulty: { easy: 290, medium: 580, hard: 180, total: 1050 },
   },
   {
-    ...CURRENT_USER, // Rudra Pratap is #3
+    ...CURRENT_USER, // Test is #3
     collegeRank: 3,
     deptRank: 2,
   },
