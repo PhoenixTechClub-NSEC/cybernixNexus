@@ -8,7 +8,6 @@ import {
   Search,
   Flame,
 } from 'lucide-react';
-import { DEPARTMENT_STATS } from '@/lib/constants';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
@@ -63,16 +62,22 @@ export function LeaderboardTable({
   // Smooth entrance of table rows when filtered or rendered (GPU transforms)
   useGSAP(
     () => {
-      gsap.from('.leaderboard-row', {
-        x: -15,
-        opacity: 0,
-        duration: 0.35,
-        stagger: 0.04,
-        ease: 'power2.out',
-        clearProps: 'transform',
-      });
+      gsap.fromTo('.leaderboard-row', 
+        {
+          x: -15,
+          opacity: 0,
+        },
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.35,
+          stagger: 0.04,
+          ease: 'power2.out',
+          clearProps: 'transform',
+        }
+      );
     },
-    { dependencies: [selectedDept, sortBy, searchQuery], scope: tableContainerRef }
+    { dependencies: [selectedDept, sortBy, searchQuery], scope: tableContainerRef, revertOnUpdate: true }
   );
 
   const { contextSafe } = useGSAP({ scope: tableContainerRef });

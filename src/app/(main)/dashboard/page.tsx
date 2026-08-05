@@ -4,13 +4,13 @@
 import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import {
-  CURRENT_USER,
   FAKE_CONTESTS,
   WEEKLY_VELOCITY_DATA,
   SEASON_PROGRESS_METRICS,
   SYNCED_PLATFORM_PROFILES,
   CODOLIO_STATS,
 } from '@/lib/constants';
+import { useUser } from '@/components/providers/UserProvider';
 import {
   Share2,
   MoreVertical,
@@ -102,48 +102,106 @@ const RATING_HISTORY_DATA: Record<'CodeChef' | 'Codeforces' | 'LeetCode', Contes
   ],
 };
 
+const getLevelForTier = (tier: string) => {
+  switch (tier) {
+    case 'Spark': return 1;
+    case 'Ember': return 2;
+    case 'Flame': return 3;
+    case 'Phoenix': return 4;
+    case 'Ascendant':
+    default:
+      return 1;
+  }
+};
+
 export default function DashboardPage() {
+  const { user: CURRENT_USER } = useUser();
   const dashboardRef = useRef<HTMLDivElement>(null);
+  
+  const [previewLevel, setPreviewLevel] = useState<number | null>(null);
+  
+  const activeLevel = previewLevel !== null 
+    ? previewLevel 
+    : getLevelForTier(CURRENT_USER.tier);
+    
+  const currentIllusSrc = `/lvl-${activeLevel}.png`;
+  const isBigLvl = activeLevel === 3 || activeLevel === 4;
+
+  const desktopWrapperClasses = `absolute hidden sm:block z-20 pointer-events-auto transition-all duration-500 ease-out ${
+    isBigLvl
+      ? 'right-10 sm:right-16 lg:right-20 -top-20 sm:-top-32 lg:-top-36'
+      : 'right-8 sm:right-12 lg:right-16 -top-16 sm:-top-24 lg:-top-28'
+  }`;
+
+  const desktopImgClasses = `hero-illustration w-auto object-contain select-none drop-shadow-xl origin-bottom will-change-transform transition-all duration-500 ease-out ${
+    isBigLvl
+      ? 'h-72 sm:h-96 lg:h-[28rem]'
+      : 'h-64 sm:h-80 lg:h-96'
+  }`;
+
+  const mobileWrapperClasses = `absolute block sm:hidden z-20 pointer-events-none transition-all duration-500 ease-out ${
+    isBigLvl
+      ? 'right-8 -top-16'
+      : 'right-6 -top-12'
+  }`;
+
+  const mobileImgClasses = `hero-illustration w-auto object-contain select-none drop-shadow-md origin-bottom will-change-transform transition-all duration-500 ease-out ${
+    isBigLvl ? 'h-64' : 'h-52'
+  }`;
 
   // Buttery Smooth 60fps Staggered Bento & Hero Entrance
   const { contextSafe } = useGSAP(
     () => {
       const illusTl = gsap.timeline({ delay: 0.1 });
       illusTl
-        .from('.hero-illustration', {
-          scale: 0.1,
-          y: 35,
-          rotation: -15,
-          duration: 0.75,
-          ease: 'back.out(1.8)',
-        });
+        .fromTo('.hero-illustration', 
+          { scale: 0.1, y: 35, rotation: -15 },
+          {
+            scale: 1,
+            y: 0,
+            rotation: 0,
+            duration: 0.75,
+            ease: 'back.out(1.8)',
+            clearProps: 'transform'
+          }
+        );
 
-      gsap.from('.hello-card', {
-        y: 20,
-        opacity: 0,
-        duration: 0.5,
-        ease: 'power2.out',
-      });
+      gsap.fromTo('.hello-card', 
+        { y: 20, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.5,
+          ease: 'power2.out',
+          clearProps: 'transform'
+        }
+      );
 
-      gsap.from('.bento-stat-card', {
-        y: 24,
-        opacity: 0,
-        duration: 0.45,
-        stagger: 0.08,
-        ease: 'back.out(1.5)',
-        delay: 0.15,
-        clearProps: 'transform',
-      });
+      gsap.fromTo('.bento-stat-card', 
+        { y: 24, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.45,
+          stagger: 0.08,
+          ease: 'back.out(1.5)',
+          delay: 0.15,
+          clearProps: 'transform',
+        }
+      );
 
-      gsap.from('.left-col-card', {
-        x: -20,
-        opacity: 0,
-        duration: 0.5,
-        stagger: 0.1,
-        ease: 'power2.out',
-        delay: 0.25,
-        clearProps: 'transform',
-      });
+      gsap.fromTo('.left-col-card', 
+        { x: -20, opacity: 0 },
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.5,
+          stagger: 0.1,
+          ease: 'power2.out',
+          delay: 0.25,
+          clearProps: 'transform',
+        }
+      );
     },
     { scope: dashboardRef }
   );
@@ -312,6 +370,32 @@ export default function DashboardPage() {
             <p className="text-xs sm:text-sm text-pine-teal font-medium">
               It&apos;s good to see you again.
             </p>
+            
+            {/* Temporary Mascot Preview Toggles */}
+            <div className="flex flex-wrap items-center gap-2 mt-4 pt-2 z-30 relative pointer-events-auto">
+              <span className="text-[10px] uppercase font-bold text-onyx/60 mr-1">Preview Mascot:</span>
+              {[1, 2, 3, 4].map((lvl) => (
+                <button
+                  key={lvl}
+                  onClick={() => setPreviewLevel(lvl)}
+                  className={`text-[10px] font-bold px-2.5 py-1 rounded-md border transition-colors ${
+                    previewLevel === lvl
+                      ? 'bg-tomato-jam text-white border-tomato-jam shadow-sm'
+                      : 'bg-white text-onyx border-pine-teal/30 hover:bg-golden-sand/40 hover:border-pine-teal/50'
+                  }`}
+                >
+                  Lvl {lvl}
+                </button>
+              ))}
+              {previewLevel !== null && (
+                <button
+                  onClick={() => setPreviewLevel(null)}
+                  className="text-[10px] font-bold px-2.5 py-1 rounded-md bg-onyx text-white hover:bg-onyx/80 shadow-sm ml-1 transition-colors"
+                >
+                  Reset (Auto)
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Bottom Interactive Sprint Bar (matching Spanish B2 pill in Dribbble reference) */}
@@ -368,20 +452,20 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* THE WAVING ILLUSTRATION (illus-removebg-preview.png) positioned at the TOP of the box (popping out above, not inside) */}
-          <div className="absolute right-4 sm:right-6 lg:right-8 -top-24 sm:-top-32 lg:-top-36 hidden sm:block z-20 pointer-events-auto">
+          {/* THE WAVING ILLUSTRATION (dynamic based on tier) positioned at the TOP of the box (popping out above, not inside) */}
+          <div className={desktopWrapperClasses}>
             <img
-              src="/illus-removebg-preview.png"
-              alt="Welcome Illustration"
-              className="hero-illustration h-60 sm:h-72 lg:h-80 w-auto object-contain select-none drop-shadow-xl origin-bottom will-change-transform"
+              src={currentIllusSrc}
+              alt={`${CURRENT_USER.tier} Tier Illustration`}
+              className={desktopImgClasses}
             />
           </div>
           {/* Mobile version of illustration */}
-          <div className="absolute right-2 -top-20 block sm:hidden z-20 pointer-events-none">
+          <div className={mobileWrapperClasses}>
             <img
-              src="/illus-removebg-preview.png"
-              alt="Welcome Illustration"
-              className="hero-illustration h-44 w-auto object-contain select-none drop-shadow-md origin-bottom will-change-transform"
+              src={currentIllusSrc}
+              alt={`${CURRENT_USER.tier} Tier Illustration`}
+              className={mobileImgClasses}
             />
           </div>
         </div>
@@ -495,18 +579,18 @@ export default function DashboardPage() {
             <div className="relative w-20 h-20 mx-auto">
               <img
                 src={CURRENT_USER.avatar}
-                alt={CODOLIO_STATS.name}
+                alt={CURRENT_USER.name}
                 className="w-20 h-20 rounded-full object-cover ring-4 ring-tomato-jam/30 shadow-md"
               />
               <span className="absolute bottom-0 right-0 w-5 h-5 bg-tomato-jam border-2 border-white rounded-full"></span>
             </div>
             <div>
               <h3 className="font-extrabold text-onyx text-lg">
-                {CODOLIO_STATS.name}
+                {CURRENT_USER.name}
               </h3>
-              <p className="text-xs font-bold text-tomato-jam">@{CODOLIO_STATS.handle}</p>
+              <p className="text-xs font-bold text-tomato-jam">@{CURRENT_USER.username}</p>
               <p className="text-[11px] text-pine-teal mt-1 leading-snug">
-                {CODOLIO_STATS.bio}
+                {CURRENT_USER.bio}
               </p>
             </div>
             <div className="text-[11px] text-pine-teal font-semibold pt-2 border-t border-pine-teal/15 space-y-1">

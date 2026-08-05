@@ -44,8 +44,10 @@ export interface AchievementBadge {
 export interface UserProfile {
   id: string;
   name: string;
+  username: string;
   avatar: string;
   email: string;
+  bio: string;
   department: Department;
   year: string;
   collegeRank: number;

@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CURRENT_USER } from '@/lib/constants';
+import { useUser } from '@/components/providers/UserProvider';
 import { LevelBadge } from '@/features/gamification/components/LevelBadge';
 import { MascotRenderer } from '@/features/gamification/components/MascotRenderer';
 import { Heatmap } from '@/features/profile/components/Heatmap';
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 export default function ProfilePage() {
+  const { user: CURRENT_USER } = useUser();
   const [activeTab, setActiveTab] = useState<'overview' | 'badges' | 'activities'>('overview');
 
   return (

@@ -3,8 +3,7 @@
 
 import React, { useRef } from 'react';
 import { UserProfile } from '@/types';
-import { LevelBadge } from '@/features/gamification/components/LevelBadge';
-import { Trophy, Flame, Crown, Award } from 'lucide-react';
+import { Trophy, } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
@@ -26,17 +25,24 @@ export function Podium({ users, onSelectUser }: PodiumProps) {
   // Buttery-smooth 60fps Staggered Podium Entrance
   useGSAP(
     () => {
-      gsap.from('.podium-item', {
-        y: 40,
-        opacity: 0,
-        scale: 0.9,
-        duration: 0.6,
-        stagger: 0.15,
-        ease: 'back.out(2)',
-        clearProps: 'transform',
-      });
+      gsap.fromTo('.podium-item', 
+        {
+          y: 40,
+          opacity: 0,
+          scale: 0.9,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.6,
+          stagger: 0.15,
+          ease: 'back.out(2)',
+          clearProps: 'transform',
+        }
+      );
     },
-    { scope: podiumRef, dependencies: [users] }
+    { scope: podiumRef, dependencies: [users], revertOnUpdate: true }
   );
 
   const { contextSafe } = useGSAP({ scope: podiumRef });

@@ -40,6 +40,15 @@
     margin: 0;
     padding: 0;
   }
+
+  /* Prevent ghost dragging on images and icons globally */
+  img, svg {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+  }
 }
 
 /* Ensure Mango Orange buttons & badges have high-contrast Espresso Brown text */
@@ -109,4 +118,33 @@
 }
 .smooth-hover:hover {
   transform: translateY(-2px);
+}
+
+/* Modern Web Guidance: Form Validation Styles */
+/* These styles trigger only AFTER the user has interacted with the field (blur) */
+.modern-input:user-invalid {
+  border-color: #d93025 !important;
+  background-color: rgba(217, 48, 37, 0.05) !important;
+}
+
+.modern-input:user-valid {
+  border-color: #188038 !important;
+}
+
+.modern-input:user-invalid + .error-msg,
+.modern-input:user-invalid ~ .error-msg {
+  display: block;
+}
+
+.error-msg {
+  display: none;
+  color: #d93025;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+/* Hide constraints/hints if the field is valid */
+.modern-input:user-valid ~ .hint-msg {
+  display: none;
 }

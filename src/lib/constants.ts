@@ -111,8 +111,10 @@ export const DSA_TOPICS: DSATopicStat[] = [
 export const CURRENT_USER: UserProfile = {
   id: 'usr-001',
   name: 'Rudra Pratap',
+  username: 'rudra_pratap',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
   email: 'rudra.pratap@nsec.ac.in',
+  bio: "Competitive Programmer & Full-Stack Developer | CSE '26 @ NSEC | Dept Rank #1",
   department: 'CSE',
   year: '3rd Year',
   collegeRank: 3,
@@ -460,7 +462,7 @@ export const MONTHLY_ACHIEVEMENTS: MonthlyAchievement[] = [
   {
     category: 'LeetCode Champ',
     title: 'LeetCode Champ of the Month',
-    winnerName: 'Rudra Pratap',
+    winnerName: 'Satyaki Bose',
     winnerDept: 'CSE',
     winnerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     scoreOrMetric: 'Top 1.2% in Weekly Contest 408',
@@ -543,7 +545,7 @@ When dealing with tree DP where node selection depends on adjacent parent-child 
     comments: [
       {
         id: 'c-1',
-        authorName: 'Rudra Pratap',
+        authorName: 'Arpan Ghosh',
         authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         authorDept: 'CSE',
         content: 'This explanation of child transition optimization finally made it click for me! Great tutorial.',
@@ -567,7 +569,7 @@ When dealing with tree DP where node selection depends on adjacent parent-child 
     problemUrl: 'https://leetcode.com',
     platform: 'LeetCode',
     difficulty: 'Hard',
-    authorName: 'Rudra Pratap',
+    authorName: 'Subhajit Paul',
     authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     authorDept: 'CSE',
     authorLevel: 48,
@@ -871,7 +873,7 @@ export const SYNCED_PLATFORM_PROFILES = [
 ];
 
 export const CODOLIO_STATS = {
-  name: 'Rudra Pratap',
+  name: 'Debjit Sarkar',
   handle: 'rudra_nsec',
   bio: "Competitive Programmer & Full-Stack Developer | CSE '26 @ NSEC | Dept Rank #1",
   location: 'Kolkata, India',

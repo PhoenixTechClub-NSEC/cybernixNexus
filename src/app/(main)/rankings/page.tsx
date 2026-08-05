@@ -2,15 +2,12 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import {
-  LEADERBOARD_USERS,
-  DEPARTMENT_STATS,
-  CURRENT_USER,
-} from '@/lib/constants';
+import { getLeaderboard, getDepartmentStats } from '@/lib/api';
 import { Podium } from '@/features/leaderboard/components/Podium';
 import { LeaderboardTable } from '@/features/leaderboard/components/LeaderboardTable';
 import { ContestCalendar } from '@/features/calendar/components/ContestCalendar';
-import { UserProfile } from '@/types';
+import { UserProfile, DepartmentStat } from '@/types';
+import { useUser } from '@/components/providers/UserProvider';
 import { LevelBadge } from '@/features/gamification/components/LevelBadge';
 import {
   Trophy,
@@ -19,40 +16,52 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
-/* ============================================================================
- * [BACKEND INTEGRATION POINT: LEADERBOARD & DEPARTMENT STANDINGS API]
- *
- * 1. GET /api/v1/rankings/global?page=1&limit=100&dept=ALL
- *    - Description: Returns paginated global leaderboard standings sorted by cpScore.
- *    - Response Payload Example:
- *      {
- *        "users": [ { "id": "1", "name": "Rudra", "cpScore": 24500, ... } ],
- *        "totalCount": 174
- *      }
- *
- * 2. GET /api/v1/rankings/departments
- *    - Description: Returns department championship statistics & active multipliers.
- *    - Response Payload Example:
- *      {
- *        "departments": [
- *          { "name": "CSE", "rank": 1, "seasonalMultiplier": 2.0, "averageRating": 1845 }
- *        ]
- *      }
- *
- * 3. POST /api/v1/rankings/sync
- *    - Description: Triggers async webhook scrape/API call to Codeforces, LeetCode & CodeChef.
- *    - Request Headers: { "Authorization": "Bearer <user_token>" }
- *
- * 4. WEBSOCKET /api/v1/rankings/stream (OR Server-Sent Events)
- *    - Description: Receives real-time score updates when students submit solutions.
- * ============================================================================ */
-
 export default function RankingsPage() {
+  const { user: CURRENT_USER } = useUser();
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [visualTab, setVisualTab] = useState<'podium' | 'battles' | 'tiers'>('podium');
   const [selectedDeptYear, setSelectedDeptYear] = useState<string>('ALL');
   const [isSyncing, setIsSyncing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const [leaderboardUsers, setLeaderboardUsers] = useState<UserProfile[]>([]);
+  const [departmentStats, setDepartmentStats] = useState<DepartmentStat[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    async function fetchData() {
+      try {
+        const [users, stats] = await Promise.all([
+          getLeaderboard(),
+          getDepartmentStats()
+        ]);
+        setLeaderboardUsers(users);
+        setDepartmentStats(stats);
+      } catch (err) {
+        console.error('Failed to fetch rankings', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  // Dynamically inject the logged-in user into the leaderboard so Rank #3 always matches the active user profile name
+  const displayLeaderboardUsers = useMemo(() => {
+    return leaderboardUsers.map((u) => {
+      if (u.id === CURRENT_USER.id || u.id === 'usr-001') {
+        return {
+          ...u,
+          ...CURRENT_USER,
+          id: u.id,
+          collegeRank: u.collegeRank,
+          deptRank: u.deptRank,
+        };
+      }
+      return u;
+    });
+  }, [leaderboardUsers, CURRENT_USER]);
 
   // Trigger simulated Live API Sync
   const handleLiveSync = () => {
@@ -64,15 +73,17 @@ export default function RankingsPage() {
     }, 1200);
   };
 
-  // Filter only Rudra's Department (CSE) and include 2 additional peers so the department standings card is full and balanced
+  // Filter only User's Department (CSE) and include 2 additional peers
   const baseCseUsers = useMemo(() => {
-    return LEADERBOARD_USERS.filter((u) => u.department === 'CSE');
-  }, []);
+    return displayLeaderboardUsers.filter((u) => u.department === (CURRENT_USER.department || 'CSE'));
+  }, [displayLeaderboardUsers, CURRENT_USER.department]);
 
   const extraCsePeers: UserProfile[] = useMemo(() => [
     {
       id: 'cse-extra-1',
       name: 'Ananya Sharma',
+      username: 'ananya_s',
+      bio: '',
       email: 'ananya@nsec.ac.in',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
       department: 'CSE',
@@ -98,6 +109,8 @@ export default function RankingsPage() {
     {
       id: 'cse-extra-2',
       name: 'Bikramjit Roy',
+      username: 'bikram_r',
+      bio: '',
       email: 'bikram@nsec.ac.in',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
       department: 'CSE',
@@ -224,10 +237,17 @@ export default function RankingsPage() {
             </div>
           </div>
 
+          {isLoading ? (
+            <div className="relative z-10 py-10 flex flex-col items-center justify-center min-h-[200px]">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-tomato-jam mb-4"></div>
+              <p className="text-xs font-bold text-onyx/50 animate-pulse">Syncing Leaderboard...</p>
+            </div>
+          ) : (
+            <>
           {/* TAB 1: TOP 3 PODIUM VISUAL */}
           {visualTab === 'podium' && (
             <div className="relative z-10 py-2">
-              <Podium users={LEADERBOARD_USERS} onSelectUser={setSelectedUser} />
+              <Podium users={displayLeaderboardUsers} onSelectUser={setSelectedUser} />
             </div>
           )}
 
@@ -235,7 +255,7 @@ export default function RankingsPage() {
           {visualTab === 'battles' && (
             <div className="relative z-10 space-y-3 py-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {DEPARTMENT_STATS.map((dept) => (
+                {departmentStats.map((dept) => (
                   <div
                     key={dept.name}
                     className={`rounded-2xl p-3.5 border transition-all ${
@@ -315,15 +335,18 @@ export default function RankingsPage() {
             </div>
           )}
 
+            </>
+          )}
+
           {/* Bottom legend note */}
           <div className="relative z-10 pt-3 mt-3 border-t border-onyx/10 flex items-center justify-between text-[11px] text-onyx/70">
-            <span>Rudra Pratap: #3 Overall College Ranking</span>
+            <span suppressHydrationWarning>{CURRENT_USER.name}: #{CURRENT_USER.collegeRank} Overall College Ranking</span>
             <span className="font-bold text-pine-teal">● Live Sync Active</span>
           </div>
         </div>
 
         {/* RIGHT 5 COLUMNS: Professional White Contest Calendar Component with self-start (ZERO stretching) */}
-        <div className="lg:col-span-5 rounded-3xl bg-white border border-onyx/12 p-6 shadow-sm self-start">
+        <div className="lg:col-span-5 rounded-3xl bg-white border border-onyx/12 p-6 shadow-sm self-start" suppressHydrationWarning>
           <ContestCalendar />
         </div>
       </div>
@@ -346,14 +369,14 @@ export default function RankingsPage() {
                 </p>
               </div>
               <div className="px-3 py-1 rounded-xl bg-golden-sand/20 text-onyx font-black text-xs border border-onyx/12 shrink-0">
-                {LEADERBOARD_USERS.length} Students Total
+                {leaderboardUsers.length} Students Total
               </div>
             </div>
           </div>
 
           {/* LeaderboardTable rendering ALL departments */}
           <LeaderboardTable
-            users={LEADERBOARD_USERS}
+            users={displayLeaderboardUsers}
             onSelectUser={setSelectedUser}
             defaultDepartment="ALL"
           />
@@ -408,7 +431,7 @@ export default function RankingsPage() {
                 </div>
               ) : (
                 cseUsers.map((user, idx) => {
-                  const isRudra = user.id === CURRENT_USER.id || user.name.includes('Rudra');
+                  const isCurrentUser = user.id === CURRENT_USER.id;
                   const rankNum = idx + 1;
 
                   return (
@@ -416,7 +439,7 @@ export default function RankingsPage() {
                       key={user.id}
                       onClick={() => setSelectedUser(user)}
                       className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                        isRudra
+                        isCurrentUser
                           ? 'bg-golden-sand/20 border-2 border-tomato-jam/60 shadow-2xs'
                           : 'bg-[#FFF1D6] border-onyx/10 hover:border-onyx/30'
                       }`}
@@ -445,7 +468,7 @@ export default function RankingsPage() {
                         <div>
                           <div className="flex items-center gap-1.5">
                             <h4 className="text-xs font-black text-onyx">{user.name}</h4>
-                            {isRudra && (
+                            {isCurrentUser && (
                               <span className="px-1.5 py-0.5 rounded bg-tomato-jam text-white text-[9px] font-extrabold">
                                 YOU
                               </span>

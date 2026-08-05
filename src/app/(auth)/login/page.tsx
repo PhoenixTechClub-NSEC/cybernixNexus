@@ -4,14 +4,23 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Flame, ArrowRight } from 'lucide-react';
+import { useUser } from '@/components/providers/UserProvider';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('rudra.pratap@nsec.ac.in');
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState('test@nsec.ac.in');
+  const [password, setPassword] = useState('password');
+
+  const { updateUser } = useUser();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Parse name from email (e.g. test@nsec.ac.in -> Test)
+    const namePart = email.split('@')[0];
+    const derivedName = namePart.split('.').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
+    
+    updateUser({ name: derivedName, email: email });
     router.push('/dashboard');
   };
 
@@ -61,12 +70,22 @@ export default function LoginPage() {
               </label>
               <div className="mt-1">
                 <input
+                  id="email"
                   type="email"
                   required
+                  autoComplete="username"
+                  pattern="^[a-zA-Z0-9._%+\-]+@nsec\.ac\.in$"
+                  aria-describedby="email-error email-hint"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam"
+                  className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam"
                 />
+                <div id="email-hint" className="hint-msg text-xs text-onyx/50 mt-1">
+                  Format: your.name@nsec.ac.in
+                </div>
+                <div id="email-error" className="error-msg">
+                  <span aria-hidden="true">❌</span> Please enter a valid @nsec.ac.in email address.
+                </div>
               </div>
             </div>
 
@@ -76,11 +95,13 @@ export default function LoginPage() {
               </label>
               <div className="mt-1">
                 <input
+                  id="current-password"
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam"
+                  className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam"
                 />
               </div>
             </div>
@@ -103,13 +124,13 @@ export default function LoginPage() {
               onClick={() => router.push('/dashboard')}
               className="w-full py-2.5 px-4 rounded-xl bg-golden-sand/15 hover:bg-golden-sand/40 text-onyx font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Demo Login as Rudra Pratap (#3 CSE)</span>
+              <span>Demo Login</span>
             </button>
           </div>
 
           <div className="mt-6 text-center text-xs text-onyx/70">
             Don&apos;t have an NSEC account yet?{' '}
-            <Link href="/dashboard" className="font-bold text-tomato-jam hover:underline">
+            <Link href="/signup" className="font-bold text-tomato-jam hover:underline">
               Create student profile
             </Link>
           </div>

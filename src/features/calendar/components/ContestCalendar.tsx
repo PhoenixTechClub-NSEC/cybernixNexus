@@ -161,6 +161,19 @@ export function ContestCalendar() {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date(2026, 7, 1)); // Month 7 is August (0-indexed)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date(2026, 7, 5)); // Default selected Aug 5
 
+  const [contestDB, setContestDB] = useState<Record<string, ContestEvent[]>>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    // TODO: BACKEND INTEGRATION - Fetch events for currentMonth
+    // Example: fetch(`/api/events?month=${currentMonth.getMonth()}`).then(...)
+    setTimeout(() => {
+      setContestDB(CONTEST_DATABASE);
+      setIsLoading(false);
+    }, 500);
+  }, [currentMonth]);
+
+
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -199,7 +212,7 @@ export function ContestCalendar() {
   };
 
   const selectedKey = formatDateKey(selectedDate);
-  const eventsForSelectedDate = CONTEST_DATABASE[selectedKey] || [];
+  const eventsForSelectedDate = contestDB[selectedKey] || [];
 
   const handlePrevMonth = () => {
     setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -231,7 +244,12 @@ export function ContestCalendar() {
   };
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4 relative">
+      {isLoading && (
+        <div className="absolute inset-0 z-50 bg-white/50 backdrop-blur-sm flex items-center justify-center rounded-[2rem]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-tomato-jam"></div>
+        </div>
+      )}
       {/* Calendar Month & Navigation Controls */}
       <div className="flex items-center justify-between pb-3 border-b border-onyx/10">
         <div className="flex items-center gap-2.5">

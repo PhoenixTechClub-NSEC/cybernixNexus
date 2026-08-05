@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FAKE_EDITORIALS, CURRENT_USER } from '@/lib/constants';
+import { useUser } from '@/components/providers/UserProvider';
 import { Editorial, PlatformName, EditorialComment } from '@/types';
 import { LevelBadge } from '@/features/gamification/components/LevelBadge';
 import {
@@ -20,19 +20,16 @@ import {
 } from 'lucide-react';
 
 export default function EditorialsPage() {
-  const [editorialsList, setEditorialsList] = useState<Editorial[]>(FAKE_EDITORIALS);
+  const { user: CURRENT_USER } = useUser();
+  const [editorialsList, setEditorialsList] = useState<Editorial[]>([]);
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformName | 'ALL'>('ALL');
   const [selectedDiff, setSelectedDiff] = useState<'ALL' | 'Easy' | 'Medium' | 'Hard'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEditorial, setSelectedEditorial] = useState<Editorial | null>(null);
-  const [likesMap, setLikesMap] = useState<Record<string, number>>(
-    Object.fromEntries(FAKE_EDITORIALS.map((e) => [e.id, e.likesCount]))
-  );
+  const [likesMap, setLikesMap] = useState<Record<string, number>>({});
   const [likedIds, setLikedIds] = useState<Record<string, boolean>>({});
   const [newCommentText, setNewCommentText] = useState('');
-  const [commentsMap, setCommentsMap] = useState<Record<string, EditorialComment[]>>(
-    Object.fromEntries(FAKE_EDITORIALS.map((e) => [e.id, e.comments]))
-  );
+  const [commentsMap, setCommentsMap] = useState<Record<string, EditorialComment[]>>({});
 
   // Publish Modal State
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 'use client';
 
 import React, { useState, useRef } from 'react';
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { useUser } from '@/components/providers/UserProvider';
 
 gsap.registerPlugin(useGSAP);
 
@@ -33,6 +35,28 @@ export function Sidebar() {
   const modalRef = useRef<HTMLDivElement>(null);
   const toastRef = useRef<HTMLDivElement>(null);
   const logoFlameRef = useRef<SVGSVGElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+
+  // Active Tab Bubble Sliding Animation
+  useGSAP(
+    () => {
+      if (!navRef.current) return;
+
+      const activeWrapper = navRef.current.querySelector('.nav-item-wrapper[data-active="true"]') as HTMLElement;
+      const selector = navRef.current.querySelector('.selector-active') as HTMLElement;
+
+      if (activeWrapper && selector) {
+        gsap.to(selector, {
+          top: activeWrapper.offsetTop,
+          height: activeWrapper.offsetHeight,
+          opacity: 1,
+          duration: 0.6,
+          ease: 'back.out(1.5)',
+        });
+      }
+    },
+    { dependencies: [pathname], scope: navRef }
+  );
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -42,11 +66,15 @@ export function Sidebar() {
     { name: 'Contests', href: '/contests', icon: Calendar },
   ];
 
-  const [integrations, setIntegrations] = useState([
-    { name: 'Codeforces', handle: 'rudra_nsec', dot: 'bg-tomato-jam' },
-    { name: 'LeetCode', handle: 'rudra_pratap', dot: 'bg-golden-sand' },
-    { name: 'CodeChef', handle: 'rudra_nsec', dot: 'bg-pine-teal' },
-  ]);
+  const { user: CURRENT_USER } = useUser();
+
+  const [integrations, setIntegrations] = useState<{ name: string; handle: string; dot: string }[]>(
+    CURRENT_USER.platforms.slice(0, 3).map((p) => ({
+      name: p.platform,
+      handle: p.handle,
+      dot: p.platform === 'Codeforces' ? 'bg-tomato-jam' : p.platform === 'LeetCode' ? 'bg-golden-sand' : 'bg-pine-teal'
+    }))
+  );
 
   // Initial Staggered Mount Animations (60fps, GPU transform-only)
   const { contextSafe } = useGSAP(
@@ -316,7 +344,30 @@ export function Sidebar() {
             </div>
           </Link>
 
-          <nav className="space-y-1.5 relative">
+          <nav className="space-y-1.5 relative" ref={navRef}>
+            {/* The Dynamic Sliding Bubble */}
+            <div
+              className="selector-active absolute right-0 w-full bg-[#FFF1D6] rounded-l-[1.5rem] pointer-events-none z-0"
+              style={{ top: 0, height: 48, opacity: 0 }}
+            >
+              <svg
+                className="absolute -top-6 right-0 w-6 h-6"
+                viewBox="0 0 24 24"
+                style={{ color: ACTIVE_BG_COLOR }}
+                fill="currentColor"
+              >
+                <path d="M 0 24 A 24 24 0 0 0 24 0 L 24 24 Z" />
+              </svg>
+              <svg
+                className="absolute -bottom-6 right-0 w-6 h-6"
+                viewBox="0 0 24 24"
+                style={{ color: ACTIVE_BG_COLOR }}
+                fill="currentColor"
+              >
+                <path d="M 0 0 A 24 24 0 0 1 24 24 L 24 0 Z" />
+              </svg>
+            </div>
+
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive =
@@ -326,28 +377,18 @@ export function Sidebar() {
               return (
                 <div
                   key={item.name}
+                  data-active={isActive}
                   className={`nav-item-wrapper relative w-full ${
                     isActive ? 'translate-x-[1px]' : ''
                   }`}
                 >
-                  {isActive && (
-                    <svg
-                      className="absolute -top-6 right-0 w-6 h-6 pointer-events-none z-20"
-                      viewBox="0 0 24 24"
-                      style={{ color: ACTIVE_BG_COLOR }}
-                      fill="currentColor"
-                    >
-                      <path d="M 0 24 A 24 24 0 0 0 24 0 L 24 24 Z" />
-                    </svg>
-                  )}
-
                   <Link
                     href={item.href}
                     onMouseEnter={handleNavEnter}
                     onMouseLeave={handleNavLeave}
                     className={`flex items-center gap-3.5 text-sm relative z-10 py-3.5 pl-5 ${
                       isActive
-                        ? 'bg-[#FFF1D6] text-onyx font-black rounded-l-[1.5rem] pr-0'
+                        ? 'text-onyx font-black pr-0'
                         : 'text-white/60 font-bold hover:text-white hover:bg-white/5 rounded-[1.5rem] mr-5 pr-4 transition-colors duration-200'
                     }`}
                   >
@@ -360,17 +401,6 @@ export function Sidebar() {
                     />
                     <span>{item.name}</span>
                   </Link>
-
-                  {isActive && (
-                    <svg
-                      className="absolute -bottom-6 right-0 w-6 h-6 pointer-events-none z-20"
-                      viewBox="0 0 24 24"
-                      style={{ color: ACTIVE_BG_COLOR }}
-                      fill="currentColor"
-                    >
-                      <path d="M 0 0 A 24 24 0 0 1 24 24 L 24 0 Z" />
-                    </svg>
-                  )}
                 </div>
               );
             })}
@@ -436,7 +466,7 @@ export function Sidebar() {
         {/* Settings Bottom Item */}
         <div className="sidebar-section pt-4 border-t border-white/10 pr-5">
           <Link
-            href="/profile"
+            href="/settings"
             onMouseEnter={handleSettingsEnter}
             onMouseLeave={handleSettingsLeave}
             className="flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-bold text-white/50 hover:bg-white/10 hover:text-white transition-colors"
@@ -493,7 +523,7 @@ export function Sidebar() {
                   type="text"
                   value={platformHandle}
                   onChange={(e) => setPlatformHandle(e.target.value)}
-                  placeholder="e.g. rudra_pratap"
+                  placeholder={`e.g. ${CURRENT_USER.username}`}
                   required
                   className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-tomato-jam transition-shadow"
                 />

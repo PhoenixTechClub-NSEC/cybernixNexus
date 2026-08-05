@@ -1,18 +1,35 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Navbar } from '@/components/layout/Navbar';
 import { Search, Bell, Plus } from 'lucide-react';
-import { CURRENT_USER } from '@/lib/constants';
+import { useUser } from '@/components/providers/UserProvider';
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user: CURRENT_USER } = useUser();
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  // Close notifications when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+  
   return (
     <div className="min-h-screen w-full bg-[#FFF1D6] text-onyx flex flex-col">
       {/* Mobile Top Navbar (visible only on small screens) */}
@@ -29,39 +46,50 @@ export default function MainLayout({
           {/* Top Header Bar for Desktop/Tablet (No background, right actions only) */}
           <header className="hidden lg:flex items-center justify-end px-0 py-1 bg-transparent border-0 shadow-none shrink-0">
             <div className="flex items-center gap-3">
-              {/* + Sync Profile Button */}
-              <button
-                onClick={() => alert('Syncing CP profile ratings across all connected platforms...')}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-onyx hover:bg-onyx/80 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5 text-tomato-jam" />
-                <span>Sync Profile</span>
-              </button>
-
-              {/* Search Button */}
-              <button
-                onClick={() => alert('Search dialog')}
-                className="w-9 h-9 rounded-xl bg-white border border-pine-teal/30 hover:bg-golden-sand/30 flex items-center justify-center text-onyx transition-colors cursor-pointer shadow-2xs"
-                title="Search"
-              >
-                <Search className="w-4 h-4" />
-              </button>
+              {/* Search and Sync Profile Buttons Removed as requested */}
 
               {/* Notifications Bell */}
-              <button
-                onClick={() => alert('Notifications: 2 upcoming contests')}
-                className="relative w-9 h-9 rounded-xl bg-white border border-pine-teal/30 hover:bg-golden-sand/30 flex items-center justify-center text-onyx transition-colors cursor-pointer shadow-2xs"
-                title="Notifications"
-              >
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-tomato-jam"></span>
-              </button>
+              <div className="relative" ref={notificationRef}>
+                <button
+                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                  className="relative w-9 h-9 rounded-xl bg-white border border-pine-teal/30 hover:bg-golden-sand/30 flex items-center justify-center text-onyx transition-colors cursor-pointer shadow-2xs"
+                  title="Notifications"
+                >
+                  <Bell className="w-4 h-4" />
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-tomato-jam"></span>
+                </button>
+
+                {/* Notifications Popover */}
+                {isNotificationsOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-onyx/10 z-50 overflow-hidden">
+                    <div className="p-3.5 border-b border-onyx/5">
+                      <h4 className="text-sm font-black text-onyx">Notifications</h4>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto p-2">
+                      <div className="p-2.5 rounded-xl hover:bg-golden-sand/15 transition-colors cursor-pointer border border-transparent hover:border-golden-sand/30 mb-1">
+                        <p className="text-xs font-bold text-onyx">Codeforces Round #962</p>
+                        <p className="text-[11px] text-onyx/60 mt-0.5">Starts in 2 hours. Are you ready?</p>
+                      </div>
+                      <div className="p-2.5 rounded-xl hover:bg-golden-sand/15 transition-colors cursor-pointer border border-transparent hover:border-golden-sand/30">
+                        <p className="text-xs font-bold text-onyx">Level Up!</p>
+                        <p className="text-[11px] text-onyx/60 mt-0.5">You reached Level {CURRENT_USER.level}. View new Mascot tier.</p>
+                      </div>
+                    </div>
+                    <div className="p-2 border-t border-onyx/5 text-center bg-gray-50/50">
+                      <button className="text-[11px] font-bold text-tomato-jam hover:underline cursor-pointer">
+                        Mark all as read
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* User Avatar */}
-              <Link href="/profile" className="flex items-center gap-2 pl-1">
+              <Link href="/profile" className="flex items-center gap-2 pl-1" suppressHydrationWarning>
                 <img
                   src={CURRENT_USER.avatar}
                   alt={CURRENT_USER.name}
+                  suppressHydrationWarning
                   className="w-9 h-9 rounded-full object-cover ring-2 ring-tomato-jam/40 shadow-2xs"
                 />
               </Link>

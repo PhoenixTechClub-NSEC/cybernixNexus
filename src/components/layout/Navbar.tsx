@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
@@ -18,14 +19,15 @@ import {
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { CURRENT_USER } from '@/lib/constants';
+import { useUser } from '@/components/providers/UserProvider';
 import { LevelBadge } from '@/features/gamification/components/LevelBadge';
 
 gsap.registerPlugin(useGSAP);
 
 export function Navbar() {
   const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user: CURRENT_USER } = useUser();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const headerRef = useRef<HTMLElement>(null);
   const navbarFlameRef = useRef<SVGSVGElement>(null);
@@ -342,6 +344,7 @@ export function Navbar() {
               href="/profile"
               onMouseEnter={handleProfileEnter}
               onMouseLeave={handleProfileLeave}
+              suppressHydrationWarning
               className="navbar-pill flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl border border-onyx/12 hover:border-tomato-jam/50 hover:bg-golden-sand/10 transition-colors duration-200 will-change-transform"
             >
               <img
@@ -391,8 +394,8 @@ export function Navbar() {
           ref={mobileMenuRef}
           className="md:hidden border-t border-onyx/12 bg-white px-4 pt-2 pb-6 space-y-3 will-change-transform"
         >
-          <div className="flex items-center justify-between py-2 border-b border-pine-teal/15">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between py-2 border-b border-pine-teal/15" suppressHydrationWarning>
+            <div className="flex items-center gap-2" suppressHydrationWarning>
               <img
                 src={CURRENT_USER.avatar}
                 alt={CURRENT_USER.name}
