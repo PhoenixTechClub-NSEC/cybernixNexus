@@ -1,12 +1,21 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useUser } from '@/components/providers/UserProvider';
-import { Camera, Save, Globe, Briefcase, Code2, Sparkles, UserCircle2, X, CheckCircle2, Plus } from 'lucide-react';
+import { Camera, Save, Globe, Briefcase, Code2, Sparkles, UserCircle2, X, CheckCircle2, Plus, Loader2 } from 'lucide-react';
+
+const DUMMY_HANDLES: Record<string, string> = {
+  LeetCode: 'leetcode_dummy',
+  Codeforces: 'tourist',
+  GFG: 'gfg_dummy',
+  CodeChef: 'codechef_dummy',
+};
+
+const STANDARD_PLATFORMS = ['LeetCode', 'Codeforces', 'GFG', 'CodeChef'] as const;
 
 export default function SettingsPage() {
-  const { user, updateUser } = useUser();
+  const { user, updateUser, refreshUser } = useUser();
   const [dpUrl, setDpUrl] = useState(user.avatar);
   const [bio, setBio] = useState(user.bio || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -19,61 +28,164 @@ export default function SettingsPage() {
     linkedin: `https://linkedin.com/in/${user.username || 'username'}`,
   });
 
-  const [platformHandles, setPlatformHandles] = useState<Record<string, string>>(
-    (user.platforms || []).reduce((acc: any, p: any) => ({ ...acc, [p.platform]: p.handle }), {})
-  );
+  const [platformHandles, setPlatformHandles] = useState<Record<string, string>>({
+    LeetCode: DUMMY_HANDLES.LeetCode,
+    Codeforces: DUMMY_HANDLES.Codeforces,
+    GFG: DUMMY_HANDLES.GFG,
+    CodeChef: DUMMY_HANDLES.CodeChef,
+  });
 
+  const initialHandlesRef = useRef<Record<string, string>>({
+    LeetCode: DUMMY_HANDLES.LeetCode,
+    Codeforces: DUMMY_HANDLES.Codeforces,
+    GFG: DUMMY_HANDLES.GFG,
+    CodeChef: DUMMY_HANDLES.CodeChef,
+  });
+  const initialNameRef = useRef<string>(user.name);
+  const initialDpUrlRef = useRef<string>(user.avatar);
+
+  const [isSaving, setIsSaving] = useState(false);
   const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
   const [platformName, setPlatformName] = useState('Codeforces');
   const [platformHandle, setPlatformHandle] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Fetch student profile & platform handles from DB on mount
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDbProfile = async () => {
+      try {
+        const res = await fetch('/api/student');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.student && isMounted) {
+          const s = data.student;
+          const handles = {
+            LeetCode: s.leetcode || DUMMY_HANDLES.LeetCode,
+            Codeforces: s.codeforces || DUMMY_HANDLES.Codeforces,
+            GFG: s.gfg || DUMMY_HANDLES.GFG,
+            CodeChef: s.codechef || DUMMY_HANDLES.CodeChef,
+          };
+          setPlatformHandles(handles);
+          initialHandlesRef.current = handles;
+
+          if (s.name) {
+            setName(s.name);
+            initialNameRef.current = s.name;
+          }
+          if (s.user?.image) {
+            setDpUrl(s.user.image);
+            initialDpUrlRef.current = s.user.image;
+          }
+        }
+      } catch (err) {
+        console.error('[SettingsPage] Error fetching DB handles:', err);
+      }
+    };
+    fetchDbProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleAddPlatform = (e: React.FormEvent) => {
     e.preventDefault();
     if (!platformHandle.trim()) return;
 
-    const existingPlatform = user.platforms?.find((p: any) => p.platform === platformName);
-    let newPlatforms = [];
-    if (existingPlatform) {
-      newPlatforms = (user.platforms || []).map((p: any) => 
-        p.platform === platformName ? { ...p, handle: platformHandle.trim() } : p
-      );
-    } else {
-      newPlatforms = [
-        ...(user.platforms || []),
-        {
-          platform: platformName as any,
-          handle: platformHandle.trim(),
-          rating: 0,
-          solvedCount: 0,
-          weight: 1.0,
-        }
-      ];
-    }
-    
-    updateUser({ platforms: newPlatforms });
-    // Update local platform handles state so the input fields reflect it immediately
-    setPlatformHandles(prev => ({ ...prev, [platformName]: platformHandle.trim() }));
+    setPlatformHandles((prev) => ({ ...prev, [platformName]: platformHandle.trim() }));
     setIsPlatformModalOpen(false);
     setPlatformHandle('');
-    setToastMessage(`Added ${platformName} (@${platformHandle.trim()}) successfully!`);
+    setToastMessage(`Added ${platformName} (@${platformHandle.trim()}) to list.`);
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const updatedPlatforms = (user.platforms || []).map((p: any) => ({
-      ...p,
-      handle: platformHandles[p.platform] || p.handle
-    }));
-    updateUser({ 
-      name,
-      username,
-      bio,
-      avatar: dpUrl || user.avatar,
-      platforms: updatedPlatforms
-    });
-    alert('Settings saved successfully!');
+
+    const currentHandles = {
+      LeetCode: platformHandles['LeetCode'] || '',
+      Codeforces: platformHandles['Codeforces'] || '',
+      GFG: platformHandles['GFG'] || '',
+      CodeChef: platformHandles['CodeChef'] || '',
+    };
+
+    const initial = initialHandlesRef.current;
+    const hasHandleChanges =
+      currentHandles.LeetCode.trim() !== (initial.LeetCode || '').trim() ||
+      currentHandles.Codeforces.trim() !== (initial.Codeforces || '').trim() ||
+      currentHandles.GFG.trim() !== (initial.GFG || '').trim() ||
+      currentHandles.CodeChef.trim() !== (initial.CodeChef || '').trim();
+
+    const hasProfileChanges =
+      name !== initialNameRef.current || dpUrl !== initialDpUrlRef.current;
+
+    // Do NOT trigger endpoint if no changes are done
+    if (!hasHandleChanges && !hasProfileChanges) {
+      setToastMessage('No changes detected in platform handles or profile.');
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/student/handles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leetcode: currentHandles.LeetCode,
+          codeforces: currentHandles.Codeforces,
+          gfg: currentHandles.GFG,
+          codechef: currentHandles.CodeChef,
+          name,
+          avatar: dpUrl,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to save handles');
+      }
+
+      // Update initial references
+      initialHandlesRef.current = currentHandles;
+      initialNameRef.current = name;
+      initialDpUrlRef.current = dpUrl;
+
+      // Update global UserProvider state & trigger page re-sync
+      const updatedPlatforms = [
+        { platform: 'LeetCode' as const, handle: currentHandles.LeetCode, rating: data.stats?.leetcodeRating || 0, solvedCount: data.stats?.leetcodeSolved || 0, weight: 1.0 },
+        { platform: 'Codeforces' as const, handle: currentHandles.Codeforces, rating: data.stats?.codeforcesRating || 0, solvedCount: 0, weight: 1.2 },
+        { platform: 'GFG' as const, handle: currentHandles.GFG, rating: 0, solvedCount: data.stats?.gfgScore || 0, weight: 0.8 },
+        { platform: 'CodeChef' as const, handle: currentHandles.CodeChef, rating: data.stats?.codechefRating || 0, solvedCount: 0, weight: 1.0 },
+      ];
+
+      updateUser({
+        name,
+        username,
+        bio,
+        avatar: dpUrl || user.avatar,
+        platforms: updatedPlatforms as any,
+        cpScore: data.stats?.totalScore ?? user.cpScore,
+        collegeRank: data.stats?.ranking ?? user.collegeRank,
+        deptRank: data.stats?.departmentRanking ?? user.deptRank,
+      });
+
+      await refreshUser();
+
+      setToastMessage(
+        data.hasHandleChanges
+          ? 'Platform handles updated & stats fetched successfully!'
+          : 'Profile settings saved successfully!'
+      );
+      setTimeout(() => setToastMessage(null), 4000);
+    } catch (err: any) {
+      console.error('[Save Error]:', err);
+      setToastMessage(`Save failed: ${err.message}`);
+      setTimeout(() => setToastMessage(null), 4000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +230,7 @@ export default function SettingsPage() {
                 className="hidden" 
               />
               <img 
-                src={dpUrl} 
+                src={dpUrl || user.avatar} 
                 alt="Profile Preview" 
                 className="w-32 h-32 rounded-full object-cover ring-4 ring-golden-sand/30 shadow-lg group-hover:ring-tomato-jam transition-colors"
               />
@@ -155,7 +267,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <p className="text-xs text-onyx/60 leading-relaxed">
-                Click the camera icon on your profile picture to upload a new image. Max display size is 128x128px.
+                Click the camera icon on your profile picture to upload a new image or sync with Google profile.
               </p>
             </div>
           </div>
@@ -183,12 +295,12 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Social Links Section */}
+        {/* Social Links & Platform Handles Section */}
         <div className="rounded-3xl bg-white border border-onyx/12 p-6 sm:p-8 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-black text-onyx flex items-center gap-2">
               <Code2 className="w-5 h-5 text-pine-teal" />
-              Social Profiles & Handles
+              Social Profiles & Platform Usernames
             </h2>
             <button
               type="button"
@@ -227,18 +339,19 @@ export default function SettingsPage() {
               />
             </div>
 
-            {(user.platforms || []).map((plat: any) => (
-              <div key={plat.platform} className="space-y-2">
+            {STANDARD_PLATFORMS.map((plat) => (
+              <div key={plat} className="space-y-2">
                 <label className="flex items-center gap-2 text-xs font-bold text-onyx uppercase tracking-wider">
-                  <span className={`font-extrabold text-sm ${plat.platform === 'Codeforces' ? 'text-tomato-jam' : plat.platform === 'LeetCode' ? 'text-golden-sand' : 'text-pine-teal'}`}>
-                    {plat.platform.charAt(0)}
+                  <span className={`font-extrabold text-sm ${plat === 'Codeforces' ? 'text-tomato-jam' : plat === 'LeetCode' ? 'text-golden-sand' : 'text-pine-teal'}`}>
+                    {plat.charAt(0)}
                   </span>{' '}
-                  {plat.platform} Handle
+                  {plat} Username / Handle
                 </label>
                 <input 
                   type="text"
-                  value={platformHandles[plat.platform] || ''}
-                  onChange={(e) => setPlatformHandles({...platformHandles, [plat.platform]: e.target.value})}
+                  value={platformHandles[plat] || ''}
+                  onChange={(e) => setPlatformHandles({...platformHandles, [plat]: e.target.value})}
+                  placeholder={`e.g. ${DUMMY_HANDLES[plat] || 'username'}`}
                   className="w-full px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-onyx/30"
                 />
               </div>
@@ -256,10 +369,20 @@ export default function SettingsPage() {
           </button>
           <button 
             type="submit" 
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-tomato-jam text-white text-sm font-black shadow-md hover:bg-[#E8890C] transition-colors cursor-pointer"
+            disabled={isSaving}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-tomato-jam text-white text-sm font-black shadow-md hover:bg-[#E8890C] transition-colors cursor-pointer disabled:opacity-50"
           >
-            <Save className="w-4 h-4" />
-            Save Profile
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Syncing Platforms...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Profile
+              </>
+            )}
           </button>
         </div>
         
@@ -296,7 +419,7 @@ export default function SettingsPage() {
                   <option value="Codeforces">Codeforces</option>
                   <option value="LeetCode">LeetCode</option>
                   <option value="CodeChef">CodeChef</option>
-                  <option value="AtCoder">AtCoder</option>
+                  <option value="GeeksforGeeks">GeeksforGeeks</option>
                 </select>
               </div>
 
@@ -344,3 +467,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

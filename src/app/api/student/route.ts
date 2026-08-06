@@ -21,6 +21,10 @@ export async function GET() {
         user: {
           select: { email: true, image: true },
         },
+        syncJobs: {
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+        },
       },
     });
 

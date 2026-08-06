@@ -21,6 +21,55 @@ export function calculateTotalScore(stats: {
   return Math.round(lcPoints + lcRatingPoints + cfPoints + gfgPoints + ccPoints);
 }
 
+export async function recalculateRankings(): Promise<void> {
+  const allStats = await prisma.studentStats.findMany({
+    include: {
+      student: {
+        select: { department: true },
+      },
+    },
+  });
+
+  if (allStats.length === 0) return;
+
+  // Sort overall by totalScore desc
+  const sortedOverall = [...allStats].sort((a, b) => b.totalScore - a.totalScore);
+  const overallRankMap = new Map<string, number>();
+  sortedOverall.forEach((stat, index) => {
+    overallRankMap.set(stat.id, index + 1);
+  });
+
+  // Group by department for departmentRanking
+  const deptGroups = new Map<string, typeof allStats>();
+  allStats.forEach((stat) => {
+    const dept = stat.student?.department || 'DEFAULT';
+    if (!deptGroups.has(dept)) {
+      deptGroups.set(dept, []);
+    }
+    deptGroups.get(dept)!.push(stat);
+  });
+
+  const deptRankMap = new Map<string, number>();
+  deptGroups.forEach((deptStats) => {
+    const sortedDept = [...deptStats].sort((a, b) => b.totalScore - a.totalScore);
+    sortedDept.forEach((stat, index) => {
+      deptRankMap.set(stat.id, index + 1);
+    });
+  });
+
+  await Promise.all(
+    allStats.map((stat) =>
+      prisma.studentStats.update({
+        where: { id: stat.id },
+        data: {
+          ranking: overallRankMap.get(stat.id) || 1,
+          departmentRanking: deptRankMap.get(stat.id) || 1,
+        },
+      })
+    )
+  );
+}
+
 export async function syncStudentStats(studentId: string): Promise<PlatformStatsResult> {
   const student = await prisma.student.findUnique({
     where: { id: studentId },
@@ -30,74 +79,121 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
     throw new Error(`Student with ID ${studentId} not found`);
   }
 
+  // Create SyncJob record
+  const syncJob = await prisma.syncJob.create({
+    data: {
+      studentId: student.id,
+      status: 'PENDING',
+      startedAt: new Date(),
+    },
+  });
+
   const errors: Record<string, string> = {};
 
-  const [lcRes, cfRes, gfgRes, ccRes] = await Promise.allSettled([
-    student.leetcode ? fetchLeetCodeStats(student.leetcode) : Promise.resolve({ solved: 0, rating: null }),
-    student.codeforces ? fetchCodeforcesStats(student.codeforces) : Promise.resolve({ rating: null, maxRating: null }),
-    student.gfg ? fetchGfgStats(student.gfg) : Promise.resolve({ score: null }),
-    student.codechef ? fetchCodechefStats(student.codechef) : Promise.resolve({ rating: null }),
-  ]);
+  try {
+    const [lcRes, cfRes, gfgRes, ccRes] = await Promise.allSettled([
+      student.leetcode ? fetchLeetCodeStats(student.leetcode) : Promise.resolve({ solved: 0, rating: null }),
+      student.codeforces ? fetchCodeforcesStats(student.codeforces) : Promise.resolve({ rating: null, maxRating: null }),
+      student.gfg ? fetchGfgStats(student.gfg) : Promise.resolve({ score: null }),
+      student.codechef ? fetchCodechefStats(student.codechef) : Promise.resolve({ rating: null }),
+    ]);
 
-  const leetcodeData = lcRes.status === 'fulfilled' ? lcRes.value : { solved: 0, rating: null };
-  if (lcRes.status === 'rejected') {
-    errors.leetcode = lcRes.reason?.message || 'Failed to fetch LeetCode stats';
-  }
+    const leetcodeData = lcRes.status === 'fulfilled' ? lcRes.value : { solved: 0, rating: null };
+    if (lcRes.status === 'rejected') {
+      errors.leetcode = lcRes.reason?.message || 'Failed to fetch LeetCode stats';
+    }
 
-  const codeforcesData = cfRes.status === 'fulfilled' ? cfRes.value : { rating: null, maxRating: null };
-  if (cfRes.status === 'rejected') {
-    errors.codeforces = cfRes.reason?.message || 'Failed to fetch Codeforces stats';
-  }
+    const codeforcesData = cfRes.status === 'fulfilled' ? cfRes.value : { rating: null, maxRating: null };
+    if (cfRes.status === 'rejected') {
+      errors.codeforces = cfRes.reason?.message || 'Failed to fetch Codeforces stats';
+    }
 
-  const gfgData = gfgRes.status === 'fulfilled' ? gfgRes.value : { score: null };
-  if (gfgRes.status === 'rejected') {
-    errors.gfg = gfgRes.reason?.message || 'Failed to fetch GFG stats';
-  }
+    const gfgData = gfgRes.status === 'fulfilled' ? gfgRes.value : { score: null };
+    if (gfgRes.status === 'rejected') {
+      errors.gfg = gfgRes.reason?.message || 'Failed to fetch GFG stats';
+    }
 
-  const codechefData = ccRes.status === 'fulfilled' ? ccRes.value : { rating: null };
-  if (ccRes.status === 'rejected') {
-    errors.codechef = ccRes.reason?.message || 'Failed to fetch CodeChef stats';
-  }
+    const codechefData = ccRes.status === 'fulfilled' ? ccRes.value : { rating: null };
+    if (ccRes.status === 'rejected') {
+      errors.codechef = ccRes.reason?.message || 'Failed to fetch CodeChef stats';
+    }
 
-  const totalScore = calculateTotalScore({
-    leetcodeSolved: leetcodeData.solved,
-    leetcodeRating: leetcodeData.rating,
-    codeforcesRating: codeforcesData.rating,
-    gfgScore: gfgData.score,
-    codechefRating: codechefData.rating,
-  });
-
-  const updatedStats = await prisma.studentStats.upsert({
-    where: { studentId: student.id },
-    create: {
-      studentId: student.id,
+    const totalScore = calculateTotalScore({
       leetcodeSolved: leetcodeData.solved,
       leetcodeRating: leetcodeData.rating,
       codeforcesRating: codeforcesData.rating,
-      codeforcesMaxRating: codeforcesData.maxRating,
       gfgScore: gfgData.score,
       codechefRating: codechefData.rating,
-      totalScore,
-    },
-    update: {
-      leetcodeSolved: leetcodeData.solved,
-      leetcodeRating: leetcodeData.rating,
-      codeforcesRating: codeforcesData.rating,
-      codeforcesMaxRating: codeforcesData.maxRating,
-      gfgScore: gfgData.score,
-      codechefRating: codechefData.rating,
-      totalScore,
-    },
-  });
+    });
 
-  return {
-    leetcodeSolved: updatedStats.leetcodeSolved,
-    leetcodeRating: updatedStats.leetcodeRating,
-    codeforcesRating: updatedStats.codeforcesRating,
-    codeforcesMaxRating: updatedStats.codeforcesMaxRating,
-    gfgScore: updatedStats.gfgScore,
-    codechefRating: updatedStats.codechefRating,
-    totalScore: updatedStats.totalScore,
-    errors,
-  };
+    await prisma.studentStats.upsert({
+      where: { studentId: student.id },
+      create: {
+        studentId: student.id,
+        leetcodeSolved: leetcodeData.solved,
+        leetcodeRating: leetcodeData.rating,
+        codeforcesRating: codeforcesData.rating,
+        codeforcesMaxRating: codeforcesData.maxRating,
+        gfgScore: gfgData.score,
+        codechefRating: codechefData.rating,
+        totalScore,
+      },
+      update: {
+        leetcodeSolved: leetcodeData.solved,
+        leetcodeRating: leetcodeData.rating,
+        codeforcesRating: codeforcesData.rating,
+        codeforcesMaxRating: codeforcesData.maxRating,
+        gfgScore: gfgData.score,
+        codechefRating: codechefData.rating,
+        totalScore,
+      },
+    });
+
+    // Recalculate rankings across all students
+    await recalculateRankings();
+
+    // Fetch updated stats with ranking
+    const finalStats = await prisma.studentStats.findUnique({
+      where: { studentId: student.id },
+    });
+
+    const hasErrors = Object.keys(errors).length > 0;
+    const isTotalFailure =
+      hasErrors &&
+      [student.leetcode, student.codeforces, student.gfg, student.codechef].filter(Boolean).length ===
+        Object.keys(errors).length;
+
+    await prisma.syncJob.update({
+      where: { id: syncJob.id },
+      data: {
+        status: isTotalFailure ? 'FAILED' : 'SUCCESS',
+        finishedAt: new Date(),
+        error: hasErrors ? JSON.stringify(errors) : null,
+      },
+    });
+
+    return {
+      leetcodeSolved: finalStats?.leetcodeSolved ?? 0,
+      leetcodeRating: finalStats?.leetcodeRating ?? null,
+      codeforcesRating: finalStats?.codeforcesRating ?? null,
+      codeforcesMaxRating: finalStats?.codeforcesMaxRating ?? null,
+      gfgScore: finalStats?.gfgScore ?? null,
+      codechefRating: finalStats?.codechefRating ?? null,
+      totalScore: finalStats?.totalScore ?? 0,
+      ranking: finalStats?.ranking ?? null,
+      departmentRanking: finalStats?.departmentRanking ?? null,
+      syncJobId: syncJob.id,
+      errors,
+    };
+  } catch (fatalError: any) {
+    await prisma.syncJob.update({
+      where: { id: syncJob.id },
+      data: {
+        status: 'FAILED',
+        finishedAt: new Date(),
+        error: fatalError.message || 'Fatal error during platform sync',
+      },
+    });
+    throw fatalError;
+  }
 }

@@ -60,9 +60,12 @@ export async function GET() {
           gfgScore: student.stats?.gfgScore ?? null,
           codechefRating: student.stats?.codechefRating ?? null,
           totalScore: student.stats?.totalScore ?? 0,
+          ranking: student.stats?.ranking ?? rank,
+          departmentRanking: student.stats?.departmentRanking ?? null,
           updatedAt: student.stats?.updatedAt ?? student.updatedAt,
         },
-        rank,
+        rank: student.stats?.ranking ?? rank,
+        departmentRanking: student.stats?.departmentRanking ?? null,
         createdAt: student.createdAt,
         updatedAt: student.updatedAt,
       };

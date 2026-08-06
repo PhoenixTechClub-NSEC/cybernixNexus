@@ -3,7 +3,12 @@ import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import prisma from '@/lib/prisma';
+
+export function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
@@ -33,7 +38,12 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid email or password');
         }
 
-        const isValid = await bcrypt.compare(credentials.password, user.password);
+        const sha256Hash = hashPassword(credentials.password);
+        let isValid = sha256Hash === user.password;
+
+        if (!isValid && user.password.startsWith('$2')) {
+          isValid = await bcrypt.compare(credentials.password, user.password);
+        }
 
         if (!isValid) {
           throw new Error('Invalid email or password');
@@ -50,16 +60,35 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (user?.email) {
+        const googlePicture = user.image || (profile as any)?.picture;
+        if (googlePicture) {
+          try {
+            await prisma.user.update({
+              where: { email: user.email },
+              data: { image: googlePicture },
+            });
+          } catch (err) {
+            console.error('[NextAuth signIn] Failed to save profile picture:', err);
+          }
+        }
+      }
+      return true;
+    },
     async session({ session, token }) {
       if (token && session.user) {
         (session.user as any).id = token.sub;
         if (token.sub) {
-          const student = await prisma.student.findUnique({
-            where: { userId: token.sub },
-            select: { profileComplete: true, id: true },
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: { image: true, student: { select: { profileComplete: true, id: true } } },
           });
-          (session.user as any).studentId = student?.id || null;
-          (session.user as any).profileComplete = student?.profileComplete || false;
+          if (dbUser?.image) {
+            session.user.image = dbUser.image;
+          }
+          (session.user as any).studentId = dbUser?.student?.id || null;
+          (session.user as any).profileComplete = dbUser?.student?.profileComplete || false;
         }
       }
       return session;

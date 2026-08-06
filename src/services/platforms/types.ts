@@ -24,5 +24,8 @@ export interface PlatformStatsResult {
   gfgScore: number | null;
   codechefRating: number | null;
   totalScore: number;
+  ranking: number | null;
+  departmentRanking: number | null;
+  syncJobId?: string;
   errors: Record<string, string>;
 }

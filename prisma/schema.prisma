@@ -81,7 +81,8 @@ model Student {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stats StudentStats?
+  stats    StudentStats?
+  syncJobs SyncJob[]
 }
 
 model StudentStats {
@@ -101,6 +102,20 @@ model StudentStats {
   codechefRating      Int?
 
   totalScore          Int  @default(0)
+  ranking             Int?
+  departmentRanking   Int?
 
   updatedAt DateTime @updatedAt
+}
+
+model SyncJob {
+  id         String    @id @default(cuid())
+  studentId  String
+  student    Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status     String    @default("PENDING")
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  error      String?   @db.Text
+
+  createdAt DateTime @default(now())
 }
