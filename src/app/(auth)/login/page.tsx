@@ -191,18 +191,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Demo Login CTA */}
-          <div className="mt-6 pt-6 border-t border-pine-teal/15">
-            <p className="text-xs text-center font-bold uppercase tracking-wider text-onyx/70 mb-3">
-              Frontend Preview Mode
-            </p>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="w-full py-2.5 px-4 rounded-xl bg-golden-sand/15 hover:bg-golden-sand/40 text-onyx font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>Demo Login</span>
-            </button>
-          </div>
+
 
           <div className="mt-6 text-center text-xs text-onyx/70">
             Don&apos;t have an account yet?{' '}

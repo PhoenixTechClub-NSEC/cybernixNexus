@@ -327,6 +327,7 @@ export default function EditorialsPage() {
                         src={editorial.authorAvatar}
                         alt={editorial.authorName}
                         className="w-7 h-7 rounded-full object-cover ring-2 ring-tomato-jam/30"
+                        loading="lazy"
                       />
                       <span className="text-xs font-bold text-onyx">
                         {editorial.authorName}
@@ -423,6 +424,7 @@ export default function EditorialsPage() {
                   src={selectedEditorial.authorAvatar}
                   alt={selectedEditorial.authorName}
                   className="w-6 h-6 rounded-full object-cover ring-2 ring-tomato-jam/40"
+                  loading="lazy"
                 />
                 <span className="font-bold">{selectedEditorial.authorName}</span>
                 <span className="bg-white/10 px-2 py-0.5 rounded text-golden-sand">
@@ -516,6 +518,7 @@ export default function EditorialsPage() {
                         src={comment.authorAvatar}
                         alt={comment.authorName}
                         className="w-8 h-8 rounded-full object-cover shrink-0 ring-2 ring-tomato-jam/30"
+                        loading="lazy"
                       />
                       <div className="flex-1 text-xs">
                         <div className="flex items-center justify-between">
@@ -608,6 +611,7 @@ export default function EditorialsPage() {
                     src={CURRENT_USER.avatar}
                     alt={CURRENT_USER.name}
                     className="w-10 h-10 rounded-full object-cover ring-2 ring-tomato-jam/30"
+                    loading="lazy"
                   />
                   <div>
                     <div className="flex items-center gap-2">
