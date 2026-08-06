@@ -463,6 +463,7 @@ export default function RankingsPage() {
                           src={user.avatar}
                           alt={user.name}
                           className="w-9 h-9 rounded-full object-cover ring-2 ring-onyx/15 shrink-0"
+                          loading="lazy"
                         />
 
                         <div>
@@ -539,6 +540,7 @@ export default function RankingsPage() {
                   src={selectedUser.avatar}
                   alt={selectedUser.name}
                   className="w-16 h-16 rounded-full object-cover ring-4 ring-tomato-jam/40"
+                  loading="lazy"
                 />
                 <div>
                   <h3 className="text-xl font-black">{selectedUser.name}</h3>

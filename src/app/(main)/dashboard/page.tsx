@@ -108,9 +108,8 @@ const getLevelForTier = (tier: string) => {
     case 'Ember': return 2;
     case 'Flame': return 3;
     case 'Phoenix': return 4;
-    case 'Ascendant':
-    default:
-      return 1;
+    case 'Ascendant': return 5;
+    default: return 1;
   }
 };
 
@@ -125,7 +124,7 @@ export default function DashboardPage() {
     : getLevelForTier(CURRENT_USER.tier);
     
   const currentIllusSrc = `/lvl-${activeLevel}.png`;
-  const isBigLvl = activeLevel === 3 || activeLevel === 4;
+  const isBigLvl = activeLevel >= 3;
 
   const desktopWrapperClasses = `absolute hidden sm:block z-20 pointer-events-auto transition-all duration-500 ease-out ${
     isBigLvl
@@ -351,20 +350,20 @@ export default function DashboardPage() {
   return (
     <div ref={dashboardRef} className="space-y-8 pb-12">
       {/* TOP HERO BENTO ROW matching Dribbble Reference: Hello Card with Outside-the-Box Illustration + 4 Stats Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-8 sm:pt-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 pt-6 sm:pt-10">
         {/* LEFT: Hello Card with Outside the Box Waving Illustration (8 Cols) */}
         <div className="hello-card lg:col-span-8 relative rounded-3xl bg-white border border-pine-teal/25 p-6 sm:p-8 shadow-xs overflow-visible flex flex-col justify-between min-h-[230px] will-change-transform">
           {/* Top Greeting Section */}
           <div className="relative z-10 max-w-md sm:max-w-lg space-y-2">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-golden-sand/20 text-tomato-jam border border-pine-teal/30">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-golden-sand/20 text-tomato-jam border border-pine-teal/30 inline-block">
                 🔥 34-Day Streak
               </span>
-              <span className="text-xs text-pine-teal font-semibold">
+              <span className="text-[10px] sm:text-xs text-pine-teal font-semibold">
                 {CURRENT_USER.department} Dept • Rank #{CURRENT_USER.collegeRank} College
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-onyx tracking-tight">
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-onyx tracking-tight">
               Hello {CURRENT_USER.name.split(' ')[0]}!
             </h1>
             <p className="text-xs sm:text-sm text-pine-teal font-medium">
@@ -372,9 +371,9 @@ export default function DashboardPage() {
             </p>
             
             {/* Temporary Mascot Preview Toggles */}
-            <div className="flex flex-wrap items-center gap-2 mt-4 pt-2 z-30 relative pointer-events-auto">
+            <div className="hidden sm:flex flex-wrap items-center gap-2 mt-4 pt-2 z-30 relative pointer-events-auto">
               <span className="text-[10px] uppercase font-bold text-onyx/60 mr-1">Preview Mascot:</span>
-              {[1, 2, 3, 4].map((lvl) => (
+              {[1, 2, 3, 4, 5].map((lvl) => (
                 <button
                   key={lvl}
                   onClick={() => setPreviewLevel(lvl)}
@@ -400,32 +399,32 @@ export default function DashboardPage() {
 
           {/* Bottom Interactive Sprint Bar (matching Spanish B2 pill in Dribbble reference) */}
           <div className="relative z-10 mt-6 pt-2">
-            <div className="flex flex-wrap items-center justify-between gap-4 p-3 sm:p-4 rounded-2xl bg-golden-sand/10 border border-pine-teal/25 shadow-2xs max-w-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl bg-golden-sand/10 border border-pine-teal/25 shadow-2xs max-w-xl">
               {/* Left: Icon and Title */}
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-tomato-jam text-white flex items-center justify-center font-extrabold shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-tomato-jam text-white flex items-center justify-center font-extrabold shadow-sm shrink-0">
                   <Flame className="w-5 h-5 fill-current animate-pulse" />
                 </div>
-                <div>
-                  <h4 className="text-xs sm:text-sm font-extrabold text-onyx">
+                <div className="min-w-0">
+                  <h4 className="text-xs sm:text-sm font-extrabold text-onyx truncate">
                     Dynamic Programming Sprint
                   </h4>
-                  <p className="text-[11px] text-pine-teal font-medium">
+                  <p className="text-[11px] text-pine-teal font-medium truncate">
                     by NSEC Phoenix Club
                   </p>
                 </div>
               </div>
 
               {/* Right: Progress Ring, Continue Button & Arrows */}
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-pine-teal/30 text-xs font-black text-onyx shadow-2xs">
+              <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 mt-2 sm:mt-0 w-full sm:w-auto">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-pine-teal/30 text-xs font-black text-onyx shadow-2xs shrink-0">
                   <span className="w-2 h-2 rounded-full bg-tomato-jam animate-pulse" />
                   <span>83%</span>
                 </div>
 
                 <Link
                   href="/editorials"
-                  className="px-4 py-2 rounded-xl bg-onyx hover:bg-dark-amethyst text-white font-extrabold text-xs shadow-sm transition-all"
+                  className="px-4 py-2 rounded-xl bg-onyx hover:bg-dark-amethyst text-white font-extrabold text-xs shadow-sm transition-all text-center flex-1 sm:flex-none"
                 >
                   Continue
                 </Link>
@@ -458,6 +457,9 @@ export default function DashboardPage() {
               src={currentIllusSrc}
               alt={`${CURRENT_USER.tier} Tier Illustration`}
               className={desktopImgClasses}
+              width="400"
+              height="400"
+              fetchPriority="high"
             />
           </div>
           {/* Mobile version of illustration */}
@@ -466,12 +468,15 @@ export default function DashboardPage() {
               src={currentIllusSrc}
               alt={`${CURRENT_USER.tier} Tier Illustration`}
               className={mobileImgClasses}
+              width="400"
+              height="400"
+              fetchPriority="high"
             />
           </div>
         </div>
 
-        {/* RIGHT: Compact 2x2 Bento Stats Grid (4 Cols) */}
-        <div className="lg:col-span-4 grid grid-cols-2 gap-4">
+        {/* RIGHT: 4 Stats Mini-Grid (4 Cols) */}
+        <div className="lg:col-span-4 grid grid-cols-2 gap-3 sm:gap-4">
           {/* Stat 1: Questions Solved */}
           <div
             onMouseEnter={handleStatCardEnter}
@@ -479,7 +484,7 @@ export default function DashboardPage() {
             className="bento-stat-card rounded-3xl bg-white border border-pine-teal/25 p-5 shadow-xs flex flex-col justify-between cursor-pointer will-change-transform"
           >
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold text-pine-teal uppercase tracking-wider">
+              <p className="text-[10px] sm:text-xs font-bold text-pine-teal uppercase tracking-wider">
                 Solved
               </p>
               <div className="stat-icon-badge w-9 h-9 rounded-xl bg-golden-sand/20 text-tomato-jam flex items-center justify-center font-black text-sm will-change-transform">
@@ -487,10 +492,10 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="mt-2">
-              <p className="text-2xl sm:text-3xl font-black text-onyx">
+              <p className="text-xl sm:text-3xl font-black text-onyx">
                 {CODOLIO_STATS.questionsSolved.toLocaleString()}
               </p>
-              <p className="text-[11px] text-tomato-jam font-semibold mt-0.5">
+              <p className="text-[10px] text-tomato-jam font-semibold mt-0.5">
                 Across 7 platforms
               </p>
             </div>
@@ -503,7 +508,7 @@ export default function DashboardPage() {
             className="bento-stat-card rounded-3xl bg-white border border-pine-teal/25 p-5 shadow-xs flex flex-col justify-between cursor-pointer will-change-transform"
           >
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold text-pine-teal uppercase tracking-wider">
+              <p className="text-[10px] sm:text-xs font-bold text-pine-teal uppercase tracking-wider">
                 Active Days
               </p>
               <div className="stat-icon-badge w-9 h-9 rounded-xl bg-golden-sand/20 text-tomato-jam flex items-center justify-center font-black text-sm will-change-transform">
@@ -511,10 +516,10 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="mt-2">
-              <p className="text-2xl sm:text-3xl font-black text-onyx">
+              <p className="text-xl sm:text-3xl font-black text-onyx">
                 {CODOLIO_STATS.activeDays}
               </p>
-              <p className="text-[11px] text-tomato-jam font-semibold mt-0.5">
+              <p className="text-[10px] text-tomato-jam font-semibold mt-0.5">
                 34d Streak
               </p>
             </div>
@@ -527,7 +532,7 @@ export default function DashboardPage() {
             className="bento-stat-card rounded-3xl bg-white border border-pine-teal/25 p-5 shadow-xs flex flex-col justify-between cursor-pointer will-change-transform"
           >
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold text-pine-teal uppercase tracking-wider">
+              <p className="text-[10px] sm:text-xs font-bold text-pine-teal uppercase tracking-wider">
                 Contests
               </p>
               <div className="stat-icon-badge w-9 h-9 rounded-xl bg-golden-sand/20 text-pine-teal flex items-center justify-center font-black text-sm will-change-transform">
@@ -535,10 +540,10 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="mt-2">
-              <p className="text-2xl sm:text-3xl font-black text-onyx">
+              <p className="text-xl sm:text-3xl font-black text-onyx">
                 {CODOLIO_STATS.contestsAttended}
               </p>
-              <p className="text-[11px] text-pine-teal mt-0.5">
+              <p className="text-[10px] text-pine-teal mt-0.5">
                 CF & CC rated
               </p>
             </div>
@@ -551,7 +556,7 @@ export default function DashboardPage() {
             className="bento-stat-card rounded-3xl bg-white border border-pine-teal/25 p-5 shadow-xs flex flex-col justify-between cursor-pointer will-change-transform"
           >
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold text-pine-teal uppercase tracking-wider">
+              <p className="text-[10px] sm:text-xs font-bold text-pine-teal uppercase tracking-wider">
                 C Score Rank
               </p>
               <div className="stat-icon-badge w-9 h-9 rounded-xl bg-onyx text-white flex items-center justify-center font-black text-xs will-change-transform">
@@ -559,10 +564,10 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="mt-2">
-              <p className="text-2xl sm:text-3xl font-black text-onyx">
+              <p className="text-xl sm:text-3xl font-black text-onyx">
                 #{CODOLIO_STATS.globalRank}
               </p>
-              <p className="text-[11px] text-pine-teal mt-0.5">
+              <p className="text-[10px] text-pine-teal mt-0.5">
                 {CODOLIO_STATS.profileViews.toLocaleString()} views
               </p>
             </div>
@@ -570,8 +575,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* THREE COLUMN CODOLIO & BENTO LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* BOTTOM DASHBOARD GRID: Left Stats, Center Graph, Right Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
         {/* LEFT COLUMN: Profile Info & Problem Solving Platform Checkmarks (3 Cols) */}
         <div className="lg:col-span-3 space-y-5">
           {/* User Profile Card */}
@@ -581,6 +586,7 @@ export default function DashboardPage() {
                 src={CURRENT_USER.avatar}
                 alt={CURRENT_USER.name}
                 className="w-20 h-20 rounded-full object-cover ring-4 ring-tomato-jam/30 shadow-md"
+                fetchPriority="high"
               />
               <span className="absolute bottom-0 right-0 w-5 h-5 bg-tomato-jam border-2 border-white rounded-full"></span>
             </div>
@@ -676,7 +682,10 @@ export default function DashboardPage() {
             </div>
 
             {/* Dynamic Interactive SVG Ember Area Graph */}
-            <div className="relative h-48 w-full pt-2">
+            <div 
+              className="relative h-32 sm:h-48 w-full pt-2 group/graph"
+              onMouseLeave={() => setHoveredPointIdx(null)}
+            >
               <svg viewBox="0 0 400 140" className="w-full h-full overflow-visible">
                 <defs>
                   <linearGradient id="emberGradDynamic" x1="0" y1="0" x2="0" y2="1">
@@ -736,7 +745,7 @@ export default function DashboardPage() {
                           fill="none"
                           stroke="#FF9F1C"
                           strokeWidth="2"
-                          className="animate-ping opacity-75"
+                          className="animate-pulse"
                         />
                       )}
 
@@ -748,7 +757,7 @@ export default function DashboardPage() {
                         fill={isHovered ? '#FF9F1C' : '#2C1F14'}
                         stroke="#FF9F1C"
                         strokeWidth={isHovered ? '3' : '1.5'}
-                        className="transition-all duration-200"
+                        className="transition-all duration-200 opacity-0 group-hover/graph:opacity-100"
                       />
                     </g>
                   );
@@ -757,7 +766,7 @@ export default function DashboardPage() {
 
               {/* Dynamic Interactive Floating Tooltip Badge */}
               <div
-                className="absolute bg-onyx text-white p-2.5 rounded-xl shadow-lg border border-pine-teal/40 transition-all duration-200 pointer-events-none z-10 text-xs min-w-[170px]"
+                className={`absolute bg-onyx text-white p-2.5 rounded-xl shadow-lg border border-pine-teal/40 transition-all duration-200 pointer-events-none z-10 text-xs min-w-[170px] ${hoveredPointIdx !== null ? 'opacity-100' : 'opacity-0'}`}
                 style={{
                   left: `${Math.min(Math.max((activePoint.x / 400) * 100, 15), 75)}%`,
                   top: `${Math.max((activePoint.y / 140) * 100 - 35, 5)}%`,

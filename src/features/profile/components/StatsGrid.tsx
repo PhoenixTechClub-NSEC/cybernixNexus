@@ -130,13 +130,13 @@ export function StatsGrid({ user }: StatsGridProps) {
                 )}`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-extrabold text-sm">{platform.platform}</span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 border border-current/20">
+                  <span className="font-extrabold text-sm truncate">@{platform.handle}</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/80 border border-current/20 shrink-0">
                     {platform.weight}x Wp
                   </span>
                 </div>
                 <div className="mt-2 text-xs">
-                  <p className="text-onyx/70">Handle: <span className="font-semibold text-onyx">@{platform.handle}</span></p>
+                  <p className="text-onyx/70">Platform: <span className="font-semibold text-onyx">{platform.platform}</span></p>
                 </div>
                 <div className="mt-2 pt-2 border-t border-current/10 flex items-center justify-between">
                   <div>

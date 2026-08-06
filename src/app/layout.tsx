@@ -4,9 +4,12 @@ import { SmoothScrollProvider } from '@/components/providers/SmoothScrollProvide
 import { UserProvider } from '@/components/providers/UserProvider';
 
 export const metadata: Metadata = {
-  title: 'Cybernix Nexus — NSEC Phoenix Tech Club CP Dashboard',
+  title: 'CP Platform',
   description:
     'Multi-platform competitive programming rating synchronization, inter-department battles, level unlocking mascot tiers, and editorial hub for NSEC.',
+  icons: {
+    icon: '/crop_one.png',
+  },
 };
 
 export default function RootLayout({
