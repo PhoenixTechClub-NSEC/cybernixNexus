@@ -19,7 +19,7 @@ export default function SettingsPage() {
   const [dpUrl, setDpUrl] = useState(user.avatar);
   const [bio, setBio] = useState(user.bio || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [name, setName] = useState(user.name);
   const [username, setUsername] = useState(user.username || user.name.toLowerCase().replace(/\s+/g, '_'));
 
@@ -153,11 +153,38 @@ export default function SettingsPage() {
       initialDpUrlRef.current = dpUrl;
 
       // Update global UserProvider state & trigger page re-sync
+      const getExisting = (platform: string) =>
+        user.platforms?.find((p: any) => p.platform === platform);
+
       const updatedPlatforms = [
-        { platform: 'LeetCode' as const, handle: currentHandles.LeetCode, rating: data.stats?.leetcodeRating || 0, solvedCount: data.stats?.leetcodeSolved || 0, weight: 1.0 },
-        { platform: 'Codeforces' as const, handle: currentHandles.Codeforces, rating: data.stats?.codeforcesRating || 0, solvedCount: 0, weight: 1.2 },
-        { platform: 'GFG' as const, handle: currentHandles.GFG, rating: 0, solvedCount: data.stats?.gfgScore || 0, weight: 0.8 },
-        { platform: 'CodeChef' as const, handle: currentHandles.CodeChef, rating: data.stats?.codechefRating || 0, solvedCount: 0, weight: 1.0 },
+        {
+          platform: 'LeetCode' as const,
+          handle: currentHandles.LeetCode,
+          rating: data.stats?.leetcodeRating ?? getExisting('LeetCode')?.rating ?? 0,
+          solvedCount: data.stats?.leetcodeSolved ?? getExisting('LeetCode')?.solvedCount ?? 0,
+          weight: 1.0,
+        },
+        {
+          platform: 'Codeforces' as const,
+          handle: currentHandles.Codeforces,
+          rating: data.stats?.codeforcesRating ?? getExisting('Codeforces')?.rating ?? 0,
+          solvedCount: data.stats?.codeforcesSolved ?? getExisting('Codeforces')?.solvedCount ?? 0,
+          weight: 1.2,
+        },
+        {
+          platform: 'GFG' as const,
+          handle: currentHandles.GFG,
+          rating: 0,
+          solvedCount: data.stats?.gfgScore ?? getExisting('GFG')?.solvedCount ?? 0,
+          weight: 0.8,
+        },
+        {
+          platform: 'CodeChef' as const,
+          handle: currentHandles.CodeChef,
+          rating: data.stats?.codechefRating ?? getExisting('CodeChef')?.rating ?? 0,
+          solvedCount: getExisting('CodeChef')?.solvedCount ?? 0,
+          weight: 1.0,
+        },
       ];
 
       updateUser({
@@ -212,29 +239,29 @@ export default function SettingsPage() {
       </div>
 
       <form onSubmit={handleSave} className="space-y-8">
-        
+
         {/* Profile Picture Section */}
         <div className="rounded-3xl bg-white border border-onyx/12 p-6 sm:p-8 shadow-sm">
           <h2 className="text-lg font-black text-onyx flex items-center gap-2 mb-6">
             <Camera className="w-5 h-5 text-tomato-jam" />
             Profile Picture
           </h2>
-          
+
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
             <div className="relative group shrink-0">
-              <input 
-                type="file" 
-                accept="image/*" 
-                ref={fileInputRef} 
-                onChange={handleImageChange} 
-                className="hidden" 
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleImageChange}
+                className="hidden"
               />
-              <img 
-                src={dpUrl || user.avatar} 
-                alt="Profile Preview" 
+              <img
+                src={dpUrl || user.avatar}
+                alt="Profile Preview"
                 className="w-32 h-32 rounded-full object-cover ring-4 ring-golden-sand/30 shadow-lg group-hover:ring-tomato-jam transition-colors"
               />
-              <button 
+              <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="absolute bottom-0 right-0 p-2.5 rounded-full bg-onyx text-white hover:bg-tomato-jam transition-colors shadow-lg cursor-pointer"
@@ -242,12 +269,12 @@ export default function SettingsPage() {
                 <Camera className="w-4 h-4" />
               </button>
             </div>
-            
+
             <div className="flex-1 w-full space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">Display Name</label>
-                  <input 
+                  <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -257,7 +284,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">Username</label>
-                  <input 
+                  <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -279,10 +306,10 @@ export default function SettingsPage() {
             <Sparkles className="w-5 h-5 text-golden-sand" />
             About You
           </h2>
-          
+
           <div>
             <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">Short Bio / Description</label>
-            <textarea 
+            <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={4}
@@ -311,17 +338,17 @@ export default function SettingsPage() {
               Add new profile
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* GitHub */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-xs font-bold text-onyx uppercase tracking-wider">
                 <Globe className="w-4 h-4 text-onyx" /> GitHub URL
               </label>
-              <input 
+              <input
                 type="url"
                 value={socials.github}
-                onChange={(e) => setSocials({...socials, github: e.target.value})}
+                onChange={(e) => setSocials({ ...socials, github: e.target.value })}
                 className="w-full px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-onyx/30"
               />
             </div>
@@ -331,10 +358,10 @@ export default function SettingsPage() {
               <label className="flex items-center gap-2 text-xs font-bold text-onyx uppercase tracking-wider">
                 <Briefcase className="w-4 h-4 text-[#0A66C2]" /> LinkedIn URL
               </label>
-              <input 
+              <input
                 type="url"
                 value={socials.linkedin}
-                onChange={(e) => setSocials({...socials, linkedin: e.target.value})}
+                onChange={(e) => setSocials({ ...socials, linkedin: e.target.value })}
                 className="w-full px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-onyx/30"
               />
             </div>
@@ -347,10 +374,10 @@ export default function SettingsPage() {
                   </span>{' '}
                   {plat} Username / Handle
                 </label>
-                <input 
+                <input
                   type="text"
                   value={platformHandles[plat] || ''}
-                  onChange={(e) => setPlatformHandles({...platformHandles, [plat]: e.target.value})}
+                  onChange={(e) => setPlatformHandles({ ...platformHandles, [plat]: e.target.value })}
                   placeholder={`e.g. ${DUMMY_HANDLES[plat] || 'username'}`}
                   className="w-full px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-onyx/30"
                 />
@@ -361,14 +388,14 @@ export default function SettingsPage() {
 
         {/* Save Actions */}
         <div className="flex items-center justify-end gap-4 pt-4 border-t border-onyx/10">
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="px-6 py-2.5 rounded-xl text-sm font-bold text-onyx/70 hover:bg-onyx/5 transition-colors cursor-pointer"
           >
             Cancel
           </button>
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={isSaving}
             className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-tomato-jam text-white text-sm font-black shadow-md hover:bg-[#E8890C] transition-colors cursor-pointer disabled:opacity-50"
           >
@@ -385,7 +412,7 @@ export default function SettingsPage() {
             )}
           </button>
         </div>
-        
+
       </form>
 
       {/* CONNECT NEW PLATFORM MODAL */}

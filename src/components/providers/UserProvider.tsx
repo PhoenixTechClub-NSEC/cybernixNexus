@@ -35,7 +35,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
           cpScore: s.stats?.totalScore ?? prev.cpScore,
           platforms: [
             { platform: 'LeetCode' as const, handle: s.leetcode || '', rating: s.stats?.leetcodeRating || 0, solvedCount: s.stats?.leetcodeSolved || 0, weight: 1.0 },
-            { platform: 'Codeforces' as const, handle: s.codeforces || '', rating: s.stats?.codeforcesRating || 0, solvedCount: 0, weight: 1.2 },
+            {
+              platform: 'Codeforces' as const,
+              handle: s.codeforces || '',
+              rating: s.stats?.codeforcesRating || 0,
+              solvedCount: s.stats?.codeforcesSolved || 0,
+              weight: 1.2,
+              profileUrl: s.codeforces ? `https://codeforces.com/profile/${s.codeforces}` : undefined,
+              // Extra CF-specific fields stored for downstream consumers
+              ...(s.stats?.codeforcesRank ? { cfRank: s.stats.codeforcesRank } : {}),
+              ...(s.stats?.codeforcesMaxRank ? { cfMaxRank: s.stats.codeforcesMaxRank } : {}),
+              ...(s.stats?.codeforcesAvatar ? { cfAvatar: s.stats.codeforcesAvatar } : {}),
+              ...(s.stats?.codeforcesContribution != null ? { cfContribution: s.stats.codeforcesContribution } : {}),
+            },
             { platform: 'GFG' as const, handle: s.gfg || '', rating: 0, solvedCount: s.stats?.gfgScore || 0, weight: 0.8 },
             { platform: 'CodeChef' as const, handle: s.codechef || '', rating: s.stats?.codechefRating || 0, solvedCount: 0, weight: 1.0 },
           ],

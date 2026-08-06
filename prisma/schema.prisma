@@ -96,6 +96,11 @@ model StudentStats {
 
   codeforcesRating    Int?
   codeforcesMaxRating Int?
+  codeforcesRank      String?
+  codeforcesMaxRank   String?
+  codeforcesSolved    Int  @default(0)
+  codeforcesAvatar    String?
+  codeforcesContribution Int?
 
   gfgScore            Int?
 

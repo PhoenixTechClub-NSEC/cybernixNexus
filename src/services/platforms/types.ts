@@ -6,6 +6,11 @@ export interface LeetCodeFetchResult {
 export interface CodeforcesFetchResult {
   rating: number | null;
   maxRating: number | null;
+  rank: string | null;
+  maxRank: string | null;
+  solved: number;
+  avatar: string | null;
+  contribution: number | null;
 }
 
 export interface GfgFetchResult {
@@ -21,6 +26,11 @@ export interface PlatformStatsResult {
   leetcodeRating: number | null;
   codeforcesRating: number | null;
   codeforcesMaxRating: number | null;
+  codeforcesRank: string | null;
+  codeforcesMaxRank: string | null;
+  codeforcesSolved: number;
+  codeforcesAvatar: string | null;
+  codeforcesContribution: number | null;
   gfgScore: number | null;
   codechefRating: number | null;
   totalScore: number;

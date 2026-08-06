@@ -361,6 +361,13 @@ export default function DashboardPage() {
   const normalizedPlatforms = rawPlatforms.map((p: any, idx: number) => {
     const platName = p.platform || p.name || 'Platform';
     const meta = getPlatformMeta(platName);
+    const cfRank = p.cfRank as string | undefined;
+    const cfMaxRank = p.cfMaxRank as string | undefined;
+    const cfContribution = p.cfContribution as number | undefined;
+    // For Codeforces, prefer the live rank from DB as badge label
+    const badge = platName === 'Codeforces'
+      ? (cfRank ? cfRank.charAt(0).toUpperCase() + cfRank.slice(1) : (p.badge || meta.badge))
+      : (p.badge || meta.badge);
     return {
       id: p.id || `plat-${idx}`,
       name: platName,
@@ -369,11 +376,13 @@ export default function DashboardPage() {
       rating: p.rating || 0,
       solvedCount: p.solvedCount || 0,
       weight: p.weight || 1.0,
-      badge: p.badge || meta.badge,
+      badge,
       percentage: p.percentage ?? Math.min(100, Math.round(((p.rating || 1000) / 2400) * 100)),
       color: p.color || meta.color,
-      url: p.profileUrl || p.url || meta.url,
-      milestone: p.milestone || `Verified ${p.handle || 'user'} profile`,
+      url: p.profileUrl || p.url || (p.handle ? `${meta.url}/profile/${p.handle}` : meta.url),
+      milestone: cfContribution != null
+        ? `Contribution: ${cfContribution > 0 ? '+' : ''}${cfContribution} • Max rank: ${cfMaxRank || 'N/A'}`
+        : (p.milestone || `Verified ${p.handle || 'user'} profile`),
     };
   });
 
