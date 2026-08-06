@@ -341,7 +341,43 @@ export default function DashboardPage() {
   const activePoint = coords[activeIndex];
   const peakRating = Math.max(...historyPoints.map((p) => p.rating));
 
-  const sortedPlatforms = [...SYNCED_PLATFORM_PROFILES].sort((a, b) => {
+  const getPlatformMeta = (platName: string) => {
+    switch (platName) {
+      case 'Codeforces':
+        return { color: '#f97316', url: 'https://codeforces.com', badge: 'Specialist' };
+      case 'LeetCode':
+        return { color: '#f59e0b', url: 'https://leetcode.com', badge: 'Knight' };
+      case 'CodeChef':
+        return { color: '#10b981', url: 'https://codechef.com', badge: '4★ Div 2' };
+      case 'GFG':
+      case 'GeeksForGeeks':
+        return { color: '#3b82f6', url: 'https://geeksforgeeks.org', badge: '5 Star' };
+      default:
+        return { color: '#8b5cf6', url: 'https://hackerrank.com', badge: 'Active' };
+    }
+  };
+
+  const rawPlatforms = CURRENT_USER.platforms && CURRENT_USER.platforms.length > 0 ? CURRENT_USER.platforms : SYNCED_PLATFORM_PROFILES;
+  const normalizedPlatforms = rawPlatforms.map((p: any, idx: number) => {
+    const platName = p.platform || p.name || 'Platform';
+    const meta = getPlatformMeta(platName);
+    return {
+      id: p.id || `plat-${idx}`,
+      name: platName,
+      platform: platName,
+      handle: p.handle || '',
+      rating: p.rating || 0,
+      solvedCount: p.solvedCount || 0,
+      weight: p.weight || 1.0,
+      badge: p.badge || meta.badge,
+      percentage: p.percentage ?? Math.min(100, Math.round(((p.rating || 1000) / 2400) * 100)),
+      color: p.color || meta.color,
+      url: p.profileUrl || p.url || meta.url,
+      milestone: p.milestone || `Verified ${p.handle || 'user'} profile`,
+    };
+  });
+
+  const sortedPlatforms = [...normalizedPlatforms].sort((a, b) => {
     if (sortBy === 'rating') return b.rating - a.rating;
     if (sortBy === 'solved') return b.solvedCount - a.solvedCount;
     return b.weight - a.weight;

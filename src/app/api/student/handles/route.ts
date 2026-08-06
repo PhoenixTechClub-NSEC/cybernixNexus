@@ -24,13 +24,36 @@ export async function POST(request: Request) {
       avatar,
     } = body;
 
-    const student = await prisma.student.findUnique({
+    let student = await prisma.student.findUnique({
       where: { userId },
       include: { user: true, stats: true },
     });
 
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     if (!student) {
-      return NextResponse.json({ error: 'Student profile not found' }, { status: 404 });
+      const fallbackRoll = `NSEC-${userId.slice(-8).toUpperCase()}`;
+      student = await prisma.student.create({
+        data: {
+          userId,
+          name: name || dbUser.name || 'Student',
+          rollNumber: fallbackRoll,
+          department: 'CSE',
+          graduationYear: 2026,
+          leetcode: typeof leetcode === 'string' ? leetcode.trim() : null,
+          codeforces: typeof codeforces === 'string' ? codeforces.trim() : null,
+          gfg: typeof gfg === 'string' ? gfg.trim() : null,
+          codechef: typeof codechef === 'string' ? codechef.trim() : null,
+          profileComplete: true,
+        },
+        include: { user: true, stats: true },
+      });
     }
 
     // Check changed platform handles

@@ -23,7 +23,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       if (data.student) {
         const s = data.student;
-        const dbImage = s.user?.image;
+        const dbImage = s.user?.image || data.user?.image;
         setUser((prev) => ({
           ...prev,
           name: s.name || prev.name,
@@ -39,6 +39,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
             { platform: 'GFG' as const, handle: s.gfg || '', rating: 0, solvedCount: s.stats?.gfgScore || 0, weight: 0.8 },
             { platform: 'CodeChef' as const, handle: s.codechef || '', rating: s.stats?.codechefRating || 0, solvedCount: 0, weight: 1.0 },
           ],
+        }));
+      } else if (data.user?.image) {
+        setUser((prev) => ({
+          ...prev,
+          name: data.user.name || prev.name,
+          email: data.user.email || prev.email,
+          avatar: data.user.image || prev.avatar,
         }));
       }
     } catch {

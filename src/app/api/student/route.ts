@@ -29,10 +29,14 @@ export async function GET() {
     });
 
     if (!student) {
-      return NextResponse.json({ error: 'Student profile not found' }, { status: 404 });
+      const dbUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, image: true, name: true },
+      });
+      return NextResponse.json({ student: null, user: dbUser }, { status: 200 });
     }
 
-    return NextResponse.json({ student });
+    return NextResponse.json({ student, user: student.user });
   } catch (error: any) {
     console.error('[GET /api/student Error]:', error);
     return NextResponse.json(

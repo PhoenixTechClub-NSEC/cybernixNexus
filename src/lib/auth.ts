@@ -79,6 +79,9 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token && session.user) {
         (session.user as any).id = token.sub;
+        if (token.picture) {
+          session.user.image = token.picture as string;
+        }
         if (token.sub) {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.sub },
@@ -93,9 +96,28 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, profile }) {
       if (user) {
         token.sub = user.id;
+        const googlePicture = user.image || (profile as any)?.picture;
+        if (googlePicture) {
+          token.picture = googlePicture;
+          try {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { image: googlePicture },
+            });
+          } catch {
+            if (user.email) {
+              try {
+                await prisma.user.update({
+                  where: { email: user.email },
+                  data: { image: googlePicture },
+                });
+              } catch {}
+            }
+          }
+        }
       }
       return token;
     },
