@@ -7,3 +7,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# Cybernix Nexus Developer & AI Agent Guidelines
+
+## 1. Code Base Standards
+- **App Router Conventions**: All server routes belong in `src/app/api/` and utilize standard `NextResponse.json()` responses.
+- **Database & Prisma**: Always query the database through `@/lib/prisma`. Keep queries efficient and utilize Prisma composite indexes for time-series models like `DailySnapshot`.
+- **Platform Scraping**: Platform scrapers (`src/services/platforms/`) must be non-blocking with proper timeout signals (8s timeout max) and fallback gracefully when external APIs fail.
+- **Styling**: Use Tailwind CSS v4 utility classes and vanilla CSS in `src/app/globals.css`. Maintain the curated color palette (tomato-jam `#E5484D`, golden-sand `#FFE6B3`, onyx `#111111`, pine-teal `#00665E`).
+- **No Mock Fallbacks in Production**: API helpers in `src/lib/api.ts` must prioritize dynamic database endpoints.
+

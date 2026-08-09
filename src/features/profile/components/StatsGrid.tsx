@@ -48,13 +48,13 @@ export function StatsGrid({ user }: StatsGridProps) {
               <div className="flex justify-between text-xs font-bold mb-1">
                 <span className="text-onyx/70">Easy</span>
                 <span className="text-onyx">
-                  {easy} / <span className="text-onyx/70">30%</span>
+                  {easy} / <span className="text-onyx/70">{total > 0 ? Math.round((easy / total) * 100) : 0}%</span>
                 </span>
               </div>
               <div className="w-full h-2 rounded-full bg-pine-teal/10 overflow-hidden">
                 <div
                   className="h-full bg-pine-teal rounded-full"
-                  style={{ width: `${(easy / total) * 100}%` }}
+                  style={{ width: total > 0 ? `${(easy / total) * 100}%` : '0%' }}
                 />
               </div>
             </div>
@@ -64,13 +64,13 @@ export function StatsGrid({ user }: StatsGridProps) {
               <div className="flex justify-between text-xs font-bold mb-1">
                 <span className="text-golden-sand">Medium</span>
                 <span className="text-onyx">
-                  {medium} / <span className="text-onyx/70">56%</span>
+                  {medium} / <span className="text-onyx/70">{total > 0 ? Math.round((medium / total) * 100) : 0}%</span>
                 </span>
               </div>
               <div className="w-full h-2 rounded-full bg-golden-sand/15 overflow-hidden">
                 <div
                   className="h-full bg-golden-sand rounded-full"
-                  style={{ width: `${(medium / total) * 100}%` }}
+                  style={{ width: total > 0 ? `${(medium / total) * 100}%` : '0%' }}
                 />
               </div>
             </div>
@@ -80,13 +80,13 @@ export function StatsGrid({ user }: StatsGridProps) {
               <div className="flex justify-between text-xs font-bold mb-1">
                 <span className="text-tomato-jam">Hard</span>
                 <span className="text-onyx">
-                  {hard} / <span className="text-onyx/70">14%</span>
+                  {hard} / <span className="text-onyx/70">{total > 0 ? Math.round((hard / total) * 100) : 0}%</span>
                 </span>
               </div>
               <div className="w-full h-2 rounded-full bg-tomato-jam/10 overflow-hidden">
                 <div
                   className="h-full bg-tomato-jam rounded-full"
-                  style={{ width: `${(hard / total) * 100}%` }}
+                  style={{ width: total > 0 ? `${(hard / total) * 100}%` : '0%' }}
                 />
               </div>
             </div>
@@ -165,7 +165,7 @@ export function StatsGrid({ user }: StatsGridProps) {
               </h3>
             </div>
             <p className="text-xs text-onyx/70 mt-0.5">
-              Breakdown of 939 total accepted problems categorized by algorithm & data structure topics.
+              Breakdown of {total} total accepted problems categorized by algorithm & data structure topics.
             </p>
           </div>
           <div className="text-xs font-semibold text-onyx/70 bg-golden-sand/10 px-3 py-1.5 rounded-lg border border-golden-sand/30">
@@ -174,27 +174,33 @@ export function StatsGrid({ user }: StatsGridProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-          {user.dsaTopics.map((item) => {
-            const maxVal = user.dsaTopics[0]?.count || 415;
-            const percentage = Math.round((item.count / maxVal) * 100);
-            return (
-              <div key={item.topic} className="flex items-center gap-3">
-                <div className="w-44 text-xs font-bold text-onyx truncate text-right">
-                  {item.topic}
-                </div>
-                <div className="flex-1 bg-pine-teal/8 h-6 rounded-lg overflow-hidden relative flex items-center">
-                  <div
-                    className={`h-full ${item.color || 'bg-pine-teal'} transition-all duration-500 rounded-lg flex items-center justify-end pr-2`}
-                    style={{ width: `${Math.max(percentage, 15)}%` }}
-                  >
-                    <span className="text-xs font-black text-white drop-shadow-xs">
-                      {item.count}
-                    </span>
+          {user.dsaTopics?.length === 0 ? (
+            <div className="col-span-2 p-4 text-center text-xs font-bold text-onyx/50 bg-golden-sand/10 rounded-xl">
+              No DSA topic tags tracked yet
+            </div>
+          ) : (
+            user.dsaTopics?.map((item) => {
+              const maxVal = user.dsaTopics[0]?.count || 415;
+              const percentage = Math.round((item.count / maxVal) * 100);
+              return (
+                <div key={item.topic} className="flex items-center gap-3">
+                  <div className="w-44 text-xs font-bold text-onyx truncate text-right">
+                    {item.topic}
+                  </div>
+                  <div className="flex-1 bg-pine-teal/8 h-6 rounded-lg overflow-hidden relative flex items-center">
+                    <div
+                      className={`h-full ${item.color || 'bg-pine-teal'} transition-all duration-500 rounded-lg flex items-center justify-end pr-2`}
+                      style={{ width: `${Math.max(percentage, 15)}%` }}
+                    >
+                      <span className="text-xs font-black text-white drop-shadow-xs">
+                        {item.count}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
     </div>

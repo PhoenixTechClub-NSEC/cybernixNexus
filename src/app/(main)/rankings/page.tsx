@@ -73,73 +73,14 @@ export default function RankingsPage() {
     }, 1200);
   };
 
-  // Filter only User's Department (CSE) and include 2 additional peers
-  const baseCseUsers = useMemo(() => {
-    return displayLeaderboardUsers.filter((u) => u.department === (CURRENT_USER.department || 'CSE'));
-  }, [displayLeaderboardUsers, CURRENT_USER.department]);
-
-  const extraCsePeers: UserProfile[] = useMemo(() => [
-    {
-      id: 'cse-extra-1',
-      name: 'Ananya Sharma',
-      username: 'ananya_s',
-      bio: '',
-      email: 'ananya@nsec.ac.in',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-      department: 'CSE',
-      year: '3rd Year',
-      collegeRank: 4,
-      deptRank: 4,
-      level: 42,
-      tier: 'Flame',
-      cpScore: 18900,
-      nextTierScore: 24000,
-      currentStreak: 27,
-      maxStreak: 40,
-      contestWinRate: 72.0,
-      solvedByDifficulty: { easy: 240, medium: 420, hard: 90, total: 750 },
-      platforms: [
-        { platform: 'Codeforces', handle: 'ananya_c', rating: 1680, solvedCount: 160, weight: 1.75 },
-        { platform: 'LeetCode', handle: 'ananya_leetcode', rating: 1910, solvedCount: 440, weight: 1.5 },
-      ],
-      badges: [],
-      dsaTopics: [],
-      recentActivities: [],
-    },
-    {
-      id: 'cse-extra-2',
-      name: 'Bikramjit Roy',
-      username: 'bikram_r',
-      bio: '',
-      email: 'bikram@nsec.ac.in',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-      department: 'CSE',
-      year: '2nd Year',
-      collegeRank: 6,
-      deptRank: 5,
-      level: 38,
-      tier: 'Flame',
-      cpScore: 15400,
-      nextTierScore: 20000,
-      currentStreak: 21,
-      maxStreak: 30,
-      contestWinRate: 68.5,
-      solvedByDifficulty: { easy: 210, medium: 360, hard: 65, total: 635 },
-      platforms: [
-        { platform: 'Codeforces', handle: 'bikram_cf', rating: 1610, solvedCount: 140, weight: 1.75 },
-        { platform: 'LeetCode', handle: 'bikram_leetcode', rating: 1840, solvedCount: 380, weight: 1.5 },
-      ],
-      badges: [],
-      dsaTopics: [],
-      recentActivities: [],
-    },
-  ], []);
-
+  // Filter user's department students dynamically from database records
   const cseUsers = useMemo(() => {
-    return [...baseCseUsers, ...extraCsePeers]
+    return displayLeaderboardUsers
+      .filter((u) => u.department === (CURRENT_USER.department || 'CSE'))
       .filter((user) => selectedDeptYear === 'ALL' || user.year === selectedDeptYear)
       .sort((a, b) => b.cpScore - a.cpScore);
-  }, [baseCseUsers, extraCsePeers, selectedDeptYear]);
+  }, [displayLeaderboardUsers, CURRENT_USER.department, selectedDeptYear]);
+
 
   return (
     <div className="space-y-6 pb-14">
