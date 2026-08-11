@@ -83,6 +83,9 @@ model Student {
 
   stats    StudentStats?
   syncJobs SyncJob[]
+
+  dailySnapshots      DailySnapshot[]
+  monthlyAchievements MonthlyAchievement[]
 }
 
 model StudentStats {
@@ -124,3 +127,44 @@ model SyncJob {
 
   createdAt DateTime @default(now())
 }
+
+model DailySnapshot {
+  id               String   @id @default(cuid())
+  studentId        String
+  student          Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  date             DateTime @db.Date
+
+  leetcodeSolved   Int      @default(0)
+  codeforcesSolved Int      @default(0)
+  gfgScore         Int      @default(0)
+  codechefRating   Int      @default(0)
+  totalScore       Int      @default(0)
+
+  createdAt        DateTime @default(now())
+
+  @@unique([studentId, date])
+  @@index([studentId, date])
+  @@index([date])
+}
+
+model MonthlyAchievement {
+  id            String   @id @default(cuid())
+  category      String   // "Beginner of the month", "Problem solver of the month", etc.
+  title         String
+  month         Int      // 1 - 12
+  year          Int
+
+  studentId     String?
+  student       Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  department    String?
+
+  scoreOrMetric String   // e.g. "+820 CP Growth this month", "118 Solved"
+  badgeIcon     String   // e.g. "🌟", "⚡", "🏆"
+  isManual      Boolean  @default(false)
+
+  createdAt     DateTime @default(now())
+
+  @@index([year, month])
+  @@index([category])
+}
+

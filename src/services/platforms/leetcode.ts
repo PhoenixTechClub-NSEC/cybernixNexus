@@ -21,7 +21,7 @@ const USER_PROFILE_QUERY = `
 
 export async function fetchLeetCodeStats(username: string): Promise<LeetCodeFetchResult> {
   if (!username || !username.trim()) {
-    return { solved: 0, rating: null };
+    return { solved: 0, easy: 0, medium: 0, hard: 0, rating: null };
   }
 
   const controller = new AbortController();
@@ -56,15 +56,28 @@ export async function fetchLeetCodeStats(username: string): Promise<LeetCodeFetc
     const allStats = acSubmissions.find(
       (item: { difficulty: string; count: number }) => item.difficulty === 'All'
     );
+    const easyStats = acSubmissions.find(
+      (item: { difficulty: string; count: number }) => item.difficulty === 'Easy'
+    );
+    const mediumStats = acSubmissions.find(
+      (item: { difficulty: string; count: number }) => item.difficulty === 'Medium'
+    );
+    const hardStats = acSubmissions.find(
+      (item: { difficulty: string; count: number }) => item.difficulty === 'Hard'
+    );
+
     const solved = allStats ? allStats.count : 0;
+    const easy = easyStats ? easyStats.count : 0;
+    const medium = mediumStats ? mediumStats.count : 0;
+    const hard = hardStats ? hardStats.count : 0;
 
     const rawRating = json.data.userContestRanking?.rating;
     const rating = rawRating ? Math.round(rawRating) : null;
 
-    return { solved, rating };
+    return { solved, easy, medium, hard, rating };
   } catch (error: any) {
     console.error(`[LeetCode Fetch Error] Username: ${username} - ${error.message}`);
-    throw error;
+    return { solved: 0, easy: 0, medium: 0, hard: 0, rating: null };
   } finally {
     clearTimeout(timeoutId);
   }

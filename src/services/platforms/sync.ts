@@ -97,13 +97,13 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
 
   try {
     const [lcRes, cfRes, gfgRes, ccRes] = await Promise.allSettled([
-      student.leetcode ? fetchLeetCodeStats(student.leetcode) : Promise.resolve({ solved: 0, rating: null }),
+      student.leetcode ? fetchLeetCodeStats(student.leetcode) : Promise.resolve({ solved: 0, easy: 0, medium: 0, hard: 0, rating: null }),
       student.codeforces ? fetchCodeforcesStats(student.codeforces) : Promise.resolve({ rating: null, maxRating: null, rank: null, maxRank: null, solved: 0, avatar: null, contribution: null }),
       student.gfg ? fetchGfgStats(student.gfg) : Promise.resolve({ score: null }),
       student.codechef ? fetchCodechefStats(student.codechef) : Promise.resolve({ rating: null }),
     ]);
 
-    const leetcodeData = lcRes.status === 'fulfilled' ? lcRes.value : { solved: 0, rating: null };
+    const leetcodeData = lcRes.status === 'fulfilled' ? lcRes.value : { solved: 0, easy: 0, medium: 0, hard: 0, rating: null };
     if (lcRes.status === 'rejected') {
       errors.leetcode = lcRes.reason?.message || 'Failed to fetch LeetCode stats';
     }
@@ -165,8 +165,38 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       },
     });
 
+    // Create or update today's DailySnapshot for historical velocity calculation
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    await prisma.dailySnapshot.upsert({
+      where: {
+        studentId_date: {
+          studentId: student.id,
+          date: today,
+        },
+      },
+      create: {
+        studentId: student.id,
+        date: today,
+        leetcodeSolved: leetcodeData.solved,
+        codeforcesSolved: codeforcesData.solved,
+        gfgScore: gfgData.score ?? 0,
+        codechefRating: codechefData.rating ?? 0,
+        totalScore,
+      },
+      update: {
+        leetcodeSolved: leetcodeData.solved,
+        codeforcesSolved: codeforcesData.solved,
+        gfgScore: gfgData.score ?? 0,
+        codechefRating: codechefData.rating ?? 0,
+        totalScore,
+      },
+    });
+
     // Recalculate rankings across all students
     await recalculateRankings();
+
 
     // Fetch updated stats with ranking
     const finalStats = await prisma.studentStats.findUnique({

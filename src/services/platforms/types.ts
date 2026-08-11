@@ -1,5 +1,8 @@
 export interface LeetCodeFetchResult {
   solved: number;
+  easy: number;
+  medium: number;
+  hard: number;
   rating: number | null;
 }
 

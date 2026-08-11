@@ -4,11 +4,8 @@
 import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import {
-  FAKE_CONTESTS,
   WEEKLY_VELOCITY_DATA,
-  SEASON_PROGRESS_METRICS,
   SYNCED_PLATFORM_PROFILES,
-  CODOLIO_STATS,
 } from '@/lib/constants';
 import { useUser } from '@/components/providers/UserProvider';
 import {
@@ -298,10 +295,24 @@ export default function DashboardPage() {
     );
   };
 
-  const currentWeekData = WEEKLY_VELOCITY_DATA[selectedTimeframe];
+  const [velocityData, setVelocityData] = useState(WEEKLY_VELOCITY_DATA);
+
+  React.useEffect(() => {
+    fetch('/api/dashboard/velocity')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.velocity) {
+          setVelocityData(json.velocity);
+        }
+      })
+      .catch((err) => console.error('Velocity fetch error:', err));
+  }, []);
+
+  const currentWeekData = (velocityData as any)[selectedTimeframe] || WEEKLY_VELOCITY_DATA[selectedTimeframe];
 
   const getX = (idx: number) => 10 + idx * 35;
   const getY = (val: number, maxVal: number) => 85 - (val / maxVal) * 70;
+
 
   const buildSvgLinePath = (values: number[], maxVal: number) => {
     return values
@@ -309,7 +320,22 @@ export default function DashboardPage() {
       .join(' ');
   };
 
-  const historyPoints = RATING_HISTORY_DATA[graphPlatform];
+  const activePlatItem = CURRENT_USER.platforms?.find(
+    (p: any) => p.platform === graphPlatform || p.name === graphPlatform
+  );
+  const currentPlatRating = activePlatItem?.rating || 0;
+
+  const historyPoints = currentPlatRating > 0
+    ? [
+        { id: 'pt-1', contestName: 'Initial Rating', date: 'Start', rating: Math.max(0, currentPlatRating - 150), delta: 0, rank: 0 },
+        { id: 'pt-2', contestName: 'Mid Progress', date: 'Mid', rating: Math.max(0, currentPlatRating - 50), delta: 100, rank: 0 },
+        { id: 'pt-3', contestName: 'Current Rating', date: 'Today', rating: currentPlatRating, delta: 50, rank: 0 },
+      ]
+    : [
+        { id: 'pt-1', contestName: 'No Contest Data', date: 'Start', rating: 0, delta: 0, rank: 0 },
+        { id: 'pt-2', contestName: 'No Contest Data', date: 'Today', rating: 0, delta: 0, rank: 0 },
+      ];
+
   const minRating = Math.min(...historyPoints.map((p) => p.rating)) - 40;
   const maxRating = Math.max(...historyPoints.map((p) => p.rating)) + 40;
   const svgWidth = 400;
@@ -538,10 +564,10 @@ export default function DashboardPage() {
             </div>
             <div className="mt-2">
               <p className="text-xl sm:text-3xl font-black text-onyx">
-                {CODOLIO_STATS.questionsSolved.toLocaleString()}
+                {(CURRENT_USER.solvedByDifficulty?.total || 0).toLocaleString()}
               </p>
               <p className="text-[10px] text-tomato-jam font-semibold mt-0.5">
-                Across 7 platforms
+                Across synced platforms
               </p>
             </div>
           </div>
@@ -554,7 +580,7 @@ export default function DashboardPage() {
           >
             <div className="flex items-center justify-between">
               <p className="text-[10px] sm:text-xs font-bold text-pine-teal uppercase tracking-wider">
-                Active Days
+                Active Streak
               </p>
               <div className="stat-icon-badge w-9 h-9 rounded-xl bg-golden-sand/20 text-tomato-jam flex items-center justify-center font-black text-sm will-change-transform">
                 🔥
@@ -562,15 +588,15 @@ export default function DashboardPage() {
             </div>
             <div className="mt-2">
               <p className="text-xl sm:text-3xl font-black text-onyx">
-                {CODOLIO_STATS.activeDays}
+                {CURRENT_USER.currentStreak || 0}d
               </p>
               <p className="text-[10px] text-tomato-jam font-semibold mt-0.5">
-                34d Streak
+                Current Streak
               </p>
             </div>
           </div>
 
-          {/* Stat 3: Contests */}
+          {/* Stat 3: Contests / Platforms */}
           <div
             onMouseEnter={handleStatCardEnter}
             onMouseLeave={handleStatCardLeave}
@@ -578,7 +604,7 @@ export default function DashboardPage() {
           >
             <div className="flex items-center justify-between">
               <p className="text-[10px] sm:text-xs font-bold text-pine-teal uppercase tracking-wider">
-                Contests
+                Linked Platforms
               </p>
               <div className="stat-icon-badge w-9 h-9 rounded-xl bg-golden-sand/20 text-pine-teal flex items-center justify-center font-black text-sm will-change-transform">
                 🏆
@@ -586,10 +612,10 @@ export default function DashboardPage() {
             </div>
             <div className="mt-2">
               <p className="text-xl sm:text-3xl font-black text-onyx">
-                {CODOLIO_STATS.contestsAttended}
+                {CURRENT_USER.platforms?.filter((p: any) => p.handle && p.handle.trim() !== '').length || 0}
               </p>
               <p className="text-[10px] text-pine-teal mt-0.5">
-                CF & CC rated
+                Synced profiles
               </p>
             </div>
           </div>
@@ -605,15 +631,15 @@ export default function DashboardPage() {
                 C Score Rank
               </p>
               <div className="stat-icon-badge w-9 h-9 rounded-xl bg-onyx text-white flex items-center justify-center font-black text-xs will-change-transform">
-                #3
+                #{CURRENT_USER.collegeRank || 0}
               </div>
             </div>
             <div className="mt-2">
               <p className="text-xl sm:text-3xl font-black text-onyx">
-                #{CODOLIO_STATS.globalRank}
+                #{CURRENT_USER.collegeRank || 0}
               </p>
               <p className="text-[10px] text-pine-teal mt-0.5">
-                {CODOLIO_STATS.profileViews.toLocaleString()} views
+                College Standings
               </p>
             </div>
           </div>
@@ -645,46 +671,55 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="text-[11px] text-pine-teal font-semibold pt-2 border-t border-pine-teal/15 space-y-1">
-              <p>📍 {CODOLIO_STATS.location}</p>
-              <p>🎓 {CODOLIO_STATS.college}</p>
+              <p>📍 Kolkata, WB</p>
+              <p>🎓 Netaji Subhash Engg. College</p>
             </div>
           </div>
 
           {/* Problem Solving Verified Platforms */}
           <div className="left-col-card rounded-3xl bg-white border border-pine-teal/25 p-5 shadow-xs space-y-3 will-change-transform">
             <h4 className="text-xs font-extrabold uppercase tracking-wider text-onyx flex items-center justify-between">
-              <span>Problem Solving Stats</span>
+              <span>Problem Solving Handles</span>
               <UserCheck className="w-4 h-4 text-tomato-jam" />
             </h4>
             <div className="space-y-2 text-xs">
-              {CODOLIO_STATS.verifiedPlatforms.map((plat) => (
-                <div
-                  key={plat.name}
-                  onMouseEnter={handleVerifiedEnter}
-                  onMouseLeave={handleVerifiedLeave}
-                  className="flex items-center justify-between p-2 rounded-xl bg-golden-sand/10 hover:bg-golden-sand/15 transition-colors cursor-pointer will-change-transform"
-                >
-                  <span className="font-bold text-onyx">{plat.name}</span>
-                  <div className="check-badge w-5 h-5 rounded-full bg-golden-sand/20 text-tomato-jam flex items-center justify-center will-change-transform">
-                    <Check className="w-3 h-3 stroke-[3]" />
-                  </div>
+              {CURRENT_USER.platforms?.filter((p: any) => p.handle && p.handle.trim() !== '').length === 0 ? (
+                <div className="p-3 text-center text-xs font-bold text-onyx/50 bg-golden-sand/10 rounded-xl">
+                  No handles linked yet (add in Settings)
                 </div>
-              ))}
+              ) : (
+                CURRENT_USER.platforms
+                  ?.filter((plat: any) => plat.handle && plat.handle.trim() !== '')
+                  .map((plat: any) => (
+                    <div
+                      key={plat.platform || plat.name}
+                      onMouseEnter={handleVerifiedEnter}
+                      onMouseLeave={handleVerifiedLeave}
+                      className="flex items-center justify-between p-2 rounded-xl bg-golden-sand/10 hover:bg-golden-sand/15 transition-colors cursor-pointer will-change-transform"
+                    >
+                      <span className="font-bold text-onyx">{plat.platform || plat.name}: {plat.handle}</span>
+                      <div className="check-badge w-5 h-5 rounded-full bg-golden-sand/20 text-tomato-jam flex items-center justify-center will-change-transform">
+                        <Check className="w-3 h-3 stroke-[3]" />
+                      </div>
+                    </div>
+                  ))
+              )}
             </div>
           </div>
 
           {/* Leaderboard Card */}
           <div className="left-col-card rounded-3xl bg-onyx text-white p-5 shadow-md space-y-3 text-center border border-pine-teal/30 will-change-transform">
             <p className="text-xs uppercase font-bold text-golden-sand/90">Global Rank (C Score)</p>
-            <p className="text-3xl font-black text-golden-sand">📊 #{CODOLIO_STATS.globalRank}</p>
+            <p className="text-3xl font-black text-golden-sand">📊 #{CURRENT_USER.collegeRank || 0}</p>
             <Link
               href="/rankings"
               className="block w-full py-2 rounded-xl bg-tomato-jam hover:bg-[#E8890C] text-white font-bold text-xs shadow-sm transition-colors"
             >
               View Leaderboard
+
             </Link>
             <div className="flex justify-between text-[11px] text-teal-200/80 pt-2 border-t border-pine-teal/20">
-              <span>Profile Views: {CODOLIO_STATS.profileViews.toLocaleString()}</span>
+              <span>Status: Active Student</span>
               <span className="text-golden-sand font-bold">Public</span>
             </div>
           </div>
@@ -845,21 +880,28 @@ export default function DashboardPage() {
           {/* Awards Row (Hexagonal & Round Badges) */}
           <div className="rounded-3xl bg-white border border-pine-teal/25 p-5 shadow-xs content-visibility-auto">
             <h4 className="text-xs font-extrabold uppercase tracking-wider text-onyx mb-3">
-              Awards & Badges (4)
+              Awards & Badges ({CURRENT_USER.badges?.length || 0})
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-              {CODOLIO_STATS.awards.map((award) => (
-                <div
-                  key={award.title}
-                  className="p-3 rounded-2xl border border-pine-teal/30 bg-golden-sand/12 text-onyx flex flex-col items-center justify-center transition-all hover:scale-105 gpu-accelerated"
-                >
-                  <span className="text-2xl mb-1">{award.icon}</span>
-                  <span className="font-extrabold text-xs">{award.title}</span>
-                  <span className="text-[10px] text-pine-teal font-semibold">{award.subtitle}</span>
+              {CURRENT_USER.badges?.length === 0 ? (
+                <div className="col-span-2 sm:col-span-4 p-4 text-center text-xs font-bold text-onyx/50 bg-golden-sand/10 rounded-2xl">
+                  No badges unlocked yet. Solve problems to earn milestone badges!
                 </div>
-              ))}
+              ) : (
+                CURRENT_USER.badges?.map((award: any) => (
+                  <div
+                    key={award.id || award.title}
+                    className="p-3 rounded-2xl border border-pine-teal/30 bg-golden-sand/12 text-onyx flex flex-col items-center justify-center transition-all hover:scale-105 gpu-accelerated"
+                  >
+                    <span className="text-2xl mb-1">{award.icon}</span>
+                    <span className="font-extrabold text-xs">{award.title}</span>
+                    <span className="text-[10px] text-pine-teal font-semibold">{award.category}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
+
 
           {/* DSA Topic Analysis Bar Chart */}
           <div className="rounded-3xl bg-white border border-pine-teal/25 p-6 shadow-xs space-y-4 content-visibility-auto">
@@ -868,33 +910,42 @@ export default function DashboardPage() {
                 <BarChart3 className="w-4 h-4 text-tomato-jam" />
                 <span>DSA Topic Analysis</span>
               </h3>
-              <span className="text-xs font-semibold text-pine-teal">939 Solved</span>
+              <span className="text-xs font-semibold text-pine-teal">
+                {CURRENT_USER.solvedByDifficulty?.total || 0} Solved
+              </span>
             </div>
 
             <div className="space-y-2.5">
-              {CURRENT_USER.dsaTopics.map((item) => {
-                const maxVal = 415;
-                const pct = Math.round((item.count / maxVal) * 100);
-                return (
-                  <div key={item.topic} className="flex items-center gap-3 text-xs">
-                    <span className="w-36 font-bold text-onyx truncate text-right">
-                      {item.topic}
-                    </span>
-                    <div className="flex-1 bg-golden-sand/12 h-5 rounded-lg overflow-hidden relative flex items-center border border-pine-teal/20">
-                      <div
-                        className={`h-full ${item.color || 'bg-tomato-jam'} rounded-lg flex items-center justify-end pr-2 transition-all duration-500`}
-                        style={{ width: `${Math.max(pct, 12)}%` }}
-                      >
-                        <span className="text-[10px] font-black text-white">
-                          {item.count}
-                        </span>
+              {CURRENT_USER.dsaTopics?.length === 0 ? (
+                <div className="p-3 text-center text-xs font-bold text-onyx/50 bg-golden-sand/10 rounded-xl">
+                  No DSA topic tags tracked yet
+                </div>
+              ) : (
+                CURRENT_USER.dsaTopics?.map((item) => {
+                  const maxVal = 415;
+                  const pct = Math.round((item.count / maxVal) * 100);
+                  return (
+                    <div key={item.topic} className="flex items-center gap-3 text-xs">
+                      <span className="w-36 font-bold text-onyx truncate text-right">
+                        {item.topic}
+                      </span>
+                      <div className="flex-1 bg-golden-sand/12 h-5 rounded-lg overflow-hidden relative flex items-center border border-pine-teal/20">
+                        <div
+                          className={`h-full ${item.color || 'bg-tomato-jam'} rounded-lg flex items-center justify-end pr-2 transition-all duration-500`}
+                          style={{ width: `${Math.max(pct, 12)}%` }}
+                        >
+                          <span className="text-[10px] font-black text-white">
+                            {item.count}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
+
         </div>
 
         {/* RIGHT COLUMN: Question Distribution & Contest Rankings (3 Cols) */}
@@ -905,23 +956,22 @@ export default function DashboardPage() {
               Question Distribution
             </h4>
 
-            {/* Donut 1: Fundamentals (174) */}
+            {/* Donut 1: Fundamentals */}
             <div className="flex items-center justify-between p-3.5 rounded-2xl bg-golden-sand/10 border border-pine-teal/25 hover:border-pine-teal/40 transition-all">
               <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
                 <svg className="w-full h-full transform -rotate-90 drop-shadow-xs" viewBox="0 0 40 40">
                   <circle cx="20" cy="20" r="16" stroke="rgba(0, 15, 8, 0.12)" strokeWidth="4" fill="none" />
                   <circle cx="20" cy="20" r="16" stroke="#2C1F14" strokeWidth="4" strokeDasharray="100" strokeDashoffset="30" strokeLinecap="round" fill="none" />
                 </svg>
-                <span className="absolute text-sm font-black text-onyx">174</span>
+                <span className="absolute text-sm font-black text-onyx">{CURRENT_USER.solvedByDifficulty?.easy || 0}</span>
               </div>
               <div className="text-right text-xs space-y-0.5">
-                <p className="font-extrabold text-onyx text-sm">Fundamentals</p>
-                <p className="text-xs text-pine-teal font-medium">GFG Basic: 9</p>
-                <p className="text-xs text-pine-teal font-medium">HackerRank: 165</p>
+                <p className="font-extrabold text-onyx text-sm">Easy Problems</p>
+                <p className="text-xs text-pine-teal font-medium">LeetCode Easy: {CURRENT_USER.solvedByDifficulty?.easy || 0}</p>
               </div>
             </div>
 
-            {/* Donut 2: DSA (939) */}
+            {/* Donut 2: DSA Total */}
             <div className="flex items-center justify-between p-3.5 rounded-2xl bg-golden-sand/10 border border-pine-teal/25 hover:border-pine-teal/40 transition-all">
               <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
                 <svg className="w-full h-full transform -rotate-90 drop-shadow-xs" viewBox="0 0 40 40">
@@ -929,29 +979,32 @@ export default function DashboardPage() {
                   <circle cx="20" cy="20" r="16" stroke="#684931" strokeWidth="4" strokeDasharray="100" strokeDashoffset="70" strokeLinecap="round" fill="none" />
                   <circle cx="20" cy="20" r="16" stroke="#FF9F1C" strokeWidth="4" strokeDasharray="100" strokeDashoffset="30" strokeLinecap="round" fill="none" />
                 </svg>
-                <span className="absolute text-sm font-black text-onyx">939</span>
+                <span className="absolute text-sm font-black text-onyx">{CURRENT_USER.solvedByDifficulty?.total || 0}</span>
               </div>
               <div className="text-right text-xs space-y-0.5">
-                <p className="font-extrabold text-onyx text-sm">DSA Difficulty</p>
-                <p className="text-xs text-pine-teal font-semibold">Easy: 286</p>
-                <p className="text-xs text-onyx font-semibold">Medium: 528</p>
-                <p className="text-xs text-tomato-jam font-semibold">Hard: 125</p>
+                <p className="font-extrabold text-onyx text-sm">DSA Solved Total</p>
+                <p className="text-xs text-pine-teal font-semibold">Easy: {CURRENT_USER.solvedByDifficulty?.easy || 0}</p>
+                <p className="text-xs text-onyx font-semibold">Medium: {CURRENT_USER.solvedByDifficulty?.medium || 0}</p>
+                <p className="text-xs text-tomato-jam font-semibold">Hard: {CURRENT_USER.solvedByDifficulty?.hard || 0}</p>
               </div>
             </div>
 
-            {/* Donut 3: Competitive Programming (119) */}
+            {/* Donut 3: Competitive Programming Solved */}
             <div className="flex items-center justify-between p-3.5 rounded-2xl bg-golden-sand/10 border border-pine-teal/25 hover:border-pine-teal/40 transition-all">
               <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
                 <svg className="w-full h-full transform -rotate-90 drop-shadow-xs" viewBox="0 0 40 40">
                   <circle cx="20" cy="20" r="16" stroke="rgba(0, 15, 8, 0.12)" strokeWidth="4" fill="none" />
                   <circle cx="20" cy="20" r="16" stroke="#FF9F1C" strokeWidth="4" strokeDasharray="100" strokeDashoffset="40" strokeLinecap="round" fill="none" />
                 </svg>
-                <span className="absolute text-sm font-black text-onyx">119</span>
+                <span className="absolute text-sm font-black text-onyx">
+                  {CURRENT_USER.platforms?.find((p: any) => p.platform === 'Codeforces')?.solvedCount || 0}
+                </span>
               </div>
               <div className="text-right text-xs space-y-0.5">
-                <p className="font-extrabold text-onyx text-sm">CP Solved</p>
-                <p className="text-xs text-pine-teal font-medium">CodeChef: 27</p>
-                <p className="text-xs text-pine-teal font-medium">Codeforces: 92</p>
+                <p className="font-extrabold text-onyx text-sm">Codeforces Solved</p>
+                <p className="text-xs text-pine-teal font-medium">
+                  Accepted: {CURRENT_USER.platforms?.find((p: any) => p.platform === 'Codeforces')?.solvedCount || 0}
+                </p>
               </div>
             </div>
           </div>
@@ -963,41 +1016,56 @@ export default function DashboardPage() {
             </h4>
 
             {/* CODECHEF */}
-            <div className="p-4 rounded-2xl bg-golden-sand/15 border border-pine-teal/30 space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-extrabold text-onyx">CODECHEF</span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-tomato-jam text-white">
-                  4★
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between pt-1">
-                <span className="text-2xl font-black text-onyx">
-                  {CODOLIO_STATS.contestRankings.codeChef.rating}
-                </span>
-                <span className="text-[11px] text-pine-teal font-semibold">
-                  (max: {CODOLIO_STATS.contestRankings.codeChef.maxRating})
-                </span>
-              </div>
-            </div>
+            {(() => {
+              const ccPlat = CURRENT_USER.platforms?.find((p: any) => p.platform === 'CodeChef');
+              const ccRating = ccPlat?.rating || 0;
+              return (
+                <div className="p-4 rounded-2xl bg-golden-sand/15 border border-pine-teal/30 space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-extrabold text-onyx">CODECHEF</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-tomato-jam text-white">
+                      {ccRating > 0 ? `${ccRating} Rating` : 'Unrated'}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between pt-1">
+                    <span className="text-2xl font-black text-onyx">
+                      {ccRating}
+                    </span>
+                    <span className="text-[11px] text-pine-teal font-semibold">
+                      (max: {ccRating})
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* CODEFORCES */}
-            <div className="p-4 rounded-2xl bg-golden-sand/15 border border-pine-teal/30 space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-extrabold text-onyx">CODEFORCES</span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-pine-teal text-white">
-                  {CODOLIO_STATS.contestRankings.codeForces.rank}
-                </span>
-              </div>
-              <div className="flex items-baseline justify-between pt-1">
-                <span className="text-2xl font-black text-onyx">
-                  {CODOLIO_STATS.contestRankings.codeForces.rating}
-                </span>
-                <span className="text-[11px] text-pine-teal font-semibold">
-                  (max: {CODOLIO_STATS.contestRankings.codeForces.maxRating})
-                </span>
-              </div>
-            </div>
+            {(() => {
+              const cfPlat = CURRENT_USER.platforms?.find((p: any) => p.platform === 'Codeforces');
+              const cfRating = cfPlat?.rating || 0;
+              const cfRank = (cfPlat as any)?.cfRank || (cfRating > 0 ? 'Rated' : 'Unrated');
+              const cfMaxRating = (cfPlat as any)?.cfMaxRating || cfRating;
+              return (
+                <div className="p-4 rounded-2xl bg-golden-sand/15 border border-pine-teal/30 space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-extrabold text-onyx">CODEFORCES</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-pine-teal text-white uppercase">
+                      {cfRank}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between pt-1">
+                    <span className="text-2xl font-black text-onyx">
+                      {cfRating}
+                    </span>
+                    <span className="text-[11px] text-pine-teal font-semibold">
+                      (max: {cfMaxRating})
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
+
         </div>
       </div>
 

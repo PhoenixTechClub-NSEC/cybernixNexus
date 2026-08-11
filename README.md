@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cybernix Nexus — NSEC Inter-Department Algorithmic Coding Platform
 
-## Getting Started
+Cybernix Nexus is a production-grade competitive programming hub for Netaji Subhash Engineering College (NSEC). It automatically syncs coding statistics across **Codeforces**, **LeetCode**, **GeeksforGeeks**, and **CodeChef**, computes seasonal department multipliers, tracks daily solve velocity, and renders live college-wide leaderboards.
 
-First, run the development server:
+---
 
+## 🏗️ Tech Stack & Architecture
+
+* **Framework:** Next.js 16 (App Router with Turbopack)
+* **Database:** PostgreSQL (with Prisma ORM v6)
+* **Authentication:** NextAuth.js (Credentials & Google OAuth Provider)
+* **Styling & UI:** Tailwind CSS v4, GSAP animations, Lucide React icons
+* **Scraper & Sync Engine:** Custom asynchronous platform fetchers (`leetcode.ts`, `codeforces.ts`, `gfg.ts`, `codechef.ts`)
+* **Package Manager:** pnpm
+
+---
+
+## 🗄️ Database Schema & Indexes
+
+The database uses PostgreSQL with the following core Prisma models:
+- **`User`**: Account identity & authentication credentials.
+- **`Student`**: Profile details, department, graduation year, and platform handles.
+- **`StudentStats`**: Aggregate metrics, CP total scores, college & department rankings.
+- **`DailySnapshot`**: Daily solve snapshots indexed by `@@unique([studentId, date])` for historical weekly velocity graphs.
+- **`MonthlyAchievement`**: Monthly Hall of Fame winners indexed by `@@index([year, month])`.
+- **`SyncJob`**: Audit log of platform scraping executions.
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+- Node.js 20+
+- PostgreSQL 15+
+- pnpm
+
+### 2. Environment Setup
+Copy `.env.example` to `.env` and fill in your database credentials:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Example `.env`:
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/cybernix_nexus?schema=public"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-super-secret-nextauth-key-min-32-chars"
+CRON_SECRET="your-cron-secret-bearer-token"
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Database Migration & Seeding
+Push the Prisma schema to your PostgreSQL database and execute the database seeder:
+```bash
+# Push schema tables & indexes
+npx prisma db push
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Seed initial student profiles & 21-day velocity snapshots
+npx prisma db seed
+```
 
-## Learn More
+### 4. Run Development Server
+```bash
+pnpm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) to access the application.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔌 API Endpoints (Phase 1)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+* `GET /api/dashboard`: Live student rankings, aggregate stats, and department summaries.
+* `GET /api/dashboard/velocity`: Past 21-day solve velocity metrics (`thisWeek`, `lastWeek`, `twoWeeksAgo`) generated from `DailySnapshot`.
+* `GET /api/achievements/monthly`: Monthly Hall of Fame achievers.
+* `POST /api/achievements/monthly`: Calculate top growth achievers.
+* `GET /api/cron/sync`: Secured background cron worker for platform stats sync (requires `Authorization: Bearer <CRON_SECRET>`).
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛡️ Background Cron Setup
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+To continuously keep student stats and daily snapshots up to date in production, set up a daily cron job (e.g. Vercel Cron or GitHub Actions) calling:
+```bash
+curl -X GET "https://your-domain.com/api/cron/sync" \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
+```
+
+---
+
+## 📜 Maintainers
+Maintained by *Phoenix the Official Tech Club of NSEC*.
