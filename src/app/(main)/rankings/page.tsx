@@ -33,7 +33,7 @@ export default function RankingsPage() {
     async function fetchData() {
       try {
         const [users, stats] = await Promise.all([
-          getLeaderboard(),
+          getLeaderboard(30),
           getDepartmentStats()
         ]);
         setLeaderboardUsers(users);
@@ -300,17 +300,17 @@ export default function RankingsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-pine-teal">
-                  🌐 College Global Standings
+                  🌐 College Global Standings (Top 30)
                 </span>
                 <h2 className="text-xl font-black text-onyx mt-0.5">
-                  Whole List of All Students
+                  Top 30 Ranked Students
                 </h2>
                 <p className="text-xs text-onyx/70 mt-0.5">
-                  Showing all registered programmers across all departments (70% main view).
+                  Showing top 30 registered programmers across all departments ordered by indexed total score.
                 </p>
               </div>
               <div className="px-3 py-1 rounded-xl bg-golden-sand/20 text-onyx font-black text-xs border border-onyx/12 shrink-0">
-                {leaderboardUsers.length} Students Total
+                Top {leaderboardUsers.length} Students
               </div>
             </div>
           </div>

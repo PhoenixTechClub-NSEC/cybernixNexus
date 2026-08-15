@@ -22,18 +22,20 @@ export async function fetchCodechefStats(username: string): Promise<CodechefFetc
       next: { revalidate: 3600 },
     });
 
-    if (response.ok) {
-      const json = await response.json();
-      const rawRating = json.currentRating ?? json.rating ?? null;
-      if (rawRating !== null && rawRating !== undefined) {
-        return { rating: typeof rawRating === 'number' ? rawRating : parseInt(String(rawRating), 10) || null };
-      }
+    if (!response.ok) {
+      throw new Error(`CodeChef API returned status ${response.status}`);
     }
 
-    return { rating: null };
+    const json = await response.json();
+    const rawRating = json.currentRating ?? json.rating ?? null;
+    if (rawRating !== null && rawRating !== undefined) {
+      return { rating: typeof rawRating === 'number' ? rawRating : parseInt(String(rawRating), 10) || null };
+    }
+
+    throw new Error(`CodeChef rating not found for username "${cleanUsername}"`);
   } catch (error: any) {
     console.error(`[CodeChef Fetch Error] Username: ${cleanUsername} - ${error.message}`);
-    return { rating: null };
+    throw error;
   } finally {
     clearTimeout(timeoutId);
   }

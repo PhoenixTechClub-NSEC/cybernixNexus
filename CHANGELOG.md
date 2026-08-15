@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.1.0-top30-rankings] - 2026-08-15
+
+### Added
+- **`StudentStats` Indexing**: Added composite descending index `@@index([totalScore(sort: Desc)])` to `StudentStats` model in `prisma/schema.prisma` for fast score-based ranking queries.
+- **Dummy Student Seeder**: Expanded `prisma/seed.ts` to generate 35 dummy students spanning CSE, IT, ECE, AI&DS, EE, and ME departments with realistic platform metrics across LeetCode, Codeforces, CodeChef, and GFG.
+- **Automated Ranking Calculation**: Embedded automated ranking recalculation (`recalculateRankings()`) in `prisma/seed.ts` to pre-calculate global and department rankings upon seeding.
+
+### Changed
+- **Dashboard API Query (`/api/dashboard`)**: Optimized `GET /api/dashboard` in `src/app/api/dashboard/route.ts` to fetch top 30 students ordered by `stats.totalScore: 'desc'` via Prisma index.
+- **Leaderboard API Helper (`src/lib/api.ts`)**: Updated `getLeaderboard(limit = 30)` to pass limit query parameters to `/api/dashboard`.
+- **Rankings Page UI (`src/app/(main)/rankings/page.tsx`)**: Updated global standings header and count badges to "College Global Standings (Top 30)" and synced Podium & LeaderboardTable components with top 30 database rankings.
+
+---
+
 ## [1.0.0-phase1] - 2026-08-06
 
 ### Added

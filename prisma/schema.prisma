@@ -114,6 +114,8 @@ model StudentStats {
   departmentRanking   Int?
 
   updatedAt DateTime @updatedAt
+
+  @@index([totalScore(sort: Desc)])
 }
 
 model SyncJob {
