@@ -5,6 +5,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
+import { syncStudentStats } from '@/services/platforms/sync';
 
 export function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(password).digest('hex');
@@ -59,13 +60,46 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
   },
+  events: {
+    async signIn({ user }) {
+      try {
+        let studentId: string | null = null;
+        if (user?.id) {
+          const student = await prisma.student.findUnique({
+            where: { userId: user.id },
+            select: { id: true, leetcode: true, codeforces: true, gfg: true, codechef: true },
+          });
+          // Only sync if the student has at least one platform handle configured
+          const hasHandles = !!(student?.leetcode || student?.codeforces || student?.gfg || student?.codechef);
+          studentId = (student && hasHandles) ? student.id : null;
+        } else if (user?.email) {
+          const student = await prisma.student.findFirst({
+            where: { user: { email: user.email } },
+            select: { id: true, leetcode: true, codeforces: true, gfg: true, codechef: true },
+          });
+          const hasHandles = !!(student?.leetcode || student?.codeforces || student?.gfg || student?.codechef);
+          studentId = (student && hasHandles) ? student.id : null;
+        }
+
+        if (studentId) {
+          // Trigger non-blocking stats sync upon login
+          syncStudentStats(studentId).catch((err) => {
+            console.error(`[NextAuth signIn Event] Sync error for student ${studentId}:`, err);
+          });
+        }
+      } catch (err) {
+        console.error('[NextAuth signIn Event] Error checking student for login sync:', err);
+      }
+    },
+  },
+
   callbacks: {
     async signIn({ user, account, profile }) {
       if (user?.email) {
         const googlePicture = user.image || (profile as any)?.picture;
         if (googlePicture) {
           try {
-            await prisma.user.update({
+            await prisma.user.updateMany({
               where: { email: user.email },
               data: { image: googlePicture },
             });
@@ -103,14 +137,14 @@ export const authOptions: NextAuthOptions = {
         if (googlePicture) {
           token.picture = googlePicture;
           try {
-            await prisma.user.update({
+            await prisma.user.updateMany({
               where: { id: user.id },
               data: { image: googlePicture },
             });
           } catch {
             if (user.email) {
               try {
-                await prisma.user.update({
+                await prisma.user.updateMany({
                   where: { email: user.email },
                   data: { image: googlePicture },
                 });

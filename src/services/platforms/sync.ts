@@ -250,6 +250,12 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       },
     });
 
+    // Update lastSyncedAt on student
+    await prisma.student.update({
+      where: { id: student.id },
+      data: { lastSyncedAt: new Date() },
+    });
+
     return {
       leetcodeSolved: finalStats?.leetcodeSolved ?? 0,
       leetcodeRating: finalStats?.leetcodeRating ?? null,

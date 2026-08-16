@@ -29,17 +29,17 @@ export default function SettingsPage() {
   });
 
   const [platformHandles, setPlatformHandles] = useState<Record<string, string>>({
-    LeetCode: DUMMY_HANDLES.LeetCode,
-    Codeforces: DUMMY_HANDLES.Codeforces,
-    GFG: DUMMY_HANDLES.GFG,
-    CodeChef: DUMMY_HANDLES.CodeChef,
+    LeetCode: '',
+    Codeforces: '',
+    GFG: '',
+    CodeChef: '',
   });
 
   const initialHandlesRef = useRef<Record<string, string>>({
-    LeetCode: DUMMY_HANDLES.LeetCode,
-    Codeforces: DUMMY_HANDLES.Codeforces,
-    GFG: DUMMY_HANDLES.GFG,
-    CodeChef: DUMMY_HANDLES.CodeChef,
+    LeetCode: '',
+    Codeforces: '',
+    GFG: '',
+    CodeChef: '',
   });
   const initialNameRef = useRef<string>(user.name);
   const initialDpUrlRef = useRef<string>(user.avatar);
@@ -61,10 +61,10 @@ export default function SettingsPage() {
         if (data.student && isMounted) {
           const s = data.student;
           const handles = {
-            LeetCode: s.leetcode || DUMMY_HANDLES.LeetCode,
-            Codeforces: s.codeforces || DUMMY_HANDLES.Codeforces,
-            GFG: s.gfg || DUMMY_HANDLES.GFG,
-            CodeChef: s.codechef || DUMMY_HANDLES.CodeChef,
+            LeetCode: s.leetcode || '',
+            Codeforces: s.codeforces || '',
+            GFG: s.gfg || '',
+            CodeChef: s.codechef || '',
           };
           setPlatformHandles(handles);
           initialHandlesRef.current = handles;

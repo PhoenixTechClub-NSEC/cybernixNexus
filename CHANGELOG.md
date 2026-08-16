@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.2.0-cron-sync] - 2026-08-16
+
+### Added
+- **Vercel Cron Job (`vercel.json`)**: Created `vercel.json` with a cron schedule `"0 0 * * 3"` (every Wednesday at 00:00 UTC) targeting `/api/cron/sync` for automated weekly platform data synchronization.
+- **`lastSyncedAt` Field (`prisma/schema.prisma`)**: Added `lastSyncedAt DateTime?` to the `Student` model to track the timestamp of the last successful platform sync per student.
+- **3-Day Sync Filter (`/api/cron/sync`)**: Updated the cron endpoint to only sync students whose `lastSyncedAt` is `null` or older than 3 days, skipping recently synced students. Response now includes `syncedCount`, `eligibleCount`, `skippedCount`, and `totalCount`.
+- **Login-Triggered Sync (`src/lib/auth.ts`)**: Added a `events.signIn` handler to NextAuth `authOptions` that triggers a non-blocking background platform sync whenever a student with at least one configured platform handle signs in.
+
+### Changed
+- **Platform Sync Service (`src/services/platforms/sync.ts`)**: Updated `syncStudentStats` to set `lastSyncedAt: new Date()` on the `Student` record upon successful sync job completion.
+- **Login Sync Guard (`src/lib/auth.ts`)**: The `events.signIn` handler now checks that a student has at least one real platform handle (`leetcode`, `codeforces`, `gfg`, `codechef`) before triggering sync — prevents spurious 404 errors from syncing dummy placeholder handles.
+- **Settings Page Defaults (`src/app/(main)/settings/page.tsx`)**: Platform handle state and `initialHandlesRef` now default to empty strings `''` instead of `DUMMY_HANDLES` values. The `useEffect` DB fetch also uses empty string as fallback instead of dummy handles, so new users no longer appear to have pre-filled dummy platform usernames.
+
+### Fixed
+- **P2025 Prisma Error on Google Sign-In (`src/lib/auth.ts`)**: Replaced `prisma.user.update()` with `prisma.user.updateMany()` in `callbacks.signIn` and `callbacks.jwt` to prevent `P2025: Record to update not found` errors when a new Google user's `User` row has not yet been created by `PrismaAdapter` at the time the callback runs.
+- **Cross-Account Platform Handle Leak (`src/app/(main)/settings/page.tsx`)**: Fixed a bug where all users (including new Google accounts with no student profile) were shown the same dummy platform handles (`leetcode_dummy`, `gfg_dummy`, `tourist`, `codechef_dummy`) as if they were real saved handles. Handles now correctly show blank inputs for accounts with no configured handles.
+
+---
+
 ## [1.1.0-top30-rankings] - 2026-08-15
 
 ### Added
