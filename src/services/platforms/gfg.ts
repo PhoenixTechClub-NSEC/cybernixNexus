@@ -22,19 +22,20 @@ export async function fetchGfgStats(handle: string): Promise<GfgFetchResult> {
       next: { revalidate: 3600 },
     });
 
-    if (response.ok) {
-      const json = await response.json();
-      const score = json.overallScore ?? json.codingScore ?? json.score ?? null;
-      if (score !== null && score !== undefined) {
-        return { score: typeof score === 'number' ? score : parseInt(String(score), 10) || null };
-      }
+    if (!response.ok) {
+      throw new Error(`GFG API returned status ${response.status}`);
     }
 
-    // Fallback parsing or return null if user score not directly reachable
-    return { score: null };
+    const json = await response.json();
+    const score = json.overallScore ?? json.codingScore ?? json.score ?? null;
+    if (score !== null && score !== undefined) {
+      return { score: typeof score === 'number' ? score : parseInt(String(score), 10) || null };
+    }
+
+    throw new Error(`GFG user score not found for handle "${cleanHandle}"`);
   } catch (error: any) {
     console.error(`[GFG Fetch Error] Handle: ${cleanHandle} - ${error.message}`);
-    return { score: null };
+    throw error;
   } finally {
     clearTimeout(timeoutId);
   }

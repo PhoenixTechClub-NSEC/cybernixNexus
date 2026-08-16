@@ -3,13 +3,23 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     const currentUserId = (session?.user as any)?.id || null;
 
-    // Fetch all students with user profile details and coding platform stats
+    const { searchParams } = new URL(request.url);
+    const limitParam = searchParams.get('limit');
+    const take = limitParam ? parseInt(limitParam, 10) : 30;
+
+    // Fetch top 30 students ordered by totalScore desc using Prisma index
     const rawStudents = await prisma.student.findMany({
+      orderBy: {
+        stats: {
+          totalScore: 'desc',
+        },
+      },
+      take,
       include: {
         user: {
           select: {
@@ -22,20 +32,9 @@ export async function GET() {
       },
     });
 
-    // Sort students by totalScore in descending order
-    const sortedStudents = rawStudents
-      .map((student) => {
-        const totalScore = student.stats?.totalScore ?? 0;
-        return {
-          ...student,
-          computedScore: totalScore,
-        };
-      })
-      .sort((a, b) => b.computedScore - a.computedScore);
-
-    // Format all users with rank
-    const students = sortedStudents.map((student, index) => {
-      const rank = index + 1;
+    // Format top 30 users with rank
+    const students = rawStudents.map((student, index) => {
+      const rank = student.stats?.ranking ?? (index + 1);
       return {
         id: student.id,
         userId: student.userId,
@@ -57,6 +56,7 @@ export async function GET() {
           leetcodeRating: student.stats?.leetcodeRating ?? null,
           codeforcesRating: student.stats?.codeforcesRating ?? null,
           codeforcesMaxRating: student.stats?.codeforcesMaxRating ?? null,
+          codeforcesSolved: student.stats?.codeforcesSolved ?? 0,
           gfgScore: student.stats?.gfgScore ?? null,
           codechefRating: student.stats?.codechefRating ?? null,
           totalScore: student.stats?.totalScore ?? 0,
@@ -72,14 +72,60 @@ export async function GET() {
     });
 
     // Extract current authenticated user stats if logged in
-    const currentUser = currentUserId
+    let currentUser = currentUserId
       ? students.find((s) => s.userId === currentUserId) || null
       : null;
+
+    if (currentUserId && !currentUser) {
+      const dbUser = await prisma.student.findUnique({
+        where: { userId: currentUserId },
+        include: {
+          user: { select: { name: true, email: true, image: true } },
+          stats: true,
+        },
+      });
+      if (dbUser) {
+        currentUser = {
+          id: dbUser.id,
+          userId: dbUser.userId,
+          name: dbUser.name,
+          email: dbUser.user?.email || null,
+          image: dbUser.user?.image || null,
+          rollNumber: dbUser.rollNumber,
+          department: dbUser.department,
+          graduationYear: dbUser.graduationYear,
+          profileComplete: dbUser.profileComplete,
+          handles: {
+            leetcode: dbUser.leetcode,
+            codeforces: dbUser.codeforces,
+            gfg: dbUser.gfg,
+            codechef: dbUser.codechef,
+          },
+          stats: {
+            leetcodeSolved: dbUser.stats?.leetcodeSolved ?? 0,
+            leetcodeRating: dbUser.stats?.leetcodeRating ?? null,
+            codeforcesRating: dbUser.stats?.codeforcesRating ?? null,
+            codeforcesMaxRating: dbUser.stats?.codeforcesMaxRating ?? null,
+            codeforcesSolved: dbUser.stats?.codeforcesSolved ?? 0,
+            gfgScore: dbUser.stats?.gfgScore ?? null,
+            codechefRating: dbUser.stats?.codechefRating ?? null,
+            totalScore: dbUser.stats?.totalScore ?? 0,
+            ranking: dbUser.stats?.ranking ?? 1,
+            departmentRanking: dbUser.stats?.departmentRanking ?? null,
+            updatedAt: dbUser.stats?.updatedAt ?? dbUser.updatedAt,
+          },
+          rank: dbUser.stats?.ranking ?? 1,
+          departmentRanking: dbUser.stats?.departmentRanking ?? null,
+          createdAt: dbUser.createdAt,
+          updatedAt: dbUser.updatedAt,
+        };
+      }
+    }
 
     // Compute platform & department summary metrics
     const totalStudents = students.length;
     const totalProblemsSolved = students.reduce(
-      (acc, s) => acc + s.stats.leetcodeSolved,
+      (acc, s) => acc + s.stats.leetcodeSolved + (s.stats.codeforcesSolved || 0),
       0
     );
     const averageTotalScore = totalStudents
@@ -102,7 +148,7 @@ export async function GET() {
       }
       deptMap[dept].count += 1;
       deptMap[dept].totalScore += student.stats.totalScore;
-      deptMap[dept].totalSolved += student.stats.leetcodeSolved;
+      deptMap[dept].totalSolved += student.stats.leetcodeSolved + (student.stats.codeforcesSolved || 0);
     });
 
     const departmentStats = Object.entries(deptMap).map(([dept, data]) => ({

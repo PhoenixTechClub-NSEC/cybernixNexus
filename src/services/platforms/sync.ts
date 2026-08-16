@@ -16,18 +16,18 @@ export function calculateTotalScore(stats: {
   gfgScore: number | null;
   codechefRating: number | null;
 }): number {
-  const lcPoints = stats.leetcodeSolved * 10;
-  const lcRatingPoints = stats.leetcodeRating ? Math.max(0, stats.leetcodeRating) * 2 : 0;
-  const cfPoints = stats.codeforcesRating ? Math.max(0, stats.codeforcesRating) * 3 : 0;
-  const cfSolvedPoints = stats.codeforcesSolved * 15; // CF problems worth more
+  const lcPoints = Math.max(0, stats.leetcodeSolved) * 10;
+  const cfSolvedPoints = Math.max(0, stats.codeforcesSolved) * 15; // CF problems worth more
   const gfgPoints = stats.gfgScore ? Math.max(0, stats.gfgScore) : 0;
-  const ccPoints = stats.codechefRating ? Math.max(0, stats.codechefRating) * 1.5 : 0;
 
-  return Math.round(lcPoints + lcRatingPoints + cfPoints + cfSolvedPoints + gfgPoints + ccPoints);
+  return Math.round(lcPoints + cfSolvedPoints + gfgPoints);
 }
 
 export async function recalculateRankings(): Promise<void> {
   const allStats = await prisma.studentStats.findMany({
+    orderBy: {
+      totalScore: 'desc',
+    },
     include: {
       student: {
         select: { department: true },
@@ -78,11 +78,14 @@ export async function recalculateRankings(): Promise<void> {
 export async function syncStudentStats(studentId: string): Promise<PlatformStatsResult> {
   const student = await prisma.student.findUnique({
     where: { id: studentId },
+    include: { stats: true },
   });
 
   if (!student) {
     throw new Error(`Student with ID ${studentId} not found`);
   }
+
+  const existingStats = student.stats;
 
   // Create SyncJob record
   const syncJob = await prisma.syncJob.create({
@@ -103,64 +106,93 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       student.codechef ? fetchCodechefStats(student.codechef) : Promise.resolve({ rating: null }),
     ]);
 
-    const leetcodeData = lcRes.status === 'fulfilled' ? lcRes.value : { solved: 0, easy: 0, medium: 0, hard: 0, rating: null };
+    const leetcodeSolved = lcRes.status === 'fulfilled'
+      ? lcRes.value.solved
+      : (existingStats?.leetcodeSolved ?? 0);
+    const leetcodeRating = lcRes.status === 'fulfilled'
+      ? lcRes.value.rating
+      : (existingStats?.leetcodeRating ?? null);
     if (lcRes.status === 'rejected') {
       errors.leetcode = lcRes.reason?.message || 'Failed to fetch LeetCode stats';
     }
 
-    const codeforcesData = cfRes.status === 'fulfilled' ? cfRes.value : { rating: null, maxRating: null, rank: null, maxRank: null, solved: 0, avatar: null, contribution: null };
+    const codeforcesRating = cfRes.status === 'fulfilled'
+      ? cfRes.value.rating
+      : (existingStats?.codeforcesRating ?? null);
+    const codeforcesMaxRating = cfRes.status === 'fulfilled'
+      ? cfRes.value.maxRating
+      : (existingStats?.codeforcesMaxRating ?? null);
+    const codeforcesRank = cfRes.status === 'fulfilled'
+      ? cfRes.value.rank
+      : (existingStats?.codeforcesRank ?? null);
+    const codeforcesMaxRank = cfRes.status === 'fulfilled'
+      ? cfRes.value.maxRank
+      : (existingStats?.codeforcesMaxRank ?? null);
+    const codeforcesSolved = cfRes.status === 'fulfilled'
+      ? cfRes.value.solved
+      : (existingStats?.codeforcesSolved ?? 0);
+    const codeforcesAvatar = cfRes.status === 'fulfilled'
+      ? cfRes.value.avatar
+      : (existingStats?.codeforcesAvatar ?? null);
+    const codeforcesContribution = cfRes.status === 'fulfilled'
+      ? cfRes.value.contribution
+      : (existingStats?.codeforcesContribution ?? null);
     if (cfRes.status === 'rejected') {
       errors.codeforces = cfRes.reason?.message || 'Failed to fetch Codeforces stats';
     }
 
-    const gfgData = gfgRes.status === 'fulfilled' ? gfgRes.value : { score: null };
+    const gfgScore = gfgRes.status === 'fulfilled'
+      ? gfgRes.value.score
+      : (existingStats?.gfgScore ?? null);
     if (gfgRes.status === 'rejected') {
       errors.gfg = gfgRes.reason?.message || 'Failed to fetch GFG stats';
     }
 
-    const codechefData = ccRes.status === 'fulfilled' ? ccRes.value : { rating: null };
+    const codechefRating = ccRes.status === 'fulfilled'
+      ? ccRes.value.rating
+      : (existingStats?.codechefRating ?? null);
     if (ccRes.status === 'rejected') {
       errors.codechef = ccRes.reason?.message || 'Failed to fetch CodeChef stats';
     }
 
     const totalScore = calculateTotalScore({
-      leetcodeSolved: leetcodeData.solved,
-      leetcodeRating: leetcodeData.rating,
-      codeforcesRating: codeforcesData.rating,
-      codeforcesSolved: codeforcesData.solved,
-      gfgScore: gfgData.score,
-      codechefRating: codechefData.rating,
+      leetcodeSolved,
+      leetcodeRating,
+      codeforcesRating,
+      codeforcesSolved,
+      gfgScore,
+      codechefRating,
     });
 
     await prisma.studentStats.upsert({
       where: { studentId: student.id },
       create: {
         studentId: student.id,
-        leetcodeSolved: leetcodeData.solved,
-        leetcodeRating: leetcodeData.rating,
-        codeforcesRating: codeforcesData.rating,
-        codeforcesMaxRating: codeforcesData.maxRating,
-        codeforcesRank: codeforcesData.rank,
-        codeforcesMaxRank: codeforcesData.maxRank,
-        codeforcesSolved: codeforcesData.solved,
-        codeforcesAvatar: codeforcesData.avatar,
-        codeforcesContribution: codeforcesData.contribution,
-        gfgScore: gfgData.score,
-        codechefRating: codechefData.rating,
+        leetcodeSolved,
+        leetcodeRating,
+        codeforcesRating,
+        codeforcesMaxRating,
+        codeforcesRank,
+        codeforcesMaxRank,
+        codeforcesSolved,
+        codeforcesAvatar,
+        codeforcesContribution,
+        gfgScore,
+        codechefRating,
         totalScore,
       },
       update: {
-        leetcodeSolved: leetcodeData.solved,
-        leetcodeRating: leetcodeData.rating,
-        codeforcesRating: codeforcesData.rating,
-        codeforcesMaxRating: codeforcesData.maxRating,
-        codeforcesRank: codeforcesData.rank,
-        codeforcesMaxRank: codeforcesData.maxRank,
-        codeforcesSolved: codeforcesData.solved,
-        codeforcesAvatar: codeforcesData.avatar,
-        codeforcesContribution: codeforcesData.contribution,
-        gfgScore: gfgData.score,
-        codechefRating: codechefData.rating,
+        leetcodeSolved,
+        leetcodeRating,
+        codeforcesRating,
+        codeforcesMaxRating,
+        codeforcesRank,
+        codeforcesMaxRank,
+        codeforcesSolved,
+        codeforcesAvatar,
+        codeforcesContribution,
+        gfgScore,
+        codechefRating,
         totalScore,
       },
     });
@@ -179,17 +211,17 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       create: {
         studentId: student.id,
         date: today,
-        leetcodeSolved: leetcodeData.solved,
-        codeforcesSolved: codeforcesData.solved,
-        gfgScore: gfgData.score ?? 0,
-        codechefRating: codechefData.rating ?? 0,
+        leetcodeSolved,
+        codeforcesSolved,
+        gfgScore: gfgScore ?? 0,
+        codechefRating: codechefRating ?? 0,
         totalScore,
       },
       update: {
-        leetcodeSolved: leetcodeData.solved,
-        codeforcesSolved: codeforcesData.solved,
-        gfgScore: gfgData.score ?? 0,
-        codechefRating: codechefData.rating ?? 0,
+        leetcodeSolved,
+        codeforcesSolved,
+        gfgScore: gfgScore ?? 0,
+        codechefRating: codechefRating ?? 0,
         totalScore,
       },
     });
@@ -216,6 +248,12 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         finishedAt: new Date(),
         error: hasErrors ? JSON.stringify(errors) : null,
       },
+    });
+
+    // Update lastSyncedAt on student
+    await prisma.student.update({
+      where: { id: student.id },
+      data: { lastSyncedAt: new Date() },
     });
 
     return {

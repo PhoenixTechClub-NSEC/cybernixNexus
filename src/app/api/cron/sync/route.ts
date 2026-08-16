@@ -7,17 +7,29 @@ export async function GET(req: Request) {
     const authHeader = req.headers.get('authorization');
     const expectedSecret = process.env.CRON_SECRET;
 
-    // If secret is set, verify authorization header
+    // If CRON_SECRET is set, verify authorization header
     if (expectedSecret && authHeader !== `Bearer ${expectedSecret}`) {
       return NextResponse.json({ success: false, error: 'Unauthorized cron request' }, { status: 401 });
     }
 
-    const students = await prisma.student.findMany({
-      select: { id: true, name: true },
-    });
+    // Sync only students who have not been synced for more than 3 days (or never synced)
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+
+    const [totalStudentsCount, eligibleStudents] = await Promise.all([
+      prisma.student.count(),
+      prisma.student.findMany({
+        where: {
+          OR: [
+            { lastSyncedAt: null },
+            { lastSyncedAt: { lt: threeDaysAgo } },
+          ],
+        },
+        select: { id: true, name: true, lastSyncedAt: true },
+      }),
+    ]);
 
     const results = [];
-    for (const student of students) {
+    for (const student of eligibleStudents) {
       try {
         const stats = await syncStudentStats(student.id);
         results.push({ studentId: student.id, name: student.name, success: true, score: stats.totalScore });
@@ -30,7 +42,9 @@ export async function GET(req: Request) {
       success: true,
       timestamp: new Date().toISOString(),
       syncedCount: results.filter((r) => r.success).length,
-      totalCount: students.length,
+      eligibleCount: eligibleStudents.length,
+      totalCount: totalStudentsCount,
+      skippedCount: totalStudentsCount - eligibleStudents.length,
       details: results,
     });
   } catch (error: any) {
@@ -41,3 +55,4 @@ export async function GET(req: Request) {
     );
   }
 }
+

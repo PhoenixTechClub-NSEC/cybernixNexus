@@ -29,9 +29,9 @@ export async function getCurrentUser(): Promise<UserProfile> {
   return CURRENT_USER;
 }
 
-export async function getLeaderboard(): Promise<UserProfile[]> {
+export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]> {
   try {
-    const res = await fetch('/api/dashboard');
+    const res = await fetch(`/api/dashboard?limit=${limit}`);
     if (res.ok) {
       const data = await res.json();
       if (data.success && Array.isArray(data.students) && data.students.length > 0) {

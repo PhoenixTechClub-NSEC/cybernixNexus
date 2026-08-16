@@ -9,8 +9,6 @@ export async function fetchCodeforcesStats(handle: string): Promise<CodeforcesFe
   }
 
   const trimmedHandle = handle.trim();
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 12000);
 
   try {
     // Fetch user info (rating, maxRating, rank, maxRank, avatar, contribution)
@@ -18,7 +16,7 @@ export async function fetchCodeforcesStats(handle: string): Promise<CodeforcesFe
     const infoResponse = await fetch(infoUrl, {
       method: 'GET',
       headers: { 'User-Agent': 'CybernixNexus-PlatformFetcher/1.0' },
-      signal: controller.signal,
+      signal: AbortSignal.timeout(8000),
       next: { revalidate: 3600 },
     });
 
@@ -41,36 +39,38 @@ export async function fetchCodeforcesStats(handle: string): Promise<CodeforcesFe
     const contribution = user.contribution ?? null;
 
     // Fetch user submission status to count unique solved problems
-    let solved = 0;
-    try {
-      const statusUrl = `${CF_USER_STATUS_ENDPOINT}?handle=${encodeURIComponent(trimmedHandle)}&from=1&count=10000`;
-      const statusResponse = await fetch(statusUrl, {
-        method: 'GET',
-        headers: { 'User-Agent': 'CybernixNexus-PlatformFetcher/1.0' },
-        next: { revalidate: 3600 },
-      });
+    const statusUrl = `${CF_USER_STATUS_ENDPOINT}?handle=${encodeURIComponent(trimmedHandle)}`;
+    const statusResponse = await fetch(statusUrl, {
+      method: 'GET',
+      headers: { 'User-Agent': 'CybernixNexus-PlatformFetcher/1.0' },
+      signal: AbortSignal.timeout(8000),
+      next: { revalidate: 3600 },
+    });
 
-      if (statusResponse.ok) {
-        const statusJson = await statusResponse.json();
-        if (statusJson.status === 'OK' && Array.isArray(statusJson.result)) {
-          const solvedSet = new Set<string>();
-          for (const sub of statusJson.result) {
-            if (sub.verdict === 'OK' && sub.problem) {
-              solvedSet.add(`${sub.problem.contestId}-${sub.problem.index}`);
-            }
-          }
-          solved = solvedSet.size;
-        }
-      }
-    } catch {
-      // Non-fatal: solved count defaults to 0
+    if (!statusResponse.ok) {
+      throw new Error(`Codeforces status API returned status ${statusResponse.status}`);
     }
+
+    const statusJson = await statusResponse.json();
+    if (statusJson.status !== 'OK' || !Array.isArray(statusJson.result)) {
+      throw new Error(`Codeforces status API error: ${statusJson.comment || 'Invalid response format'}`);
+    }
+
+    const solvedSet = new Set<string>();
+    for (const sub of statusJson.result) {
+      if (sub.verdict === 'OK' && sub.problem) {
+        const p = sub.problem;
+        const problemKey = p.contestId
+          ? `${p.contestId}-${p.index}`
+          : (p.problemsetName ? `${p.problemsetName}-${p.index}` : `${p.name || p.index}`);
+        solvedSet.add(problemKey);
+      }
+    }
+    const solved = solvedSet.size;
 
     return { rating, maxRating, rank, maxRank, solved, avatar, contribution };
   } catch (error: any) {
     console.error(`[Codeforces Fetch Error] Handle: ${handle} - ${error.message}`);
     throw error;
-  } finally {
-    clearTimeout(timeoutId);
   }
 }
