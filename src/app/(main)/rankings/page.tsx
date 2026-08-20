@@ -80,16 +80,16 @@ export default function RankingsPage() {
     loadData();
   }, []);
 
-  // Dynamically inject the logged-in user into the leaderboard so Rank #3 always matches the active user profile name
+  // Dynamically sync the logged-in user with live leaderboard data
   const displayLeaderboardUsers = useMemo(() => {
     return leaderboardUsers.map((u) => {
-      if (u.id === CURRENT_USER.id || u.id === 'usr-001') {
+      if (CURRENT_USER.id && u.id === CURRENT_USER.id) {
         return {
           ...u,
           ...CURRENT_USER,
           id: u.id,
-          collegeRank: u.collegeRank,
-          deptRank: u.deptRank,
+          collegeRank: u.collegeRank || CURRENT_USER.collegeRank,
+          deptRank: u.deptRank || CURRENT_USER.deptRank,
         };
       }
       return u;

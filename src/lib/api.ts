@@ -30,23 +30,33 @@ export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]>
     if (res.ok) {
       const data = await res.json();
       if (data.success && Array.isArray(data.students)) {
-        return data.students.map((s: any) => ({
-          id: s.id,
-          name: s.name || 'NSEC Programmer',
-          username: s.email ? s.email.split('@')[0] : 'student',
-          avatar: s.image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-          email: s.email || '',
-          bio: `${s.department} '${String(s.graduationYear || 2026).slice(2)} @ NSEC`,
-          department: s.department || 'CSE',
-          year: `${2026 - (s.graduationYear - 4)}th Year`,
-          collegeRank: s.rank || s.stats?.ranking || 1,
-          deptRank: s.departmentRanking || s.stats?.departmentRanking || 1,
-          level: Math.max(1, Math.min(100, Math.floor((s.stats?.totalScore || 0) / 500))),
-          tier: (s.stats?.totalScore || 0) > 30000 ? 'Phoenix' : (s.stats?.totalScore || 0) > 10000 ? 'Flame' : (s.stats?.totalScore || 0) > 2000 ? 'Ember' : 'Spark',
-          cpScore: s.stats?.totalScore || 0,
-          nextTierScore: 26500,
-          currentStreak: (s.stats?.leetcodeSolved || 0) + (s.stats?.codeforcesSolved || 0) > 0 ? 1 : 0,
-          maxStreak: (s.stats?.leetcodeSolved || 0) + (s.stats?.codeforcesSolved || 0) > 0 ? 1 : 0,
+        return data.students.map((s: any) => {
+          const gradYear = s.graduationYear || 2026;
+          const currentYear = new Date().getFullYear();
+          const calculatedYear = Math.max(1, Math.min(4, 4 - (gradYear - currentYear)));
+          const yearString = `${calculatedYear === 1 ? '1st' : calculatedYear === 2 ? '2nd' : calculatedYear === 3 ? '3rd' : '4th'} Year`;
+          const totalScore = s.stats?.totalScore ?? 0;
+          const lcSolved = s.stats?.leetcodeSolved ?? 0;
+          const cfSolved = s.stats?.codeforcesSolved ?? 0;
+          const totalSolved = lcSolved + cfSolved;
+
+          return {
+            id: s.id,
+            name: s.name || 'NSEC Programmer',
+            username: s.email ? s.email.split('@')[0] : 'student',
+            avatar: s.image || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+            email: s.email || '',
+            bio: `${s.department} '${String(gradYear).slice(2)} @ NSEC`,
+            department: s.department || 'CSE',
+            year: yearString,
+            collegeRank: s.rank || s.stats?.ranking || 1,
+            deptRank: s.departmentRanking || s.stats?.departmentRanking || 1,
+            level: Math.max(1, Math.min(100, Math.floor(totalScore / 500))),
+            tier: totalScore > 30000 ? 'Phoenix' : totalScore > 10000 ? 'Flame' : totalScore > 2000 ? 'Ember' : 'Spark',
+            cpScore: totalScore,
+            nextTierScore: 26500,
+            currentStreak: totalSolved > 0 ? 1 : 0,
+            maxStreak: totalSolved > 0 ? 1 : 0,
           contestWinRate: 0,
           solvedByDifficulty: {
             easy: Math.round((s.stats?.leetcodeSolved || 0) * 0.4),
@@ -87,7 +97,8 @@ export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]>
           badges: [],
           dsaTopics: [],
           recentActivities: [],
-        }));
+        };
+      });
       }
     }
   } catch (err) {
