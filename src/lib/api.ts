@@ -6,11 +6,6 @@ import {
   MonthlyAchievement,
 } from '@/types';
 import {
-  LEADERBOARD_USERS,
-  FAKE_EDITORIALS,
-  FAKE_CONTESTS,
-  DEPARTMENT_STATS,
-  MONTHLY_ACHIEVEMENTS,
   CURRENT_USER,
 } from './constants';
 
@@ -34,7 +29,7 @@ export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]>
     const res = await fetch(`/api/dashboard?limit=${limit}`);
     if (res.ok) {
       const data = await res.json();
-      if (data.success && Array.isArray(data.students) && data.students.length > 0) {
+      if (data.success && Array.isArray(data.students)) {
         return data.students.map((s: any) => ({
           id: s.id,
           name: s.name || 'NSEC Programmer',
@@ -50,14 +45,14 @@ export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]>
           tier: (s.stats?.totalScore || 0) > 30000 ? 'Phoenix' : (s.stats?.totalScore || 0) > 10000 ? 'Flame' : (s.stats?.totalScore || 0) > 2000 ? 'Ember' : 'Spark',
           cpScore: s.stats?.totalScore || 0,
           nextTierScore: 26500,
-          currentStreak: 14,
-          maxStreak: 30,
-          contestWinRate: 75,
+          currentStreak: (s.stats?.leetcodeSolved || 0) + (s.stats?.codeforcesSolved || 0) > 0 ? 1 : 0,
+          maxStreak: (s.stats?.leetcodeSolved || 0) + (s.stats?.codeforcesSolved || 0) > 0 ? 1 : 0,
+          contestWinRate: 0,
           solvedByDifficulty: {
             easy: Math.round((s.stats?.leetcodeSolved || 0) * 0.4),
             medium: Math.round((s.stats?.leetcodeSolved || 0) * 0.5),
             hard: Math.round((s.stats?.leetcodeSolved || 0) * 0.1),
-            total: s.stats?.leetcodeSolved || 0,
+            total: (s.stats?.leetcodeSolved || 0) + (s.stats?.codeforcesSolved || 0),
           },
           platforms: [
             {
@@ -98,7 +93,7 @@ export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]>
   } catch (err) {
     console.error('Failed to fetch leaderboard from API', err);
   }
-  return LEADERBOARD_USERS;
+  return [];
 }
 
 export async function getDepartmentStats(): Promise<DepartmentStat[]> {
@@ -106,23 +101,23 @@ export async function getDepartmentStats(): Promise<DepartmentStat[]> {
     const res = await fetch('/api/dashboard');
     if (res.ok) {
       const data = await res.json();
-      if (data.success && Array.isArray(data.summary?.departmentStats) && data.summary.departmentStats.length > 0) {
+      if (data.success && Array.isArray(data.summary?.departmentStats)) {
         return data.summary.departmentStats.map((d: any, idx: number) => ({
           name: d.department,
           rank: idx + 1,
-          averageRating: d.averageScore || 1500,
+          averageRating: d.averageScore || 0,
           totalSolved: d.totalSolved || 0,
           topCoderName: 'NSEC Student',
           topCoderScore: d.averageScore || 0,
           seasonalMultiplier: idx === 0 ? 2.0 : idx === 1 ? 1.75 : 1.5,
-          activeStudentsCount: d.studentCount || 1,
+          activeStudentsCount: d.studentCount || 0,
         }));
       }
     }
   } catch (err) {
     console.error('Failed to fetch department stats from API', err);
   }
-  return DEPARTMENT_STATS;
+  return [];
 }
 
 export async function getMonthlyAchievements(): Promise<MonthlyAchievement[]> {
@@ -130,20 +125,43 @@ export async function getMonthlyAchievements(): Promise<MonthlyAchievement[]> {
     const res = await fetch('/api/achievements/monthly');
     if (res.ok) {
       const data = await res.json();
-      if (data.success && Array.isArray(data.achievements) && data.achievements.length > 0) {
+      if (data.success && Array.isArray(data.achievements)) {
         return data.achievements;
       }
     }
   } catch (err) {
     console.error('Failed to fetch monthly achievements from API', err);
   }
-  return MONTHLY_ACHIEVEMENTS;
+  return [];
 }
 
 export async function getEditorials(): Promise<Editorial[]> {
-  return FAKE_EDITORIALS;
+  try {
+    const res = await fetch('/api/editorials');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.editorials)) {
+        return data.editorials;
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch editorials from API', err);
+  }
+  return [];
 }
 
 export async function getContests(): Promise<Contest[]> {
-  return FAKE_CONTESTS;
+  try {
+    const res = await fetch('/api/contests');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.contests)) {
+        return data.contests;
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch contests from API', err);
+  }
+  return [];
 }
+

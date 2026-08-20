@@ -6,7 +6,8 @@ import prisma from '@/lib/prisma';
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as any)?.id;
+    const sessionUser = session?.user as { id?: string } | undefined;
+    const userId = sessionUser?.id;
 
     // Find student for current logged in user or fallback to top student
     let student = userId
@@ -85,10 +86,11 @@ export async function GET() {
         },
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Failed to calculate velocity metrics';
     console.error('[GET /api/dashboard/velocity Error]:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to calculate velocity metrics' },
+      { success: false, error: errorMsg },
       { status: 500 }
     );
   }

@@ -33,8 +33,9 @@ export async function GET(req: Request) {
       try {
         const stats = await syncStudentStats(student.id);
         results.push({ studentId: student.id, name: student.name, success: true, score: stats.totalScore });
-      } catch (err: any) {
-        results.push({ studentId: student.id, name: student.name, success: false, error: err.message });
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : 'Unknown sync error';
+        results.push({ studentId: student.id, name: student.name, success: false, error: errorMsg });
       }
     }
 
@@ -47,12 +48,12 @@ export async function GET(req: Request) {
       skippedCount: totalStudentsCount - eligibleStudents.length,
       details: results,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Cron sync failed';
     console.error('[GET /api/cron/sync Error]:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Cron sync failed' },
+      { success: false, error: errorMsg },
       { status: 500 }
     );
   }
 }
-

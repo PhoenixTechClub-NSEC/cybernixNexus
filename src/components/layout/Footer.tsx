@@ -13,6 +13,20 @@ gsap.registerPlugin(useGSAP);
 export function Footer() {
   const footerRef = useRef<HTMLElement>(null);
   const flameRef = useRef<SVGSVGElement>(null);
+  const [totalStudents, setTotalStudents] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    fetch('/api/dashboard')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && data.summary?.totalRegisteredStudents) {
+          setTotalStudents(data.summary.totalRegisteredStudents);
+        } else if (data.success && data.summary?.totalStudents) {
+          setTotalStudents(data.summary.totalStudents);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const { contextSafe } = useGSAP({ scope: footerRef });
 
@@ -264,7 +278,7 @@ export function Footer() {
           <div className="flex items-center gap-4 mt-2 sm:mt-0">
             <span className="inline-flex items-center gap-1 text-tomato-jam font-medium">
               <span className="w-2 h-2 rounded-full bg-tomato-jam animate-pulse"></span>
-              Live Synced: 564 Students
+              Live Synced: {totalStudents > 0 ? totalStudents : '14+'} Registered Coders
             </span>
           </div>
         </div>

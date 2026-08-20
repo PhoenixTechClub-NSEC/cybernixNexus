@@ -4,6 +4,21 @@ All notable changes to Cybernix Nexus will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-production-readiness] - 2026-08-21
+
+### Added
+- **Peer Editorials & Contests Prisma Models (`prisma/schema.prisma`)**: Added `Editorial`, `EditorialComment`, `EditorialLike`, `Contest`, and `ContestRegistration` models with full relational links to `Student`.
+- **Dynamic Editorial Endpoints (`/api/editorials`, `/api/editorials/[id]/like`, `/api/editorials/[id]/comment`)**: Full CRUD support for student problem solution sharing with markdown formatting and language-specific code snippets.
+- **Hybrid Contest Engine (`/api/contests`)**: Hybrid sourcing of college championships and live external competitive programming rounds with one-click enrollment.
+- **Activity Heatmap & Streak Engine (`/api/student/activity`)**: Aggregates 52-week activity matrices from `DailySnapshot` and computes consecutive day streak counts.
+- **Auth Session Persistence & "Remember Me"**: NextAuth configured for 30-day session lifetime with local storage email persistence on the login screen.
+- **`AuthProvider` Client Wrapper (`src/components/providers/AuthProvider.tsx`)**: Wraps NextAuth `SessionProvider` around the app for auto-refresh on window focus and multi-tab sync.
+
+### Changed
+- **Zero Dummy Data in Production**: Removed all fake students, generated mock snapshots, and demo buttons. Cleaned `prisma/seed.ts` and purged all dummy tables.
+- **No Mock Fallbacks in Production (`src/lib/api.ts` & `src/lib/constants.ts`)**: Removed fallback constants `LEADERBOARD_USERS`, `DEPARTMENT_STATS`, `FAKE_EDITORIALS`, `FAKE_CONTESTS`, `SYNCED_PLATFORM_PROFILES`, and `CODOLIO_STATS` in favor of clean empty array returns.
+- **Signup Validation (`/api/auth/signup`)**: Pre-validates roll number uniqueness to prevent unhandled database constraint conflicts and provides clean error reporting.
+
 ---
 
 ## [1.2.0-cron-sync] - 2026-08-16

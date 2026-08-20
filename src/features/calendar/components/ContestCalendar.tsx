@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -13,7 +13,7 @@ export interface ContestEvent {
   id: string;
   title: string;
   time: string;
-  platform: 'Codeforces' | 'LeetCode' | 'CodeChef' | 'AtCoder' | 'NSEC';
+  platform: 'Codeforces' | 'LeetCode' | 'CodeChef' | 'AtCoder' | 'NSEC' | string;
   badge: string;
   duration: string;
   ratedFor: string;
@@ -21,158 +21,84 @@ export interface ContestEvent {
   type: 'major' | 'regular';
 }
 
-// Multi-month contest database (July, August, September 2026) keyed by "YYYY-MM-DD"
-export const CONTEST_DATABASE: Record<string, ContestEvent[]> = {
-  // August 2026
-  '2026-08-01': [
-    {
-      id: 'lc-bw-137',
-      title: 'LeetCode Biweekly Contest 137',
-      time: '20:00 IST',
-      duration: '1.5 hrs',
-      platform: 'LeetCode',
-      badge: 'Registered 🎯',
-      ratedFor: 'All Users (Global)',
-      url: 'https://leetcode.com/contest',
-      type: 'major',
-    },
-  ],
-  '2026-08-02': [
-    {
-      id: 'lc-w-410',
-      title: 'LeetCode Weekly Contest 410',
-      time: '08:00 IST',
-      duration: '1.5 hrs',
-      platform: 'LeetCode',
-      badge: 'Registered 🎯',
-      ratedFor: 'All Users (Global)',
-      url: 'https://leetcode.com/contest',
-      type: 'major',
-    },
-  ],
-  '2026-08-05': [
-    {
-      id: 'nsec-avahan-26',
-      title: 'NSEC Avahan Cup 2026 (Internal Championship)',
-      time: '20:00 - 22:30 IST',
-      duration: '2.5 hrs',
-      platform: 'NSEC',
-      badge: 'Championship 🏆',
-      ratedFor: 'NSEC College Students (2.0x Multiplier)',
-      url: 'https://nsec.ac.in/cp',
-      type: 'major',
-    },
-  ],
-  '2026-08-08': [
-    {
-      id: 'abc-365',
-      title: 'AtCoder Beginner Contest 365',
-      time: '17:30 IST',
-      duration: '1.6 hrs',
-      platform: 'AtCoder',
-      badge: 'Rated <2800 ⭐',
-      ratedFor: 'Beginner & Intermediate',
-      url: 'https://atcoder.jp',
-      type: 'major',
-    },
-  ],
-  '2026-08-12': [
-    {
-      id: 'cf-950-div2',
-      title: 'Codeforces Round #950 (Div. 2 & Div. 1)',
-      time: '20:05 IST',
-      duration: '2.0 hrs',
-      platform: 'Codeforces',
-      badge: 'Registered 🔥',
-      ratedFor: 'Div. 1 & Div. 2 Users',
-      url: 'https://codeforces.com',
-      type: 'major',
-    },
-  ],
-  '2026-08-15': [
-    {
-      id: 'lc-bw-138',
-      title: 'LeetCode Biweekly Contest 138',
-      time: '20:00 IST',
-      duration: '1.5 hrs',
-      platform: 'LeetCode',
-      badge: 'Scheduled 🎯',
-      ratedFor: 'All Users (Global)',
-      url: 'https://leetcode.com',
-      type: 'major',
-    },
-  ],
-  '2026-08-19': [
-    {
-      id: 'cc-start-150',
-      title: 'CodeChef Starters 150 (Div. 1, 2, 3)',
-      time: '20:00 IST',
-      duration: '2.0 hrs',
-      platform: 'CodeChef',
-      badge: 'Registered ⭐',
-      ratedFor: 'All Divisions',
-      url: 'https://codechef.com',
-      type: 'major',
-    },
-  ],
-  '2026-08-23': [
-    {
-      id: 'cf-951-div3',
-      title: 'Codeforces Round #951 (Div. 3)',
-      time: '20:05 IST',
-      duration: '2.25 hrs',
-      platform: 'Codeforces',
-      badge: 'Rated <1600 ⚡',
-      ratedFor: 'Div. 3 Users',
-      url: 'https://codeforces.com',
-      type: 'major',
-    },
-  ],
-  '2026-08-26': [
-    {
-      id: 'lc-bw-139',
-      title: 'LeetCode Biweekly Contest 139',
-      time: '20:00 IST',
-      duration: '1.5 hrs',
-      platform: 'LeetCode',
-      badge: 'Scheduled 🎯',
-      ratedFor: 'All Users (Global)',
-      url: 'https://leetcode.com',
-      type: 'major',
-    },
-  ],
-  '2026-08-30': [
-    {
-      id: 'nsec-sprint-end',
-      title: 'NSEC August Sprint Finale',
-      time: '18:00 IST',
-      duration: '3.0 hrs',
-      platform: 'NSEC',
-      badge: 'Championship 🏆',
-      ratedFor: 'All NSEC Departments',
-      url: 'https://nsec.ac.in',
-      type: 'major',
-    },
-  ],
-};
-
 export function ContestCalendar() {
-  // Real dynamic Date state: default to August 4, 2026
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date(2026, 7, 1)); // Month 7 is August (0-indexed)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date(2026, 7, 5)); // Default selected Aug 5
+  const now = new Date();
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date(now.getFullYear(), now.getMonth(), 1));
+  const [selectedDate, setSelectedDate] = useState<Date>(now);
 
   const [contestDB, setContestDB] = useState<Record<string, ContestEvent[]>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [registeredMap, setRegisteredMap] = useState<Record<string, boolean>>({});
 
-  React.useEffect(() => {
-    // TODO: BACKEND INTEGRATION - Fetch events for currentMonth
-    // Example: fetch(`/api/events?month=${currentMonth.getMonth()}`).then(...)
-    setTimeout(() => {
-      setContestDB(CONTEST_DATABASE);
+  const fetchContests = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch('/api/contests');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.contests)) {
+          const grouped: Record<string, ContestEvent[]> = {};
+          const regMap: Record<string, boolean> = {};
+
+          data.contests.forEach((c: any) => {
+            const dateObj = new Date(c.startTime);
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            const dateKey = `${y}-${m}-${d}`;
+
+            const event: ContestEvent = {
+              id: c.id,
+              title: c.title,
+              time: dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              duration: c.duration,
+              platform: c.platform,
+              badge: c.badge || (c.isInternal ? 'Championship 🏆' : 'Rated Match'),
+              ratedFor: c.ratedFor || 'All Users',
+              url: c.url || '#',
+              type: 'major',
+            };
+
+            if (!grouped[dateKey]) grouped[dateKey] = [];
+            grouped[dateKey].push(event);
+
+            if (c.isRegisteredByMe) {
+              regMap[c.id] = true;
+            }
+          });
+
+          setContestDB(grouped);
+          setRegisteredMap(regMap);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch contests calendar from database:', err);
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
+  };
+
+  useEffect(() => {
+    fetchContests();
   }, [currentMonth]);
 
+  const handleRegister = async (contestId: string, url: string) => {
+    if (!url.startsWith('http')) {
+      try {
+        const res = await fetch('/api/contests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contestId }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setRegisteredMap((prev) => ({ ...prev, [contestId]: true }));
+        }
+      } catch (err) {
+        console.error('Registration failed:', err);
+      }
+    }
+  };
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -223,7 +149,7 @@ export function ContestCalendar() {
   };
 
   const handleToday = () => {
-    const today = new Date(2026, 7, 4); // Standardized today Aug 4, 2026
+    const today = new Date();
     setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
     setSelectedDate(today);
   };
@@ -303,7 +229,7 @@ export function ContestCalendar() {
         ))}
       </div>
 
-      {/* Dynamic Date Grid (Supports ANY month & leap years correctly!) */}
+      {/* Dynamic Date Grid (Supports ANY month & leap years correctly) */}
       <div className="grid grid-cols-7 gap-1.5 text-center">
         {calendarDays.map((dateObj, idx) => {
           if (!dateObj) {
@@ -311,24 +237,23 @@ export function ContestCalendar() {
           }
 
           const dateKey = formatDateKey(dateObj);
-          const hasContest = Boolean(CONTEST_DATABASE[dateKey]?.length);
+          const hasContest = Boolean(contestDB[dateKey]?.length);
           const isSelected = formatDateKey(selectedDate) === dateKey;
-          const isToday = dateKey === '2026-08-04'; // Simulated Today
+          const isToday = formatDateKey(new Date()) === dateKey;
 
           return (
             <button
               key={dateKey}
               type="button"
               onClick={() => setSelectedDate(dateObj)}
-              className={`h-10 w-full rounded-xl text-xs font-bold transition-all relative flex flex-col items-center justify-center cursor-pointer ${
-                isSelected
+              className={`h-10 w-full rounded-xl text-xs font-bold transition-all relative flex flex-col items-center justify-center cursor-pointer ${isSelected
                   ? 'bg-onyx text-white shadow-sm ring-2 ring-golden-sand scale-105 font-black z-10'
                   : hasContest
-                  ? 'bg-tomato-jam text-white shadow-2xs hover:scale-105 font-black'
-                  : isToday
-                  ? 'bg-golden-sand/30 text-onyx border-2 border-tomato-jam font-extrabold'
-                  : 'bg-[#FFF1D6] text-onyx hover:bg-onyx/10 border border-onyx/5'
-              }`}
+                    ? 'bg-tomato-jam text-white shadow-2xs hover:scale-105 font-black'
+                    : isToday
+                      ? 'bg-golden-sand/30 text-onyx border-2 border-tomato-jam font-extrabold'
+                      : 'bg-[#FFF1D6] text-onyx hover:bg-onyx/10 border border-onyx/5'
+                }`}
             >
               <span>{dateObj.getDate()}</span>
               {hasContest && (
@@ -346,7 +271,7 @@ export function ContestCalendar() {
             <span className="text-xs font-black text-onyx">
               {monthNames[selectedDate.getMonth()]} {selectedDate.getDate()}, {selectedDate.getFullYear()}
             </span>
-            {formatDateKey(selectedDate) === '2026-08-04' && (
+            {formatDateKey(selectedDate) === formatDateKey(new Date()) && (
               <span className="px-2 py-0.5 rounded-full bg-golden-sand/30 text-onyx text-[10px] font-extrabold">
                 TODAY
               </span>
@@ -359,57 +284,74 @@ export function ContestCalendar() {
 
         {eventsForSelectedDate.length > 0 ? (
           <div className="space-y-3">
-            {eventsForSelectedDate.map((ev) => (
-              <div
-                key={ev.id}
-                className="p-3 rounded-xl bg-white border border-onyx/12 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${getPlatformBadgeStyle(
-                        ev.platform
-                      )}`}
-                    >
-                      {ev.platform}
-                    </span>
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-golden-sand/20 text-tomato-jam">
-                      {ev.badge}
-                    </span>
-                  </div>
-                  <h4 className="text-xs font-black text-onyx leading-snug">
-                    {ev.title}
-                  </h4>
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-onyx/70">
-                    <span className="flex items-center gap-1 font-semibold text-onyx">
-                      <Clock className="w-3.5 h-3.5 text-tomato-jam" />
-                      {ev.time} ({ev.duration})
-                    </span>
-                    <span>•</span>
-                    <span>{ev.ratedFor}</span>
-                  </div>
-                </div>
-
-                <a
-                  href={ev.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3.5 py-1.5 rounded-xl bg-tomato-jam text-white text-xs font-bold hover:bg-red-700 transition-colors shrink-0 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+            {eventsForSelectedDate.map((ev) => {
+              const isRegistered = registeredMap[ev.id];
+              return (
+                <div
+                  key={ev.id}
+                  className="p-3 rounded-xl bg-white border border-onyx/12 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
-                  <span>Register</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
-            ))}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${getPlatformBadgeStyle(
+                          ev.platform
+                        )}`}
+                      >
+                        {ev.platform}
+                      </span>
+                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-golden-sand/20 text-tomato-jam">
+                        {isRegistered ? 'Registered 🎯' : ev.badge}
+                      </span>
+                    </div>
+                    <h4 className="text-xs font-black text-onyx leading-snug">
+                      {ev.title}
+                    </h4>
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-onyx/70">
+                      <span className="flex items-center gap-1 font-semibold text-onyx">
+                        <Clock className="w-3.5 h-3.5 text-tomato-jam" />
+                        {ev.time} ({ev.duration})
+                      </span>
+                      <span>•</span>
+                      <span>{ev.ratedFor}</span>
+                    </div>
+                  </div>
+
+                  {ev.url.startsWith('http') ? (
+                    <a
+                      href={ev.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3.5 py-1.5 rounded-xl bg-tomato-jam text-white text-xs font-bold hover:bg-red-700 transition-colors shrink-0 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <span>Open Link</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isRegistered}
+                      onClick={() => handleRegister(ev.id, ev.url)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors shrink-0 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs ${isRegistered
+                          ? 'bg-emerald-600 text-white cursor-default'
+                          : 'bg-tomato-jam text-white hover:bg-red-700'
+                        }`}
+                    >
+                      <span>{isRegistered ? 'Enrolled ✓' : 'Register'}</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="p-4 rounded-xl bg-white border border-onyx/12 text-center space-y-1">
             <div className="w-8 h-8 rounded-full bg-golden-sand/20 text-tomato-jam flex items-center justify-center mx-auto font-black text-xs">
               🎯
             </div>
-            <h4 className="text-xs font-black text-onyx">Open Training &amp; Upsolving Day</h4>
+            <h4 className="text-xs font-black text-onyx">Open Practice &amp; Upsolving Day</h4>
             <p className="text-[11px] text-onyx/70 max-w-sm mx-auto">
-              No major external contests scheduled. Perfect day to practice Dynamic Programming or upsolve previous Codeforces Round #950 problems!
+              No contests scheduled on this date. Perfect day for practice and problem upsolving!
             </p>
           </div>
         )}

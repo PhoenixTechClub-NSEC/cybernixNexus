@@ -12,7 +12,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = (session.user as any).id;
+    const sessionUser = session.user as { id?: string };
+    const userId = sessionUser.id;
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
 
     const student = await prisma.student.findUnique({
       where: { userId },
@@ -37,10 +42,11 @@ export async function GET() {
     }
 
     return NextResponse.json({ student, user: student.user });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Internal server error';
     console.error('[GET /api/student Error]:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: errorMsg },
       { status: 500 }
     );
   }
@@ -54,7 +60,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = (session.user as any).id;
+    const sessionUser = session.user as { id?: string };
+    const userId = sessionUser.id;
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
+
     const body = await request.json();
 
     const {
@@ -66,6 +78,8 @@ export async function POST(request: Request) {
       codeforces,
       gfg,
       codechef,
+      github,
+      linkedin,
     } = body;
 
     if (!name || !rollNumber || !department || !graduationYear) {
@@ -75,29 +89,36 @@ export async function POST(request: Request) {
       );
     }
 
+    const parsedGradYear = Number(graduationYear);
+    const validGradYear = isNaN(parsedGradYear) ? 2026 : parsedGradYear;
+
     const student = await prisma.student.upsert({
       where: { userId },
       create: {
         userId,
-        name,
-        rollNumber,
-        department,
-        graduationYear: Number(graduationYear),
-        leetcode: leetcode || null,
-        codeforces: codeforces || null,
-        gfg: gfg || null,
-        codechef: codechef || null,
+        name: name.trim(),
+        rollNumber: rollNumber.trim(),
+        department: department.trim(),
+        graduationYear: validGradYear,
+        leetcode: typeof leetcode === 'string' && leetcode.trim() ? leetcode.trim() : null,
+        codeforces: typeof codeforces === 'string' && codeforces.trim() ? codeforces.trim() : null,
+        gfg: typeof gfg === 'string' && gfg.trim() ? gfg.trim() : null,
+        codechef: typeof codechef === 'string' && codechef.trim() ? codechef.trim() : null,
+        github: typeof github === 'string' && github.trim() ? github.trim() : null,
+        linkedin: typeof linkedin === 'string' && linkedin.trim() ? linkedin.trim() : null,
         profileComplete: true,
       },
       update: {
-        name,
-        rollNumber,
-        department,
-        graduationYear: Number(graduationYear),
-        leetcode: leetcode || null,
-        codeforces: codeforces || null,
-        gfg: gfg || null,
-        codechef: codechef || null,
+        name: name.trim(),
+        rollNumber: rollNumber.trim(),
+        department: department.trim(),
+        graduationYear: validGradYear,
+        leetcode: typeof leetcode === 'string' && leetcode.trim() ? leetcode.trim() : null,
+        codeforces: typeof codeforces === 'string' && codeforces.trim() ? codeforces.trim() : null,
+        gfg: typeof gfg === 'string' && gfg.trim() ? gfg.trim() : null,
+        codechef: typeof codechef === 'string' && codechef.trim() ? codechef.trim() : null,
+        ...(typeof github === 'string' ? { github: github.trim() || null } : {}),
+        ...(typeof linkedin === 'string' ? { linkedin: linkedin.trim() || null } : {}),
         profileComplete: true,
       },
     });
@@ -106,8 +127,9 @@ export async function POST(request: Request) {
     let syncResults = null;
     try {
       syncResults = await syncStudentStats(student.id);
-    } catch (syncError: any) {
-      console.warn(`[Student Save] Platform sync warning for student ${student.id}:`, syncError.message);
+    } catch (syncError: unknown) {
+      const errorMsg = syncError instanceof Error ? syncError.message : 'Scraping warning';
+      console.warn(`[Student Save] Platform sync warning for student ${student.id}:`, errorMsg);
     }
 
     return NextResponse.json({
@@ -115,10 +137,11 @@ export async function POST(request: Request) {
       student,
       stats: syncResults,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Internal server error';
     console.error('[POST /api/student Error]:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: errorMsg },
       { status: 500 }
     );
   }

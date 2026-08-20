@@ -2,9 +2,10 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { SmoothScrollProvider } from '@/components/providers/SmoothScrollProvider';
 import { UserProvider } from '@/components/providers/UserProvider';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'CP Platform',
+  title: 'Cybernix Nexus',
   description:
     'Multi-platform competitive programming rating synchronization, inter-department battles, level unlocking mascot tiers, and editorial hub for NSEC.',
   icons: {
@@ -18,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-<html lang="en" className="light" suppressHydrationWarning>
+    <html lang="en" className="light" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -28,9 +29,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-[#FFF1D6] text-onyx antialiased selection:bg-tomato-jam selection:text-white" suppressHydrationWarning>
-        <UserProvider>
-          <SmoothScrollProvider>{children}</SmoothScrollProvider>
-        </UserProvider>
+        <AuthProvider>
+          <UserProvider>
+            <SmoothScrollProvider>{children}</SmoothScrollProvider>
+          </UserProvider>
+        </AuthProvider>
       </body>
     </html>
   );

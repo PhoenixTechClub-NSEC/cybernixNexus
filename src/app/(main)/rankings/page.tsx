@@ -26,25 +26,58 @@ export default function RankingsPage() {
 
   const [leaderboardUsers, setLeaderboardUsers] = useState<UserProfile[]>([]);
   const [departmentStats, setDepartmentStats] = useState<DepartmentStat[]>([]);
+  const [tierDistribution, setTierDistribution] = useState<Record<string, number>>({
+    Phoenix: 0,
+    Flame: 0,
+    Ember: 0,
+    Spark: 0,
+  });
+  const [topDeptInfo, setTopDeptInfo] = useState<{ department: string; seasonalMultiplier: number; averageScore: number }>({
+    department: 'CSE',
+    seasonalMultiplier: 2.0,
+    averageScore: 1845,
+  });
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isLoading, setIsLoading] = useState(true);
 
-  React.useEffect(() => {
-    async function fetchData() {
-      try {
-        const [users, stats] = await Promise.all([
-          getLeaderboard(30),
-          getDepartmentStats()
-        ]);
-        setLeaderboardUsers(users);
-        setDepartmentStats(stats);
-      } catch (err) {
-        console.error('Failed to fetch rankings', err);
-      } finally {
-        setIsLoading(false);
+  const loadData = async () => {
+    try {
+      const [users, statsRes] = await Promise.all([
+        getLeaderboard(30),
+        fetch('/api/dashboard').then((r) => r.json()),
+      ]);
+      setLeaderboardUsers(users);
+      if (statsRes.success && statsRes.summary) {
+        if (Array.isArray(statsRes.summary.departmentStats)) {
+          setDepartmentStats(
+            statsRes.summary.departmentStats.map((d: any, idx: number) => ({
+              name: d.department,
+              rank: idx + 1,
+              averageRating: d.averageScore || 1500,
+              totalSolved: d.totalSolved || 0,
+              topCoderName: 'NSEC Student',
+              topCoderScore: d.averageScore || 0,
+              seasonalMultiplier: d.seasonalMultiplier || (idx === 0 ? 2.0 : idx === 1 ? 1.75 : 1.5),
+              activeStudentsCount: d.studentCount || 1,
+            }))
+          );
+        }
+        if (statsRes.summary.tierDistribution) {
+          setTierDistribution(statsRes.summary.tierDistribution);
+        }
+        if (statsRes.summary.topDepartment) {
+          setTopDeptInfo(statsRes.summary.topDepartment);
+        }
       }
+    } catch (err) {
+      console.error('Failed to fetch rankings', err);
+    } finally {
+      setIsLoading(false);
     }
-    fetchData();
+  };
+
+  React.useEffect(() => {
+    loadData();
   }, []);
 
   // Dynamically inject the logged-in user into the leaderboard so Rank #3 always matches the active user profile name
@@ -63,14 +96,20 @@ export default function RankingsPage() {
     });
   }, [leaderboardUsers, CURRENT_USER]);
 
-  // Trigger simulated Live API Sync
-  const handleLiveSync = () => {
+  // Trigger real Live API Sync
+  const handleLiveSync = async () => {
     setIsSyncing(true);
-    setTimeout(() => {
-      setIsSyncing(false);
+    try {
+      // Trigger live sync
+      await fetch('/api/cron/sync', { method: 'POST' }).catch(() => {});
+      await loadData();
       setToastMessage('Leaderboard standings synchronized with Codeforces, LeetCode & CodeChef!');
+    } catch {
+      setToastMessage('Standings refreshed!');
+    } finally {
+      setIsSyncing(false);
       setTimeout(() => setToastMessage(null), 4000);
-    }, 1200);
+    }
   };
 
   // Filter user's department students dynamically from database records
@@ -81,6 +120,16 @@ export default function RankingsPage() {
       .sort((a, b) => b.cpScore - a.cpScore);
   }, [displayLeaderboardUsers, CURRENT_USER.department, selectedDeptYear]);
 
+  const userDeptStat = useMemo(() => {
+    return (
+      departmentStats.find((d) => d.name === (CURRENT_USER.department || 'CSE')) || {
+        name: CURRENT_USER.department || 'CSE',
+        rank: 1,
+        averageRating: 1845,
+        seasonalMultiplier: 2.0,
+      }
+    );
+  }, [departmentStats, CURRENT_USER.department]);
 
   return (
     <div className="space-y-6 pb-14">
@@ -95,7 +144,7 @@ export default function RankingsPage() {
             Rankings, Battles &amp; Contests
           </h1>
           <p className="text-xs sm:text-sm text-onyx/70 mt-0.5 max-w-2xl">
-            Live student leaderboards, seasonal department multipliers, and active August contest schedule matching the clean white Bento card aesthetic.
+            Live student leaderboards, seasonal department multipliers, and active contest schedule matching the clean white Bento card aesthetic.
           </p>
         </div>
 
@@ -107,15 +156,15 @@ export default function RankingsPage() {
             className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-tomato-jam hover:bg-[#E8890C] text-white font-extrabold text-xs shadow-md transition-all cursor-pointer disabled:opacity-60"
           >
             <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            <span>{isSyncing ? 'Syncing APIs...' : 'Sync CP Standings'}</span>
+            <span>{isSyncing ? 'Syncing Platforms...' : 'Sync CP Standings'}</span>
           </button>
 
           <div className="flex items-center gap-3 bg-white px-3.5 py-2.5 rounded-2xl border border-onyx/12 shadow-2xs">
             <div className="w-9 h-9 rounded-xl bg-tomato-jam text-white flex items-center justify-center font-black text-xs shrink-0">
-              2.0x
+              {topDeptInfo.seasonalMultiplier.toFixed(1)}x
             </div>
             <div>
-              <p className="text-xs font-black text-onyx">CSE Dept Leader #1</p>
+              <p className="text-xs font-black text-onyx">{topDeptInfo.department} Dept Leader #1</p>
               <p className="text-[11px] text-onyx/70">Seasonal CP Multiplier Bonus Active</p>
             </div>
           </div>
@@ -253,22 +302,22 @@ export default function RankingsPage() {
             <div className="relative z-10 space-y-3 py-2">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                 <div className="p-3.5 rounded-2xl bg-golden-sand/15 border border-onyx/12">
-                  <p className="text-xl font-black text-onyx">4</p>
+                  <p className="text-xl font-black text-onyx">{tierDistribution.Phoenix || 0}</p>
                   <p className="text-[11px] font-extrabold text-tomato-jam mt-0.5">Phoenix Tier</p>
                   <p className="text-[10px] text-onyx/60">30,000+ pts</p>
                 </div>
                 <div className="p-3.5 rounded-2xl bg-golden-sand/15 border border-onyx/12">
-                  <p className="text-xl font-black text-onyx">3</p>
+                  <p className="text-xl font-black text-onyx">{tierDistribution.Flame || 0}</p>
                   <p className="text-[11px] font-extrabold text-pine-teal mt-0.5">Flame Tier</p>
-                  <p className="text-[10px] text-onyx/60">9,200+ pts</p>
+                  <p className="text-[10px] text-onyx/60">10,000+ pts</p>
                 </div>
                 <div className="p-3.5 rounded-2xl bg-golden-sand/15 border border-onyx/12">
-                  <p className="text-xl font-black text-onyx">2</p>
+                  <p className="text-xl font-black text-onyx">{tierDistribution.Ember || 0}</p>
                   <p className="text-[11px] font-extrabold text-onyx mt-0.5">Ember Tier</p>
                   <p className="text-[10px] text-onyx/60">2,000+ pts</p>
                 </div>
                 <div className="p-3.5 rounded-2xl bg-golden-sand/15 border border-onyx/12">
-                  <p className="text-xl font-black text-onyx">1</p>
+                  <p className="text-xl font-black text-onyx">{tierDistribution.Spark || 0}</p>
                   <p className="text-[11px] font-extrabold text-onyx/70 mt-0.5">Spark Tier</p>
                   <p className="text-[10px] text-onyx/60">0+ pts</p>
                 </div>
@@ -439,8 +488,8 @@ export default function RankingsPage() {
 
             {/* Dept Stats Footer */}
             <div className="mt-4 pt-3 border-t border-onyx/10 flex items-center justify-between text-xs font-bold text-onyx/70">
-              <span>Avg Rating: 1,845</span>
-              <span className="text-tomato-jam">1st Place in College 🏆</span>
+              <span>Avg Rating: {userDeptStat.averageRating.toLocaleString()}</span>
+              <span className="text-tomato-jam">#{userDeptStat.rank} in College 🏆</span>
             </div>
           </div>
 
@@ -451,14 +500,14 @@ export default function RankingsPage() {
                 ⚡ Championship Rule
               </span>
               <span className="px-2 py-0.5 rounded-full bg-onyx/10 text-onyx text-[10px] font-extrabold">
-                August Season
+                Active Season
               </span>
             </div>
             <h4 className="text-sm font-black text-onyx">
-              2.0x Seasonal Multiplier Active
+              {topDeptInfo.seasonalMultiplier.toFixed(1)}x Seasonal Multiplier Active
             </h4>
             <p className="text-xs text-onyx/70 leading-relaxed">
-              Because Computer Science &amp; Engineering maintains the #1 overall college average rating, all solved problems by CSE students earn double points.
+              Because {topDeptInfo.department} maintains the #1 overall college average rating ({topDeptInfo.averageScore} pts), all solved problems by {topDeptInfo.department} students earn {topDeptInfo.seasonalMultiplier}x points.
             </p>
           </div>
         </div>

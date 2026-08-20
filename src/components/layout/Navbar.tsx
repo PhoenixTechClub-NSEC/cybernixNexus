@@ -1,8 +1,7 @@
 /* eslint-disable react-hooks/refs */
-/* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -16,6 +15,8 @@ import {
   X,
   Sparkles,
   ChevronRight,
+  LogOut,
+  Settings,
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -26,8 +27,27 @@ gsap.registerPlugin(useGSAP);
 
 export function Navbar() {
   const pathname = usePathname();
-  const { user: CURRENT_USER } = useUser();
+  const { user: CURRENT_USER, logout } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [topDept, setTopDept] = useState({ name: 'CSE', multiplier: 2.0 });
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/dashboard')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success && data.summary?.topDepartment) {
+          setTopDept({
+            name: data.summary.topDepartment.department || 'CSE',
+            multiplier: data.summary.topDepartment.seasonalMultiplier || 2.0,
+          });
+        }
+      })
+      .catch(() => { });
+  }, []);
+
+  const streakMultiplier = (1 + (CURRENT_USER.currentStreak || 1) * 0.01).toFixed(2);
 
   const headerRef = useRef<HTMLElement>(null);
   const navbarFlameRef = useRef<HTMLImageElement>(null);
@@ -190,7 +210,7 @@ export function Navbar() {
     });
   });
 
-  const handleProfileEnter = contextSafe((e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleProfileEnter = contextSafe((e: React.MouseEvent<HTMLElement>) => {
     const img = e.currentTarget.querySelector('.avatar-img');
     gsap.to(e.currentTarget, {
       scale: 1.03,
@@ -207,7 +227,7 @@ export function Navbar() {
     }
   });
 
-  const handleProfileLeave = contextSafe((e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleProfileLeave = contextSafe((e: React.MouseEvent<HTMLElement>) => {
     const img = e.currentTarget.querySelector('.avatar-img');
     gsap.to(e.currentTarget, {
       scale: 1,
@@ -235,9 +255,9 @@ export function Navbar() {
           <Sparkles className="w-3.5 h-3.5 animate-pulse text-golden-sand shrink-0" />
           <span className="truncate max-w-[200px] sm:max-w-none">
             <strong className="hidden sm:inline">NSEC Avahan League 2026: </strong>
-            <span className="hidden sm:inline">CSE currently leads Dept Battles with a </span>
-            <span className="sm:hidden">CSE leads with </span>
-            <span className="underline decoration-golden-sand">2.0x Bonus</span>!
+            <span className="hidden sm:inline">{topDept.name} currently leads Dept Battles with a </span>
+            <span className="sm:hidden">{topDept.name} leads with </span>
+            <span className="underline decoration-golden-sand">{topDept.multiplier.toFixed(1)}x Bonus</span>!
           </span>
           <Link
             href="/rankings"
@@ -255,13 +275,16 @@ export function Navbar() {
           {/* Logo */}
           <Link
             href="/dashboard"
+            onMouseEnter={handleLogoEnter}
+            onMouseLeave={handleLogoLeave}
             className="navbar-logo flex items-center gap-3 cursor-pointer"
           >
             <div className="flex items-center justify-center w-10 h-10 shrink-0">
               <img
+                ref={navbarFlameRef}
                 src="/pheonix_mod1.png"
                 alt="Phoenix Logo"
-                className="w-10 h-10 object-contain drop-shadow-sm scale-[3]"
+                className="w-10 h-10 object-contain drop-shadow-sm scale-[3] will-change-transform"
                 width="40"
                 height="40"
                 fetchPriority="high"
@@ -270,7 +293,7 @@ export function Navbar() {
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-xl tracking-tight text-onyx">
-                  CP <span className="text-tomato-jam">Platform</span>
+                  Cybernix <span className="text-tomato-jam">Nexus</span>
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider bg-golden-sand/20 text-onyx px-1.5 py-0.5 rounded border border-onyx/12">
                   NSEC
@@ -295,8 +318,8 @@ export function Navbar() {
                   onMouseEnter={handleNavEnter}
                   onMouseLeave={handleNavLeave}
                   className={`navbar-nav-item inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors duration-150 will-change-transform ${isActive
-                      ? 'bg-golden-sand/20 text-tomato-jam font-semibold shadow-2xs border border-onyx/12'
-                      : 'text-onyx/70 hover:bg-golden-sand/12 hover:text-onyx'
+                    ? 'bg-golden-sand/20 text-tomato-jam font-semibold shadow-2xs border border-onyx/12'
+                    : 'text-onyx/70 hover:bg-golden-sand/12 hover:text-onyx'
                     }`}
                 >
                   <Icon
@@ -316,7 +339,7 @@ export function Navbar() {
               onMouseEnter={handleStreakEnter}
               onMouseLeave={handleStreakLeave}
               className="navbar-pill flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-golden-sand/15 border border-onyx/12 text-onyx text-xs font-bold shadow-2xs cursor-pointer will-change-transform"
-              title="Daily Streak Multiplier: +1.34x (Caps at 1.60x for 60-day streak)"
+              title={`Daily Streak Multiplier: +${streakMultiplier}x (Caps at 1.60x for 60-day streak)`}
             >
               <Flame
                 ref={streakFlameRef}
@@ -324,7 +347,7 @@ export function Navbar() {
               />
               <span>{CURRENT_USER.currentStreak}-Day Streak</span>
               <span className="text-[10px] bg-tomato-jam text-white px-1.5 py-0.2 rounded-full">
-                1.34x
+                {streakMultiplier}x
               </span>
             </div>
 
@@ -343,34 +366,80 @@ export function Navbar() {
               </span>
             </div>
 
-            {/* Profile Pill */}
-            <Link
-              href="/profile"
-              onMouseEnter={handleProfileEnter}
-              onMouseLeave={handleProfileLeave}
-              suppressHydrationWarning
-              className="navbar-pill flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl border border-onyx/12 hover:border-tomato-jam/50 hover:bg-golden-sand/10 transition-colors duration-200 will-change-transform"
-            >
-              <img
-                src={CURRENT_USER.avatar}
-                alt={CURRENT_USER.name}
-                className="avatar-img w-8 h-8 rounded-full object-cover ring-2 ring-tomato-jam/40 will-change-transform"
-                fetchPriority="high"
-              />
-              <div className="text-left">
-                <div className="flex items-center gap-1">
-                  <span className="text-xs font-bold text-onyx leading-none">
-                    {CURRENT_USER.name}
-                  </span>
-                  <span className="text-[10px] font-semibold text-tomato-jam bg-golden-sand/20 px-1 rounded">
-                    {CURRENT_USER.department}
-                  </span>
+            {/* Profile Dropdown Container */}
+            <div className="relative" ref={profileDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setProfileDropdownOpen((prev) => !prev)}
+                onMouseEnter={handleProfileEnter}
+                onMouseLeave={handleProfileLeave}
+                suppressHydrationWarning
+                className="navbar-pill flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl border border-onyx/12 hover:border-tomato-jam/50 hover:bg-golden-sand/10 transition-colors duration-200 will-change-transform cursor-pointer"
+              >
+                <img
+                  src={CURRENT_USER.avatar}
+                  alt={CURRENT_USER.name}
+                  className="avatar-img w-8 h-8 rounded-full object-cover ring-2 ring-tomato-jam/40 will-change-transform"
+                  fetchPriority="high"
+                />
+                <div className="text-left">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold text-onyx leading-none">
+                      {CURRENT_USER.name}
+                    </span>
+                    <span className="text-[10px] font-semibold text-tomato-jam bg-golden-sand/20 px-1 rounded">
+                      {CURRENT_USER.department}
+                    </span>
+                  </div>
+                  <div className="mt-0.5">
+                    <LevelBadge level={CURRENT_USER.level} tier={CURRENT_USER.tier} size="sm" />
+                  </div>
                 </div>
-                <div className="mt-0.5">
-                  <LevelBadge level={CURRENT_USER.level} tier={CURRENT_USER.tier} size="sm" />
+              </button>
+
+              {/* Desktop Profile Dropdown Menu */}
+              {profileDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-white border border-onyx/12 shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-4 py-2 border-b border-onyx/10">
+                    <p className="text-xs font-black text-onyx truncate">{CURRENT_USER.name}</p>
+                    <p className="text-[11px] text-onyx/60 truncate">{CURRENT_USER.email || `${CURRENT_USER.department} Student`}</p>
+                  </div>
+
+                  <div className="py-1">
+                    <Link
+                      href="/profile"
+                      onClick={() => setProfileDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-onyx hover:bg-golden-sand/20 transition-colors"
+                    >
+                      <User className="w-4 h-4 text-tomato-jam" />
+                      <span>View Profile</span>
+                    </Link>
+                    <Link
+                      href="/settings"
+                      onClick={() => setProfileDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-onyx hover:bg-golden-sand/20 transition-colors"
+                    >
+                      <Settings className="w-4 h-4 text-onyx/70" />
+                      <span>Settings</span>
+                    </Link>
+                  </div>
+
+                  <div className="pt-1 border-t border-onyx/10">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        logout();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-black text-tomato-jam hover:bg-tomato-jam/10 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </Link>
+              )}
+            </div>
           </div>
 
           {/* Mobile hamburger button */}
@@ -432,8 +501,8 @@ export function Navbar() {
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${isActive
-                      ? 'bg-golden-sand/20 text-tomato-jam font-semibold'
-                      : 'text-onyx/70 hover:bg-golden-sand/12'
+                    ? 'bg-golden-sand/20 text-tomato-jam font-semibold'
+                    : 'text-onyx/70 hover:bg-golden-sand/12'
                     }`}
                 >
                   <Icon className={`w-5 h-5 ${isActive ? 'text-tomato-jam' : 'text-onyx/70'}`} />
@@ -441,6 +510,20 @@ export function Navbar() {
                 </Link>
               );
             })}
+
+            <div className="pt-2 mt-2 border-t border-onyx/10">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold text-tomato-jam hover:bg-tomato-jam/10 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Sign Out</span>
+              </button>
+            </div>
           </nav>
         </div>
       )}

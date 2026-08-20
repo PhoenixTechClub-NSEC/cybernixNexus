@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 import { UserProfile } from '@/types';
 
 const INITIAL_EMPTY_USER: UserProfile = {
@@ -11,7 +12,7 @@ const INITIAL_EMPTY_USER: UserProfile = {
   email: '',
   bio: 'NSEC Student Programmer',
   department: 'CSE',
-  year: '3rd Year',
+  year: '1st Year',
   collegeRank: 0,
   deptRank: 0,
   level: 1,
@@ -32,11 +33,13 @@ interface UserContextType {
   user: UserProfile;
   updateUser: (updates: Partial<UserProfile>) => void;
   refreshUser: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
+  const { status } = useSession();
   const [user, setUser] = useState<UserProfile>(INITIAL_EMPTY_USER);
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -56,23 +59,48 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const level = Math.max(1, Math.min(100, Math.floor(totalScore / 500)));
         const tier = totalScore > 30000 ? 'Phoenix' : totalScore > 10000 ? 'Flame' : totalScore > 2000 ? 'Ember' : 'Spark';
 
+        let currentStreak = totalSolved > 0 ? 1 : 0;
+        let maxStreak = totalSolved > 0 ? 1 : 0;
+
+        try {
+          const actRes = await fetch(`/api/student/activity?studentId=${s.id}`);
+          if (actRes.ok) {
+            const actData = await actRes.json();
+            if (actData.success) {
+              currentStreak = actData.currentStreak || currentStreak;
+              maxStreak = actData.maxStreak || maxStreak;
+            }
+          }
+        } catch {
+          // Fallback gracefully
+        }
+
+        const gradYear = s.graduationYear || 2026;
+        const currentYear = new Date().getFullYear();
+        const calculatedYear = Math.max(1, Math.min(4, 4 - (gradYear - currentYear)));
+        const yearString = `${calculatedYear === 1 ? '1st' : calculatedYear === 2 ? '2nd' : calculatedYear === 3 ? '3rd' : '4th'} Year`;
+
         setUser({
           id: s.id,
           name: s.name || s.user?.email?.split('@')[0] || 'NSEC Student',
           username: s.user?.email ? s.user.email.split('@')[0] : 'student',
           avatar: dbImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
           email: s.user?.email || '',
-          bio: `${s.department} '${String(s.graduationYear || 2026).slice(2)} @ NSEC`,
+          bio: `${s.department} '${String(gradYear).slice(2)} @ NSEC`,
           department: s.department || 'CSE',
-          year: `${2026 - ((s.graduationYear || 2026) - 4)}th Year`,
+          year: yearString,
+          rollNumber: s.rollNumber || '',
+          graduationYear: gradYear,
+          github: s.github || '',
+          linkedin: s.linkedin || '',
           collegeRank: s.stats?.ranking ?? 0,
           deptRank: s.stats?.departmentRanking ?? 0,
           level,
           tier,
           cpScore: totalScore,
           nextTierScore: 26500,
-          currentStreak: totalSolved > 0 ? 1 : 0,
-          maxStreak: totalSolved > 0 ? 1 : 0,
+          currentStreak,
+          maxStreak,
           contestWinRate: 0,
           solvedByDifficulty: {
             easy: Math.round(lcSolved * 0.4),
@@ -115,14 +143,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    try {
-      localStorage.removeItem('cybernix_user');
-    } catch {
-      // Ignore
-    }
     setIsHydrated(true);
     fetchStudentProfile();
-  }, []);
+  }, [status]);
 
   const updateUser = (updates: Partial<UserProfile>) => {
     setUser((prev) => ({ ...prev, ...updates }));
@@ -132,16 +155,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
     await fetchStudentProfile();
   };
 
+  const logout = async () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {
+      // Ignore
+    }
+    setUser(INITIAL_EMPTY_USER);
+    await signOut({ callbackUrl: '/login', redirect: true });
+  };
+
   if (!isHydrated) {
     return (
-      <UserContext.Provider value={{ user: INITIAL_EMPTY_USER, updateUser, refreshUser }}>
+      <UserContext.Provider value={{ user: INITIAL_EMPTY_USER, updateUser, refreshUser, logout }}>
         {children}
       </UserContext.Provider>
     );
   }
 
   return (
-    <UserContext.Provider value={{ user, updateUser, refreshUser }}>
+    <UserContext.Provider value={{ user, updateUser, refreshUser, logout }}>
       {children}
     </UserContext.Provider>
   );

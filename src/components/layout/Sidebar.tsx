@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/refs */
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -10,11 +10,8 @@ import {
   BookOpen,
   User,
   Calendar,
-  Plus,
   Settings,
-  Flame,
-  X,
-  CheckCircle2,
+  LogOut,
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -26,13 +23,9 @@ const ACTIVE_BG_COLOR = "#FFF1D6";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user: CURRENT_USER, updateUser } = useUser();
-  const [isHovered, setIsHovered] = useState(false);
-
+  const { user: CURRENT_USER, logout } = useUser();
 
   const sidebarRef = useRef<HTMLElement>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
-  const toastRef = useRef<HTMLDivElement>(null);
   const logoFlameRef = useRef<HTMLImageElement>(null);
   const navRef = useRef<HTMLElement>(null);
 
@@ -154,7 +147,7 @@ export function Sidebar() {
 
 
 
-  const handleDeptEnter = contextSafe((e: React.MouseEvent<HTMLDivElement>) => {
+  const handleDeptEnter = contextSafe((e: React.MouseEvent<HTMLElement>) => {
     const badge = e.currentTarget.querySelector('.dept-badge');
     if (badge) {
       gsap.to(badge, {
@@ -166,7 +159,7 @@ export function Sidebar() {
     }
   });
 
-  const handleDeptLeave = contextSafe((e: React.MouseEvent<HTMLDivElement>) => {
+  const handleDeptLeave = contextSafe((e: React.MouseEvent<HTMLElement>) => {
     const badge = e.currentTarget.querySelector('.dept-badge');
     if (badge) {
       gsap.to(badge, {
@@ -238,18 +231,21 @@ export function Sidebar() {
           {/* Brand Logo with Interactive GSAP Micro-Animation */}
           <Link
             href="/dashboard"
+            onMouseEnter={handleLogoEnter}
+            onMouseLeave={handleLogoLeave}
             className="sidebar-logo flex items-center gap-3 px-3 mb-6 cursor-pointer"
           >
             <div className="flex items-center justify-center w-10 h-10 shrink-0">
               <img
+                ref={logoFlameRef}
                 src="/pheonix_mod1.png"
                 alt="Phoenix Logo"
-                className="w-10 h-10 object-contain drop-shadow-md scale-[3] brightness-0 invert"
+                className="w-10 h-10 object-contain drop-shadow-md scale-[3] brightness-0 invert will-change-transform"
               />
             </div>
             <div>
               <span className="font-extrabold text-2xl tracking-tight text-white flex items-center gap-1">
-                CP <span className="text-golden-sand">Platform</span>
+                Cybernix <span className="text-golden-sand">Nexus</span>
               </span>
               <span className="text-[9px] font-bold uppercase tracking-wider text-golden-sand/60 block mt-0.5">
                 NSEC PHOENIX CLUB . cybernix
@@ -268,26 +264,23 @@ export function Sidebar() {
                 <div
                   key={item.name}
                   data-active={isActive}
-                  className={`nav-item-wrapper relative w-full ${
-                    isActive ? 'translate-x-[1px]' : ''
-                  }`}
+                  className={`nav-item-wrapper relative w-full ${isActive ? 'translate-x-[1px]' : ''
+                    }`}
                 >
                   <Link
                     href={item.href}
                     onMouseEnter={handleNavEnter}
                     onMouseLeave={handleNavLeave}
-                    className={`flex items-center gap-3.5 text-base relative z-10 py-3.5 pl-5 ${
-                      isActive
+                    className={`flex items-center gap-3.5 text-base relative z-10 py-3.5 pl-5 ${isActive
                         ? 'text-onyx font-black pr-0'
                         : 'text-white/60 font-bold hover:text-white hover:bg-white/5 rounded-[1.5rem] mr-5 pr-4 transition-colors duration-200'
-                    }`}
+                      }`}
                   >
                     <Icon
-                      className={`nav-icon w-5 h-5 shrink-0 will-change-transform ${
-                        isActive
+                      className={`nav-icon w-5 h-5 shrink-0 will-change-transform ${isActive
                           ? 'text-tomato-jam stroke-[2.5]'
                           : 'text-golden-sand/60 transition-colors duration-200'
-                      }`}
+                        }`}
                     />
                     <span>{item.name}</span>
                   </Link>
@@ -304,40 +297,50 @@ export function Sidebar() {
               Teams &amp; League
             </span>
             <div className="space-y-1">
-              <div
+              <Link
+                href="/rankings"
                 onMouseEnter={handleDeptEnter}
                 onMouseLeave={handleDeptLeave}
                 className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-white bg-tomato-jam/20 border border-tomato-jam/30 cursor-pointer transition-colors hover:bg-tomato-jam/30"
               >
                 <div className="flex items-center gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-tomato-jam animate-pulse"></span>
-                  <span>CSE Dept</span>
+                  <span>{CURRENT_USER.department || 'CSE'} Dept</span>
                 </div>
                 <span className="dept-badge text-xs font-black text-golden-sand bg-onyx px-2 py-0.5 rounded-md border border-golden-sand/30 will-change-transform">
-                  2.0x
+                  #{CURRENT_USER.deptRank || 1}
                 </span>
-              </div>
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* Settings Bottom Item */}
-        <div className="sidebar-section pt-4 border-t border-white/10">
+        {/* Settings & Sign Out Bottom Items */}
+        <div className="sidebar-section pt-4 border-t border-white/10 space-y-1">
           <div data-active={pathname === '/settings'} className={`nav-item-wrapper relative w-full ${pathname === '/settings' ? 'translate-x-[1px]' : ''}`}>
             <Link
               href="/settings"
               onMouseEnter={handleSettingsEnter}
               onMouseLeave={handleSettingsLeave}
-              className={`flex items-center gap-3.5 text-base relative z-10 py-3.5 pl-5 ${
-                pathname === '/settings'
+              className={`flex items-center gap-3.5 text-base relative z-10 py-3 pl-5 ${pathname === '/settings'
                   ? 'text-onyx font-black pr-0'
                   : 'text-white/50 font-bold hover:text-white hover:bg-white/5 rounded-[1.5rem] mr-5 pr-4 transition-colors duration-200'
-              }`}
+                }`}
             >
               <Settings className={`settings-cog w-5 h-5 shrink-0 will-change-transform ${pathname === '/settings' ? 'text-tomato-jam stroke-[2.5]' : ''}`} />
               <span>Settings</span>
             </Link>
           </div>
+
+          <button
+            type="button"
+            onClick={() => logout()}
+            className="w-full flex items-center gap-3.5 text-base relative z-10 py-3 pl-5 text-white/50 font-bold hover:text-tomato-jam hover:bg-white/5 rounded-[1.5rem] mr-5 pr-4 transition-colors duration-200 cursor-pointer"
+            title="Sign out and clear session"
+          >
+            <LogOut className="w-5 h-5 shrink-0 text-tomato-jam/80" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </aside>
 

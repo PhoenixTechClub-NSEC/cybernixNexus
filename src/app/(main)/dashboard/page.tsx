@@ -5,7 +5,6 @@ import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   WEEKLY_VELOCITY_DATA,
-  SYNCED_PLATFORM_PROFILES,
 } from '@/lib/constants';
 import { useUser } from '@/components/providers/UserProvider';
 import {
@@ -383,7 +382,7 @@ export default function DashboardPage() {
     }
   };
 
-  const rawPlatforms = CURRENT_USER.platforms && CURRENT_USER.platforms.length > 0 ? CURRENT_USER.platforms : SYNCED_PLATFORM_PROFILES;
+  const rawPlatforms = CURRENT_USER.platforms || [];
   const normalizedPlatforms = rawPlatforms.map((p: any, idx: number) => {
     const platName = p.platform || p.name || 'Platform';
     const meta = getPlatformMeta(platName);
@@ -428,7 +427,7 @@ export default function DashboardPage() {
           <div className="relative z-10 max-w-md sm:max-w-lg space-y-2">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
               <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-golden-sand/20 text-tomato-jam border border-pine-teal/30 inline-block">
-                🔥 34-Day Streak
+                🔥 {CURRENT_USER.currentStreak || 1}-Day Streak
               </span>
               <span className="text-[10px] sm:text-xs text-pine-teal font-semibold">
                 {CURRENT_USER.department} Dept • Rank #{CURRENT_USER.collegeRank} College

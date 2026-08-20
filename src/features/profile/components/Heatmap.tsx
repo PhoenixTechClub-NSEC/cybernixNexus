@@ -10,37 +10,39 @@ interface HeatmapProps {
 }
 
 export function Heatmap({
-  currentStreak = 34,
-  maxStreak = 45,
-  totalSolved = 939,
-}: HeatmapProps) {
+  currentStreak: initialStreak = 0,
+  maxStreak: initialMaxStreak = 0,
+  totalSolved: initialTotal = 0,
+}: Partial<HeatmapProps>) {
   const [hoveredDay, setHoveredDay] = useState<{
     date: string;
     count: number;
   } | null>(null);
 
-  // Generate 52 weeks of mock daily data (0 to 6 problems per day)
-  const weeks = 52;
-  const daysPerWeek = 7;
-  const gridData: number[][] = [];
-  const todayIndex = weeks * daysPerWeek - 1;
+  const [gridData, setGridData] = useState<number[][]>([]);
+  const [currentStreak, setCurrentStreak] = useState<number>(initialStreak);
+  const [maxStreak, setMaxStreak] = useState<number>(initialMaxStreak);
+  const [totalSolved, setTotalSolved] = useState<number>(initialTotal);
 
-  for (let w = 0; w < weeks; w++) {
-    const weekCol: number[] = [];
-    for (let d = 0; d < daysPerWeek; d++) {
-      const idx = w * daysPerWeek + d;
-      // Make the last 34 days consecutive green (current streak)
-      if (idx >= todayIndex - currentStreak + 1) {
-        // Solved between 1 and 6 problems
-        weekCol.push(((idx % 5) + 1));
-      } else if (idx % 4 === 0 || idx % 7 === 1 || idx % 11 === 0) {
-        weekCol.push(0); // blank day
-      } else {
-        weekCol.push(((idx % 4) + 1));
+  React.useEffect(() => {
+    const fetchActivity = async () => {
+      try {
+        const res = await fetch('/api/student/activity');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.gridData)) {
+            setGridData(data.gridData);
+            setCurrentStreak(data.currentStreak);
+            setMaxStreak(data.maxStreak);
+            setTotalSolved(data.totalSolved);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load student activity:', err);
       }
-    }
-    gridData.push(weekCol);
-  }
+    };
+    fetchActivity();
+  }, []);
 
   const getCellColor = (count: number) => {
     if (count === 0) return 'bg-pine-teal/10 hover:bg-pine-teal/20';
