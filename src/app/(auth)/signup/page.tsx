@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import {
   Flame,
   CheckCircle2,
@@ -24,6 +24,14 @@ import { useUser } from '@/components/providers/UserProvider';
 export default function SignupPage() {
   const router = useRouter();
   const { refreshUser } = useUser();
+  const { status } = useSession();
+
+  // Automatically redirect if already logged in
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace('/dashboard');
+    }
+  }, [status, router]);
 
   // User & Identity Fields
   const [firstName, setFirstName] = useState('');

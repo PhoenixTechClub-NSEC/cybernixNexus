@@ -160,6 +160,7 @@ export default function ProfilePage() {
 
           {/* ACTIVITY HEATMAP */}
           <Heatmap
+            studentId={CURRENT_USER.id}
             currentStreak={CURRENT_USER.currentStreak}
             maxStreak={CURRENT_USER.maxStreak}
             totalSolved={CURRENT_USER.solvedByDifficulty.total}

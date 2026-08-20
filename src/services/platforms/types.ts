@@ -4,6 +4,7 @@ export interface LeetCodeFetchResult {
   medium: number;
   hard: number;
   rating: number | null;
+  submissionCalendar?: Record<string, number>;
 }
 
 export interface CodeforcesFetchResult {
@@ -14,6 +15,7 @@ export interface CodeforcesFetchResult {
   solved: number;
   avatar: string | null;
   contribution: number | null;
+  dailySubmissions?: Record<string, number>;
 }
 
 export interface GfgFetchResult {

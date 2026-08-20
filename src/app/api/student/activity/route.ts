@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { syncStudentStats } from '@/services/platforms';
 
 export async function GET(req: Request) {
   try {
@@ -38,22 +39,35 @@ export async function GET(req: Request) {
         maxStreak: 0,
         totalSolved: 0,
         gridData: Array.from({ length: 52 }, () => Array(7).fill(0)),
+        dayDetails: [],
       });
     }
 
-    // Fetch all DailySnapshots for this student
-    const snapshots = await prisma.dailySnapshot.findMany({
+    // Check if student has snapshots; if not and platform handles exist, trigger dynamic sync
+    let snapshots = await prisma.dailySnapshot.findMany({
       where: { studentId: student.id },
       orderBy: { date: 'asc' },
     });
 
+    if (snapshots.length === 0 && (student.leetcode || student.codeforces)) {
+      try {
+        await syncStudentStats(student.id);
+        snapshots = await prisma.dailySnapshot.findMany({
+          where: { studentId: student.id },
+          orderBy: { date: 'asc' },
+        });
+      } catch (syncErr) {
+        console.warn('[Activity Route] Auto-sync on empty snapshots warning:', syncErr);
+      }
+    }
+
     const totalSolved = (student.stats?.leetcodeSolved || 0) + (student.stats?.codeforcesSolved || 0);
 
-    // Build date-indexed map of solved problem counts
+    // Build date-indexed map of real daily solved problem counts
     const dateMap = new Map<string, number>();
     snapshots.forEach((snap) => {
       const dateKey = snap.date.toISOString().split('T')[0];
-      const daySolves = Math.max(1, Math.round((snap.leetcodeSolved + snap.codeforcesSolved) / 30));
+      const daySolves = (snap.leetcodeSolved || 0) + (snap.codeforcesSolved || 0);
       dateMap.set(dateKey, daySolves);
     });
 
@@ -68,47 +82,100 @@ export async function GET(req: Request) {
     startDate.setDate(today.getDate() - (weeks * daysPerWeek - 1));
 
     const gridData: number[][] = [];
-    let currentStreakCount = 0;
-    let maxStreakCount = 0;
-    let tempStreak = 0;
+    const dayDetails: { date: string; formattedDate: string; count: number }[][] = [];
+    let periodSolves = 0;
 
     for (let w = 0; w < weeks; w++) {
       const weekCol: number[] = [];
+      const weekDetails: { date: string; formattedDate: string; count: number }[] = [];
+
       for (let d = 0; d < daysPerWeek; d++) {
         const dayOffset = w * daysPerWeek + d;
         const targetDate = new Date(startDate);
         targetDate.setDate(startDate.getDate() + dayOffset);
         const dateKey = targetDate.toISOString().split('T')[0];
 
-        let count = dateMap.get(dateKey) || 0;
-
-        // If within snapshot range and total solved > 0, ensure realistic non-empty activity
-        if (count === 0 && totalSolved > 0) {
-          const dayIndex = targetDate.getDate();
-          if (targetDate <= today && (dayIndex % 2 === 0 || dayIndex % 3 === 0)) {
-            count = (dayIndex % 4) + 1;
-          }
-        }
-
-        // Today or future
-        if (targetDate > today) {
-          count = 0;
-        }
+        // Future dates have 0 activity
+        const count = targetDate > today ? 0 : (dateMap.get(dateKey) || 0);
 
         weekCol.push(count);
+        weekDetails.push({
+          date: dateKey,
+          formattedDate: targetDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+          count,
+        });
 
-        if (count > 0) {
-          tempStreak++;
-          if (tempStreak > maxStreakCount) maxStreakCount = tempStreak;
-        } else {
-          tempStreak = 0;
-        }
+        periodSolves += count;
       }
+
       gridData.push(weekCol);
+      dayDetails.push(weekDetails);
     }
 
-    currentStreakCount = Math.max(1, Math.min(tempStreak || 14, 60));
-    maxStreakCount = Math.max(currentStreakCount, maxStreakCount, 21);
+    // 1. Calculate current active streak (counting backwards from today or yesterday)
+    let currentStreakCount = 0;
+    const todayKey = today.toISOString().split('T')[0];
+    const todaySolves = dateMap.get(todayKey) || 0;
+
+    const streakCursor = new Date(today);
+    if (todaySolves > 0) {
+      // User solved today, count today and walk backward
+      while (true) {
+        const key = streakCursor.toISOString().split('T')[0];
+        const count = dateMap.get(key) || 0;
+        if (count > 0) {
+          currentStreakCount++;
+          streakCursor.setDate(streakCursor.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+    } else {
+      // User hasn't solved today yet, check if yesterday was active to maintain ongoing streak
+      streakCursor.setDate(streakCursor.getDate() - 1);
+      const yesterdayKey = streakCursor.toISOString().split('T')[0];
+      const yesterdaySolves = dateMap.get(yesterdayKey) || 0;
+
+      if (yesterdaySolves > 0) {
+        while (true) {
+          const key = streakCursor.toISOString().split('T')[0];
+          const count = dateMap.get(key) || 0;
+          if (count > 0) {
+            currentStreakCount++;
+            streakCursor.setDate(streakCursor.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+      }
+    }
+
+    // 2. Calculate max streak across chronological dates
+    let maxStreakCount = 0;
+    let runningStreak = 0;
+    const iterDate = new Date(startDate);
+
+    while (iterDate <= today) {
+      const key = iterDate.toISOString().split('T')[0];
+      const count = dateMap.get(key) || 0;
+      if (count > 0) {
+        runningStreak++;
+        if (runningStreak > maxStreakCount) {
+          maxStreakCount = runningStreak;
+        }
+      } else {
+        runningStreak = 0;
+      }
+      iterDate.setDate(iterDate.getDate() + 1);
+    }
+
+    if (currentStreakCount > maxStreakCount) {
+      maxStreakCount = currentStreakCount;
+    }
 
     return NextResponse.json({
       success: true,
@@ -116,8 +183,10 @@ export async function GET(req: Request) {
       studentName: student.name,
       currentStreak: currentStreakCount,
       maxStreak: maxStreakCount,
-      totalSolved,
+      totalSolved: totalSolved || periodSolves,
+      periodSolves,
       gridData,
+      dayDetails,
     });
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : 'Failed to fetch student activity';

@@ -57,6 +57,8 @@ export async function fetchCodeforcesStats(handle: string): Promise<CodeforcesFe
     }
 
     const solvedSet = new Set<string>();
+    const dailySubmissions: Record<string, number> = {};
+
     for (const sub of statusJson.result) {
       if (sub.verdict === 'OK' && sub.problem) {
         const p = sub.problem;
@@ -64,11 +66,16 @@ export async function fetchCodeforcesStats(handle: string): Promise<CodeforcesFe
           ? `${p.contestId}-${p.index}`
           : (p.problemsetName ? `${p.problemsetName}-${p.index}` : `${p.name || p.index}`);
         solvedSet.add(problemKey);
+
+        if (sub.creationTimeSeconds) {
+          const dateStr = new Date(sub.creationTimeSeconds * 1000).toISOString().split('T')[0];
+          dailySubmissions[dateStr] = (dailySubmissions[dateStr] || 0) + 1;
+        }
       }
     }
     const solved = solvedSet.size;
 
-    return { rating, maxRating, rank, maxRank, solved, avatar, contribution };
+    return { rating, maxRating, rank, maxRank, solved, avatar, contribution, dailySubmissions };
   } catch (error: any) {
     console.error(`[Codeforces Fetch Error] Handle: ${handle} - ${error.message}`);
     throw error;

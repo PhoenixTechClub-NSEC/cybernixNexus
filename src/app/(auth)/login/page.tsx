@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import {
   Flame,
   ArrowRight,
@@ -18,6 +18,7 @@ import { useUser } from '@/components/providers/UserProvider';
 export default function LoginPage() {
   const router = useRouter();
   const { refreshUser } = useUser();
+  const { status } = useSession();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +26,13 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Automatically redirect if already logged in
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace('/dashboard');
+    }
+  }, [status, router]);
 
   // Restore remembered email on mount
   useEffect(() => {
