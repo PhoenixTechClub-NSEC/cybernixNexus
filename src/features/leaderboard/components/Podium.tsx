@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import React, { useRef } from 'react';
@@ -99,14 +98,41 @@ export function Podium({ users, onSelectUser }: PodiumProps) {
     }
   });
 
-  if (!first || !second || !third) return null;
-
-  const renderPodiumItem = (user: UserProfile, position: 1 | 2 | 3) => {
+  const renderPodiumItem = (user: UserProfile | undefined, position: 1 | 2 | 3) => {
     const isFirst = position === 1;
     const heightClass = isFirst ? 'h-32 sm:h-48' : position === 2 ? 'h-24 sm:h-36' : 'h-20 sm:h-28';
     const numColor = isFirst ? 'text-golden-sand/40' : position === 2 ? 'text-slate-300/40' : 'text-amber-600/40';
     const borderGlow = isFirst ? 'border-golden-sand shadow-[0_0_15px_rgba(255,159,28,0.15)]' : 'border-white/10';
     const bgFrost = isFirst ? 'bg-white/20' : position === 2 ? 'bg-white/10' : 'bg-white/5';
+
+    if (!user) {
+      return (
+        <div
+          key={`placeholder-${position}`}
+          className={`podium-item flex flex-col items-center justify-end w-full will-change-transform opacity-60 ${
+            isFirst ? 'order-2 z-10' : position === 2 ? 'order-1' : 'order-3'
+          }`}
+        >
+          <div className="relative mb-3 z-10 flex flex-col items-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-dashed border-white/30 flex items-center justify-center bg-white/5 text-white/40 text-xl font-bold">
+              ?
+            </div>
+            <div className="absolute -bottom-3 -right-2 text-xl drop-shadow-md">
+              {isFirst ? '🥇' : position === 2 ? '🥈' : '🥉'}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center mb-2 px-1 text-center">
+            <span className="font-bold text-xs sm:text-sm text-white/50">Open Spot</span>
+            <span className="text-[10px] text-white/40 font-medium">Rank #{position}</span>
+          </div>
+
+          <div className={`w-full rounded-t-2xl backdrop-blur-md flex flex-col items-center justify-center pt-3 relative ${bgFrost} border ${borderGlow} border-b-0 ${heightClass}`}>
+            <span className={`text-3xl sm:text-5xl font-black ${numColor}`}>{position}</span>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div

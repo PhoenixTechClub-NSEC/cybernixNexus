@@ -3,7 +3,7 @@ import { fetchLeetCodeStats } from './leetcode';
 import { fetchCodeforcesStats } from './codeforces';
 import { fetchGfgStats } from './gfg';
 import { fetchCodechefStats } from './codechef';
-import { PlatformStatsResult } from './types';
+import { PlatformStatsResult, LeetCodeFetchResult, CodeforcesFetchResult } from './types';
 
 
 //will change the logic later using the formula discussed
@@ -100,8 +100,8 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
 
   try {
     const [lcRes, cfRes, gfgRes, ccRes] = await Promise.allSettled([
-      student.leetcode ? fetchLeetCodeStats(student.leetcode) : Promise.resolve({ solved: 0, easy: 0, medium: 0, hard: 0, rating: null }),
-      student.codeforces ? fetchCodeforcesStats(student.codeforces) : Promise.resolve({ rating: null, maxRating: null, rank: null, maxRank: null, solved: 0, avatar: null, contribution: null }),
+      student.leetcode ? fetchLeetCodeStats(student.leetcode) : Promise.resolve<LeetCodeFetchResult>({ solved: 0, easy: 0, medium: 0, hard: 0, rating: null, submissionCalendar: {} }),
+      student.codeforces ? fetchCodeforcesStats(student.codeforces) : Promise.resolve<CodeforcesFetchResult>({ rating: null, maxRating: null, rank: null, maxRank: null, solved: 0, avatar: null, contribution: null, dailySubmissions: {} }),
       student.gfg ? fetchGfgStats(student.gfg) : Promise.resolve({ score: null }),
       student.codechef ? fetchCodechefStats(student.codechef) : Promise.resolve({ rating: null }),
     ]);
@@ -197,9 +197,68 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       },
     });
 
-    // Create or update today's DailySnapshot for historical velocity calculation
+    // Collect all historical daily solves from platforms
+    const dailyMap = new Map<string, { lc: number; cf: number }>();
+
+    // 1. LeetCode submissionCalendar
+    if (lcRes.status === 'fulfilled' && lcRes.value.submissionCalendar) {
+      for (const [timestampStr, count] of Object.entries(lcRes.value.submissionCalendar)) {
+        const ts = parseInt(timestampStr, 10);
+        if (!isNaN(ts) && ts > 0 && typeof count === 'number') {
+          const dateKey = new Date(ts * 1000).toISOString().split('T')[0];
+          const entry = dailyMap.get(dateKey) || { lc: 0, cf: 0 };
+          entry.lc += count;
+          dailyMap.set(dateKey, entry);
+        }
+      }
+    }
+
+    // 2. Codeforces dailySubmissions
+    if (cfRes.status === 'fulfilled' && cfRes.value.dailySubmissions) {
+      for (const [dateKey, count] of Object.entries(cfRes.value.dailySubmissions)) {
+        if (typeof count === 'number' && count > 0) {
+          const entry = dailyMap.get(dateKey) || { lc: 0, cf: 0 };
+          entry.cf += count;
+          dailyMap.set(dateKey, entry);
+        }
+      }
+    }
+
+    // Upsert historical DailySnapshots
+    const upsertPromises = Array.from(dailyMap.entries()).map(([dateStr, counts]) => {
+      const snapDate = new Date(`${dateStr}T00:00:00.000Z`);
+      const dayScore = counts.lc * 10 + counts.cf * 15;
+      return prisma.dailySnapshot.upsert({
+        where: {
+          studentId_date: {
+            studentId: student.id,
+            date: snapDate,
+          },
+        },
+        create: {
+          studentId: student.id,
+          date: snapDate,
+          leetcodeSolved: counts.lc,
+          codeforcesSolved: counts.cf,
+          gfgScore: 0,
+          codechefRating: 0,
+          totalScore: dayScore,
+        },
+        update: {
+          leetcodeSolved: counts.lc,
+          codeforcesSolved: counts.cf,
+          totalScore: dayScore,
+        },
+      });
+    });
+
+    await Promise.all(upsertPromises);
+
+    // Create or update today's DailySnapshot
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
+    const todayActivity = dailyMap.get(todayStr) || { lc: 0, cf: 0 };
 
     await prisma.dailySnapshot.upsert({
       where: {
@@ -211,15 +270,15 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       create: {
         studentId: student.id,
         date: today,
-        leetcodeSolved,
-        codeforcesSolved,
+        leetcodeSolved: todayActivity.lc,
+        codeforcesSolved: todayActivity.cf,
         gfgScore: gfgScore ?? 0,
         codechefRating: codechefRating ?? 0,
         totalScore,
       },
       update: {
-        leetcodeSolved,
-        codeforcesSolved,
+        leetcodeSolved: todayActivity.lc,
+        codeforcesSolved: todayActivity.cf,
         gfgScore: gfgScore ?? 0,
         codechefRating: codechefRating ?? 0,
         totalScore,

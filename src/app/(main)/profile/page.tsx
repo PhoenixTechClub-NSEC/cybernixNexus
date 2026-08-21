@@ -42,6 +42,16 @@ export default function ProfilePage() {
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-golden-sand border border-white/15">
                   {CURRENT_USER.department} • {CURRENT_USER.year}
                 </span>
+                {CURRENT_USER.rollNumber && (
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/10 text-white/80 border border-white/15">
+                    Roll: {CURRENT_USER.rollNumber}
+                  </span>
+                )}
+                {CURRENT_USER.graduationYear && (
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/10 text-white/80 border border-white/15">
+                    Class of {CURRENT_USER.graduationYear}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-white/50 font-medium">
                 {CURRENT_USER.email} • Netaji Subhash Engineering College
@@ -150,6 +160,7 @@ export default function ProfilePage() {
 
           {/* ACTIVITY HEATMAP */}
           <Heatmap
+            studentId={CURRENT_USER.id}
             currentStreak={CURRENT_USER.currentStreak}
             maxStreak={CURRENT_USER.maxStreak}
             totalSolved={CURRENT_USER.solvedByDifficulty.total}

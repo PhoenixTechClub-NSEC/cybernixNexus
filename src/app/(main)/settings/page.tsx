@@ -3,30 +3,35 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useUser } from '@/components/providers/UserProvider';
-import { Camera, Save, Globe, Briefcase, Code2, Sparkles, UserCircle2, X, CheckCircle2, Plus, Loader2 } from 'lucide-react';
-
-const DUMMY_HANDLES: Record<string, string> = {
-  LeetCode: 'leetcode_dummy',
-  Codeforces: 'tourist',
-  GFG: 'gfg_dummy',
-  CodeChef: 'codechef_dummy',
-};
+import {
+  Save,
+  Globe,
+  Briefcase,
+  Code2,
+  Sparkles,
+  UserCircle2,
+  X,
+  Plus,
+  Loader2,
+  GraduationCap,
+  ImageIcon,
+} from 'lucide-react';
 
 const STANDARD_PLATFORMS = ['LeetCode', 'Codeforces', 'GFG', 'CodeChef'] as const;
 
 export default function SettingsPage() {
   const { user, updateUser, refreshUser } = useUser();
-  const [dpUrl, setDpUrl] = useState(user.avatar);
+  const [dpUrl, setDpUrl] = useState(user.avatar || '');
   const [bio, setBio] = useState(user.bio || '');
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState(user.name);
   const [username, setUsername] = useState(user.username || user.name.toLowerCase().replace(/\s+/g, '_'));
+  const [department, setDepartment] = useState<string>(user.department || 'CSE');
+  const [graduationYear, setGraduationYear] = useState<string>(String(user.graduationYear || 2026));
+  const [rollNumber, setRollNumber] = useState<string>(user.rollNumber || '');
 
-  const [socials, setSocials] = useState({
-    github: `https://github.com/${user.username || 'username'}`,
-    linkedin: `https://linkedin.com/in/${user.username || 'username'}`,
-  });
+  const [github, setGithub] = useState(user.github || '');
+  const [linkedin, setLinkedin] = useState(user.linkedin || '');
 
   const [platformHandles, setPlatformHandles] = useState<Record<string, string>>({
     LeetCode: '',
@@ -43,6 +48,11 @@ export default function SettingsPage() {
   });
   const initialNameRef = useRef<string>(user.name);
   const initialDpUrlRef = useRef<string>(user.avatar);
+  const initialDeptRef = useRef<string>(user.department || 'CSE');
+  const initialGradYearRef = useRef<string>(String(user.graduationYear || 2026));
+  const initialRollRef = useRef<string>(user.rollNumber || '');
+  const initialGithubRef = useRef<string>(user.github || '');
+  const initialLinkedinRef = useRef<string>(user.linkedin || '');
 
   const [isSaving, setIsSaving] = useState(false);
   const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
@@ -72,6 +82,26 @@ export default function SettingsPage() {
           if (s.name) {
             setName(s.name);
             initialNameRef.current = s.name;
+          }
+          if (s.department) {
+            setDepartment(s.department);
+            initialDeptRef.current = s.department;
+          }
+          if (s.graduationYear) {
+            setGraduationYear(String(s.graduationYear));
+            initialGradYearRef.current = String(s.graduationYear);
+          }
+          if (s.rollNumber) {
+            setRollNumber(s.rollNumber);
+            initialRollRef.current = s.rollNumber;
+          }
+          if (s.github) {
+            setGithub(s.github);
+            initialGithubRef.current = s.github;
+          }
+          if (s.linkedin) {
+            setLinkedin(s.linkedin);
+            initialLinkedinRef.current = s.linkedin;
           }
           if (s.user?.image) {
             setDpUrl(s.user.image);
@@ -116,11 +146,18 @@ export default function SettingsPage() {
       currentHandles.GFG.trim() !== (initial.GFG || '').trim() ||
       currentHandles.CodeChef.trim() !== (initial.CodeChef || '').trim();
 
+    const hasAcademicChanges =
+      department !== initialDeptRef.current ||
+      graduationYear !== initialGradYearRef.current ||
+      rollNumber.trim() !== initialRollRef.current.trim() ||
+      github.trim() !== initialGithubRef.current.trim() ||
+      linkedin.trim() !== initialLinkedinRef.current.trim();
+
     const hasProfileChanges =
       name !== initialNameRef.current || dpUrl !== initialDpUrlRef.current;
 
     // Do NOT trigger endpoint if no changes are done
-    if (!hasHandleChanges && !hasProfileChanges) {
+    if (!hasHandleChanges && !hasProfileChanges && !hasAcademicChanges) {
       setToastMessage('No changes detected in platform handles or profile.');
       setTimeout(() => setToastMessage(null), 3000);
       return;
@@ -137,7 +174,12 @@ export default function SettingsPage() {
           gfg: currentHandles.GFG,
           codechef: currentHandles.CodeChef,
           name,
-          avatar: dpUrl,
+          avatar: dpUrl.trim() || null,
+          department,
+          graduationYear: Number(graduationYear),
+          rollNumber: rollNumber.trim(),
+          github: github.trim() || null,
+          linkedin: linkedin.trim() || null,
         }),
       });
 
@@ -151,6 +193,11 @@ export default function SettingsPage() {
       initialHandlesRef.current = currentHandles;
       initialNameRef.current = name;
       initialDpUrlRef.current = dpUrl;
+      initialDeptRef.current = department;
+      initialGradYearRef.current = graduationYear;
+      initialRollRef.current = rollNumber.trim();
+      initialGithubRef.current = github.trim();
+      initialLinkedinRef.current = linkedin.trim();
 
       // Update global UserProvider state & trigger page re-sync
       const getExisting = (platform: string) =>
@@ -191,6 +238,11 @@ export default function SettingsPage() {
         name,
         username,
         bio,
+        department: department as any,
+        graduationYear: Number(graduationYear),
+        rollNumber: rollNumber.trim(),
+        github: github.trim(),
+        linkedin: linkedin.trim(),
         avatar: dpUrl || user.avatar,
         platforms: updatedPlatforms as any,
         cpScore: data.stats?.totalScore ?? user.cpScore,
@@ -203,7 +255,7 @@ export default function SettingsPage() {
       setToastMessage(
         data.hasHandleChanges
           ? 'Platform handles updated & stats fetched successfully!'
-          : 'Profile settings saved successfully!'
+          : 'Profile and academic settings saved successfully!'
       );
       setTimeout(() => setToastMessage(null), 4000);
     } catch (err: any) {
@@ -215,17 +267,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setDpUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12 animate-in fade-in zoom-in-95 duration-300">
       <div className="flex items-center gap-3 mb-6">
@@ -233,44 +274,56 @@ export default function SettingsPage() {
           <UserCircle2 className="w-5 h-5" />
         </div>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-onyx">Profile Settings</h1>
-          <p className="text-sm text-onyx/70 mt-0.5">Customize how you appear on the leaderboard and editorials.</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-onyx">Profile & Academic Settings</h1>
+          <p className="text-sm text-onyx/70 mt-0.5">Customize your personal info, academic department, and synced CP handles.</p>
         </div>
       </div>
 
+      {toastMessage && (
+        <div className="p-4 rounded-2xl bg-white border border-onyx/12 text-onyx font-bold text-sm shadow-md flex items-center gap-2.5">
+          <Sparkles className="w-4 h-4 text-tomato-jam" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       <form onSubmit={handleSave} className="space-y-8">
 
-        {/* Profile Picture Section */}
+        {/* Profile Picture (PFP URL Only) & Personal Identity */}
         <div className="rounded-3xl bg-white border border-onyx/12 p-6 sm:p-8 shadow-sm">
           <h2 className="text-lg font-black text-onyx flex items-center gap-2 mb-6">
-            <Camera className="w-5 h-5 text-tomato-jam" />
-            Profile Picture
+            <ImageIcon className="w-5 h-5 text-tomato-jam" />
+            Profile Picture & Identity
           </h2>
 
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
-            <div className="relative group shrink-0">
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                onChange={handleImageChange}
-                className="hidden"
-              />
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 mb-6">
+            <div className="shrink-0">
               <img
-                src={dpUrl || user.avatar}
+                src={dpUrl.trim() || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
                 alt="Profile Preview"
-                className="w-32 h-32 rounded-full object-cover ring-4 ring-golden-sand/30 shadow-lg group-hover:ring-tomato-jam transition-colors"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+                }}
+                className="w-24 h-24 rounded-full object-cover ring-4 ring-golden-sand/30 shadow-lg"
               />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 p-2.5 rounded-full bg-onyx text-white hover:bg-tomato-jam transition-colors shadow-lg cursor-pointer"
-              >
-                <Camera className="w-4 h-4" />
-              </button>
             </div>
 
             <div className="flex-1 w-full space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">
+                  Profile Picture URL (PFP)
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    value={dpUrl}
+                    onChange={(e) => setDpUrl(e.target.value)}
+                    placeholder="https://example.com/avatar.jpg"
+                    className="w-full px-4 py-3 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm font-medium text-onyx focus:outline-none focus:ring-2 focus:ring-tomato-jam/50 transition-shadow placeholder:text-onyx/40"
+                  />
+                </div>
+                <p className="text-xs text-onyx/60 mt-1">Provide a direct public image URL for your avatar.</p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">Display Name</label>
@@ -293,31 +346,65 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-onyx/60 leading-relaxed">
-                Click the camera icon on your profile picture to upload a new image or sync with Google profile.
-              </p>
             </div>
           </div>
         </div>
 
-        {/* Bio / Description Section */}
+        {/* Academic Details Section (Prisma: Student.department, graduationYear, rollNumber) */}
         <div className="rounded-3xl bg-white border border-onyx/12 p-6 sm:p-8 shadow-sm">
           <h2 className="text-lg font-black text-onyx flex items-center gap-2 mb-6">
-            <Sparkles className="w-5 h-5 text-golden-sand" />
-            About You
+            <GraduationCap className="w-5 h-5 text-tomato-jam" />
+            Academic & College Details
           </h2>
 
-          <div>
-            <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">Short Bio / Description</label>
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={4}
-              className="w-full px-4 py-3 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm font-medium text-onyx focus:outline-none focus:ring-2 focus:ring-tomato-jam/50 transition-shadow resize-none"
-              placeholder="Tell us about your coding journey..."
-            />
-            <div className="flex justify-end mt-2">
-              <span className="text-[10px] font-bold text-onyx/50">{bio.length} / 160 chars</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">
+                College Roll Number
+              </label>
+              <input
+                type="text"
+                value={rollNumber}
+                onChange={(e) => setRollNumber(e.target.value)}
+                placeholder="e.g. 10800121001"
+                className="w-full px-4 py-3 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm font-medium text-onyx focus:outline-none focus:ring-2 focus:ring-tomato-jam/50 transition-shadow placeholder:text-onyx/40"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">
+                Department
+              </label>
+              <select
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm font-medium text-onyx focus:outline-none focus:ring-2 focus:ring-tomato-jam/50 transition-shadow"
+              >
+                <option value="CSE">CSE (Computer Science)</option>
+                <option value="IT">IT (Information Technology)</option>
+                <option value="ECE">ECE (Electronics & Communication)</option>
+                <option value="AI&DS">AI & DS (Artificial Intelligence)</option>
+                <option value="EE">EE (Electrical Engineering)</option>
+                <option value="ME">ME (Mechanical Engineering)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">
+                Graduation Year
+              </label>
+              <select
+                value={graduationYear}
+                onChange={(e) => setGraduationYear(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm font-medium text-onyx focus:outline-none focus:ring-2 focus:ring-tomato-jam/50 transition-shadow"
+              >
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
+              </select>
             </div>
           </div>
         </div>
@@ -327,15 +414,15 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-black text-onyx flex items-center gap-2">
               <Code2 className="w-5 h-5 text-pine-teal" />
-              Social Profiles & Platform Usernames
+              Social Profiles & Coding Handles
             </h2>
             <button
               type="button"
               onClick={() => setIsPlatformModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-golden-sand/20 text-tomato-jam text-xs font-bold hover:bg-golden-sand/30 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-golden-sand/20 text-tomato-jam text-xs font-bold hover:bg-golden-sand/30 transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              Add new profile
+              Add platform
             </button>
           </div>
 
@@ -343,26 +430,28 @@ export default function SettingsPage() {
             {/* GitHub */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-xs font-bold text-onyx uppercase tracking-wider">
-                <Globe className="w-4 h-4 text-onyx" /> GitHub URL
+                <Globe className="w-4 h-4 text-onyx" /> GitHub Username
               </label>
               <input
-                type="url"
-                value={socials.github}
-                onChange={(e) => setSocials({ ...socials, github: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-onyx/30"
+                type="text"
+                value={github}
+                onChange={(e) => setGithub(e.target.value)}
+                placeholder="e.g. octocat"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-onyx/30 placeholder:text-onyx/30"
               />
             </div>
 
             {/* LinkedIn */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-xs font-bold text-onyx uppercase tracking-wider">
-                <Briefcase className="w-4 h-4 text-[#0A66C2]" /> LinkedIn URL
+                <Briefcase className="w-4 h-4 text-[#0A66C2]" /> LinkedIn Username
               </label>
               <input
-                type="url"
-                value={socials.linkedin}
-                onChange={(e) => setSocials({ ...socials, linkedin: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-onyx/30"
+                type="text"
+                value={linkedin}
+                onChange={(e) => setLinkedin(e.target.value)}
+                placeholder="e.g. satyaki-das"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-onyx/30 placeholder:text-onyx/30"
               />
             </div>
 
@@ -378,36 +467,52 @@ export default function SettingsPage() {
                   type="text"
                   value={platformHandles[plat] || ''}
                   onChange={(e) => setPlatformHandles({ ...platformHandles, [plat]: e.target.value })}
-                  placeholder={`e.g. ${DUMMY_HANDLES[plat] || 'username'}`}
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-onyx/30"
+                  placeholder="Enter handle"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-onyx/30 placeholder:text-onyx/30"
                 />
               </div>
             ))}
           </div>
         </div>
 
+        {/* Bio / Description Section */}
+        <div className="rounded-3xl bg-white border border-onyx/12 p-6 sm:p-8 shadow-sm">
+          <h2 className="text-lg font-black text-onyx flex items-center gap-2 mb-6">
+            <Sparkles className="w-5 h-5 text-golden-sand" />
+            About You
+          </h2>
+
+          <div>
+            <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">Short Bio / Description</label>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm font-medium text-onyx focus:outline-none focus:ring-2 focus:ring-tomato-jam/50 transition-shadow resize-none"
+              placeholder="Tell us about your competitive programming goals and interests..."
+            />
+            <div className="flex justify-end mt-2">
+              <span className="text-[10px] font-bold text-onyx/50">{bio.length} / 160 chars</span>
+            </div>
+          </div>
+        </div>
+
         {/* Save Actions */}
         <div className="flex items-center justify-end gap-4 pt-4 border-t border-onyx/10">
           <button
-            type="button"
-            className="px-6 py-2.5 rounded-xl text-sm font-bold text-onyx/70 hover:bg-onyx/5 transition-colors cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
             type="submit"
             disabled={isSaving}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-tomato-jam text-white text-sm font-black shadow-md hover:bg-[#E8890C] transition-colors cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 px-8 py-3.5 rounded-xl bg-tomato-jam text-white text-sm font-black shadow-md hover:bg-[#E8890C] transition-colors cursor-pointer disabled:opacity-50"
           >
             {isSaving ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Syncing Platforms...
+                Saving & Syncing...
               </>
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                Save Profile
+                Save Changes
               </>
             )}
           </button>
@@ -427,7 +532,7 @@ export default function SettingsPage() {
             </button>
 
             <h3 className="text-xl font-black text-slate-900 mb-1.5">
-              Connect CP Platform
+              Connect Coding Platform
             </h3>
             <p className="text-sm text-slate-500 mb-6">
               Sync your problem-solving statistics and automatic department multipliers.
@@ -446,52 +551,34 @@ export default function SettingsPage() {
                   <option value="Codeforces">Codeforces</option>
                   <option value="LeetCode">LeetCode</option>
                   <option value="CodeChef">CodeChef</option>
-                  <option value="GeeksforGeeks">GeeksforGeeks</option>
+                  <option value="GFG">GeeksforGeeks</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-black text-slate-700 mb-2 uppercase tracking-wider">
-                  Username / Handle
+                  Handle / Username
                 </label>
                 <input
                   type="text"
+                  required
                   value={platformHandle}
                   onChange={(e) => setPlatformHandle(e.target.value)}
-                  placeholder={`e.g. ${user.username}`}
-                  required
-                  className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-tomato-jam transition-shadow"
+                  placeholder="e.g. tourist"
+                  className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-tomato-jam transition-shadow placeholder:text-slate-400"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsPlatformModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl text-slate-600 font-bold text-sm hover:bg-slate-100 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-tomato-jam hover:bg-[#E8890C] text-white font-bold text-sm shadow-md shadow-tomato-jam/20 transition-colors cursor-pointer"
-                >
-                  Connect &amp; Verify
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="w-full py-4 rounded-2xl bg-tomato-jam text-white font-extrabold text-sm shadow-md hover:bg-[#E8890C] transition-colors cursor-pointer"
+              >
+                Add to Profiles
+              </button>
             </form>
           </div>
-        </div>
-      )}
-
-      {/* TOAST NOTIFICATION */}
-      {toastMessage && (
-        <div className="fixed bottom-8 right-8 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl bg-slate-900 text-white text-sm font-extrabold shadow-2xl border border-white/10 will-change-transform">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span>{toastMessage}</span>
         </div>
       )}
     </div>
   );
 }
-

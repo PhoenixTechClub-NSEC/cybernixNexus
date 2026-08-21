@@ -101,85 +101,164 @@ export default function EditorialsPage() {
     }
   };
 
-  const handleCreateEditorial = (e: React.FormEvent) => {
+  // Fetch editorials from API on mount
+  useEffect(() => {
+    const fetchEditorials = async () => {
+      try {
+        const res = await fetch('/api/editorials');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.editorials)) {
+            setEditorialsList(data.editorials);
+            const initialLikes: Record<string, number> = {};
+            const initialLikedIds: Record<string, boolean> = {};
+            const initialComments: Record<string, EditorialComment[]> = {};
+            data.editorials.forEach((ed: any) => {
+              initialLikes[ed.id] = ed.likesCount || 0;
+              initialLikedIds[ed.id] = ed.isLikedByMe || false;
+              initialComments[ed.id] = ed.comments || [];
+            });
+            setLikesMap(initialLikes);
+            setLikedIds(initialLikedIds);
+            setCommentsMap(initialComments);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load editorials:', err);
+      }
+    };
+    fetchEditorials();
+  }, []);
+
+  const handleCreateEditorial = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!postTitle.trim() || !postContent.trim()) {
       return;
     }
-    const newId = `ed-custom-${Date.now()}`;
-    const newEditorial: Editorial = {
-      id: newId,
-      title: postTitle.trim(),
-      problemUrl: postProblemName.trim() || 'https://codeforces.com',
-      platform: postPlatform,
-      difficulty: postDifficulty,
-      authorName: CURRENT_USER.name,
-      authorAvatar: CURRENT_USER.avatar,
-      authorDept: CURRENT_USER.department,
-      authorLevel: CURRENT_USER.level,
-      authorTier: CURRENT_USER.tier,
-      tags: postTags.length > 0 ? postTags : ['Algorithms'],
-      summary:
-        postSummary.trim() ||
-        postContent.slice(0, 150) + (postContent.length > 150 ? '...' : ''),
-      content: postContent.trim(),
-      codeSnippet: postCodeSnippet.trim() || '// Solution approach',
-      codeLanguage: 'C++',
-      likesCount: 1,
-      commentsCount: 0,
-      comments: [],
-      publishedAt: 'Just now',
-    };
 
-    setEditorialsList([newEditorial, ...editorialsList]);
-    setLikesMap({ ...likesMap, [newId]: 1 });
-    setLikedIds({ ...likedIds, [newId]: true });
-    setCommentsMap({ ...commentsMap, [newId]: [] });
-    setIsPublishModalOpen(false);
+    try {
+      const res = await fetch('/api/editorials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: postTitle.trim(),
+          problemUrl: postProblemName.trim() || 'https://codeforces.com',
+          platform: postPlatform,
+          difficulty: postDifficulty,
+          tags: postTags.length > 0 ? postTags : ['Algorithms'],
+          summary: postSummary.trim() || postContent.slice(0, 150) + (postContent.length > 150 ? '...' : ''),
+          content: postContent.trim(),
+          codeSnippet: postCodeSnippet.trim() || '// Solution approach',
+          codeLanguage: 'cpp',
+        }),
+      });
 
-    // Reset Form
-    setPostTitle('');
-    setPostProblemName('');
-    setPostSummary('');
-    setPostContent('');
-    setPostCodeSnippet(
-      '// Solution O(N log N)\n#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n  // Write your approach here\n}'
-    );
-    setPostTags(['Dynamic Programming', 'Algorithms']);
-    setPreviewTab('write');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.editorial) {
+          const ed = data.editorial;
+          const score = ed.author.stats?.totalScore || CURRENT_USER.cpScore || 0;
+          const level = Math.max(1, Math.min(100, Math.floor(score / 500)));
+          const tier = score > 30000 ? 'Phoenix' : score > 10000 ? 'Flame' : score > 2000 ? 'Ember' : 'Spark';
 
-    // Show Success Toast
-    setShowSuccessToast(true);
-    setTimeout(() => setShowSuccessToast(false), 5000);
-  };
+          const formattedNew: Editorial = {
+            id: ed.id,
+            title: ed.title,
+            problemUrl: ed.problemUrl || '',
+            platform: ed.platform,
+            difficulty: ed.difficulty,
+            authorName: ed.author.name,
+            authorAvatar: ed.author.user?.image || CURRENT_USER.avatar,
+            authorDept: ed.author.department,
+            authorLevel: level,
+            authorTier: tier,
+            tags: ed.tags,
+            summary: ed.summary,
+            content: ed.content,
+            codeSnippet: ed.codeSnippet,
+            codeLanguage: ed.codeLanguage,
+            likesCount: 0,
+            commentsCount: 0,
+            comments: [],
+            publishedAt: 'Just now',
+          };
 
-  const handleLike = (id: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (likedIds[id]) {
-      setLikedIds({ ...likedIds, [id]: false });
-      setLikesMap({ ...likesMap, [id]: (likesMap[id] || 1) - 1 });
-    } else {
-      setLikedIds({ ...likedIds, [id]: true });
-      setLikesMap({ ...likesMap, [id]: (likesMap[id] || 0) + 1 });
+          setEditorialsList([formattedNew, ...editorialsList]);
+          setLikesMap((prev) => ({ ...prev, [ed.id]: 0 }));
+          setLikedIds((prev) => ({ ...prev, [ed.id]: false }));
+          setCommentsMap((prev) => ({ ...prev, [ed.id]: [] }));
+          setIsPublishModalOpen(false);
+
+          // Reset Form
+          setPostTitle('');
+          setPostProblemName('');
+          setPostSummary('');
+          setPostContent('');
+          setPostCodeSnippet(
+            '// Solution O(N log N)\n#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n  // Write your approach here\n}'
+          );
+          setPostTags(['Dynamic Programming', 'Algorithms']);
+          setPreviewTab('write');
+
+          // Show Success Toast
+          setShowSuccessToast(true);
+          setTimeout(() => setShowSuccessToast(false), 5000);
+        }
+      }
+    } catch (err) {
+      console.error('Error creating editorial:', err);
     }
   };
 
-  const handleAddComment = (editorialId: string) => {
+  const handleLike = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const currentlyLiked = likedIds[id];
+    
+    // Optimistic UI update
+    setLikedIds((prev) => ({ ...prev, [id]: !currentlyLiked }));
+    setLikesMap((prev) => ({
+      ...prev,
+      [id]: Math.max(0, (prev[id] || 0) + (currentlyLiked ? -1 : 1)),
+    }));
+
+    try {
+      const res = await fetch(`/api/editorials/${id}/like`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setLikedIds((prev) => ({ ...prev, [id]: data.isLiked }));
+          setLikesMap((prev) => ({ ...prev, [id]: data.likesCount }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to toggle like:', err);
+    }
+  };
+
+  const handleAddComment = async (editorialId: string) => {
     if (!newCommentText.trim()) return;
-    const newComment = {
-      id: `c-${Date.now()}`,
-      authorName: CURRENT_USER.name,
-      authorAvatar: CURRENT_USER.avatar,
-      authorDept: CURRENT_USER.department,
-      content: newCommentText.trim(),
-      createdAt: 'Just now',
-      likes: 0,
-    };
-    setCommentsMap({
-      ...commentsMap,
-      [editorialId]: [newComment, ...(commentsMap[editorialId] || [])],
-    });
+    const textToSend = newCommentText.trim();
     setNewCommentText('');
+
+    try {
+      const res = await fetch(`/api/editorials/${editorialId}/comment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: textToSend }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.comment) {
+          setCommentsMap((prev) => ({
+            ...prev,
+            [editorialId]: [data.comment, ...(prev[editorialId] || [])],
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to post comment:', err);
+    }
   };
 
   const filteredEditorials = editorialsList.filter((item) => {

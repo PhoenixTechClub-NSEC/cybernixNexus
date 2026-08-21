@@ -75,6 +75,8 @@ model Student {
   codeforces      String?
   gfg             String?
   codechef        String?
+  github          String?
+  linkedin        String?
 
   profileComplete Boolean  @default(false)
   lastSyncedAt    DateTime?
@@ -87,6 +89,10 @@ model Student {
 
   dailySnapshots      DailySnapshot[]
   monthlyAchievements MonthlyAchievement[]
+  editorials          Editorial[]
+  editorialComments   EditorialComment[]
+  editorialLikes      EditorialLike[]
+  contestRegistrations ContestRegistration[]
 }
 
 model StudentStats {
@@ -170,4 +176,100 @@ model MonthlyAchievement {
   @@index([year, month])
   @@index([category])
 }
+
+model Editorial {
+  id           String             @id @default(cuid())
+  title        String
+  problemUrl   String?
+  platform     String             // "Codeforces" | "LeetCode" | "CodeChef" | "GFG" | "AtCoder" | "HackerRank"
+  difficulty   String             // "Easy" | "Medium" | "Hard"
+  tags         String[]           // Array of string tags
+  summary      String             @db.Text
+  content      String             @db.Text
+  codeSnippet  String             @db.Text
+  codeLanguage String             @default("cpp")
+
+  authorId     String
+  author       Student            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  comments     EditorialComment[]
+  likes        EditorialLike[]
+
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([platform])
+  @@index([difficulty])
+  @@index([authorId])
+  @@index([createdAt(sort: Desc)])
+}
+
+model EditorialComment {
+  id          String    @id @default(cuid())
+  content     String    @db.Text
+  editorialId String
+  editorial   Editorial @relation(fields: [editorialId], references: [id], onDelete: Cascade)
+
+  authorId    String
+  author      Student   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+
+  @@index([editorialId])
+  @@index([authorId])
+}
+
+model EditorialLike {
+  id          String    @id @default(cuid())
+  editorialId String
+  editorial   Editorial @relation(fields: [editorialId], references: [id], onDelete: Cascade)
+
+  studentId   String
+  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+
+  @@unique([editorialId, studentId])
+  @@index([editorialId])
+}
+
+model Contest {
+  id              String                @id @default(cuid())
+  title           String
+  platform        String                // "NSEC Internal" | "Codeforces" | "LeetCode" | "CodeChef" | "AtCoder"
+  startTime       DateTime
+  duration        String                // e.g. "3 hours", "2.5 hrs"
+  registeredCount Int                   @default(0)
+  isInternal      Boolean               @default(false)
+  url             String?
+  description     String?               @db.Text
+  badge           String?               // e.g. "Championship 🏆", "Rated Div. 2"
+  ratedFor        String?               // e.g. "All NSEC Departments", "Div. 1 & 2"
+  externalId      String?               @unique
+
+  registrations   ContestRegistration[]
+
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([startTime])
+  @@index([platform])
+  @@index([isInternal])
+}
+
+model ContestRegistration {
+  id        String   @id @default(cuid())
+  contestId String
+  contest   Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([contestId, studentId])
+  @@index([contestId])
+  @@index([studentId])
+}
+
 

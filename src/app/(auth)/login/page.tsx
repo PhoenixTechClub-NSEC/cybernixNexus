@@ -1,47 +1,97 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
-import { Flame, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { signIn, useSession } from 'next-auth/react';
+import {
+  Flame,
+  ArrowRight,
+  AlertCircle,
+  Loader2,
+  Eye,
+  EyeOff,
+  Check,
+} from 'lucide-react';
 import { useUser } from '@/components/providers/UserProvider';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('test@nsec.ac.in');
-  const [password, setPassword] = useState('password');
+  const { refreshUser } = useUser();
+  const { status } = useSession();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { updateUser } = useUser();
+  // Automatically redirect if already logged in
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace('/dashboard');
+    }
+  }, [status, router]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Restore remembered email on mount
+  useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem('cybernix_saved_email');
+      const savedRemember = localStorage.getItem('cybernix_remember_me');
+      if (savedEmail) {
+        setEmail(savedEmail);
+      }
+      if (savedRemember !== null) {
+        setRememberMe(savedRemember === 'true');
+      }
+    } catch {
+      // Ignore storage errors in restricted iframe
+    }
+  }, []);
+
+  const handleLogin = async (e?: React.FormEvent, customEmail?: string, customPass?: string) => {
+    if (e) e.preventDefault();
     setIsLoading(true);
     setError('');
 
+    const targetEmail = (customEmail || email).trim();
+    const targetPassword = customPass || password;
+
+    if (!targetEmail || !targetPassword) {
+      setError('Please enter both email and password.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
+      // Save or clear remember me preference
+      try {
+        if (rememberMe) {
+          localStorage.setItem('cybernix_saved_email', targetEmail);
+          localStorage.setItem('cybernix_remember_me', 'true');
+        } else {
+          localStorage.removeItem('cybernix_saved_email');
+          localStorage.setItem('cybernix_remember_me', 'false');
+        }
+      } catch { }
+
       const result = await signIn('credentials', {
-        email: email.trim(),
-        password,
+        email: targetEmail,
+        password: targetPassword,
         redirect: false,
       });
 
       if (result?.error) {
-        setError('Invalid email or password. Please try again.');
+        setError('Invalid email or password. Please verify your credentials.');
         setIsLoading(false);
         return;
       }
 
-      // Update client context state for responsive UI
-      const namePart = email.split('@')[0];
-      const derivedName = namePart
-        .split('.')
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ');
+      // Refresh global user state immediately
+      await refreshUser();
 
-      updateUser({ name: derivedName, email });
+      // Smooth navigation to dashboard
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred during login.');
@@ -52,13 +102,13 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       await signIn('google', { callbackUrl: '/dashboard' });
-    } catch (err: any) {
+    } catch {
       setError('Failed to initiate Google sign in.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF1D6] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FFF1D6] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <Link href="/" className="inline-flex items-center gap-2 group">
           <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-tomato-jam text-white shadow-lg shadow-tomato-jam/20 group-hover:scale-105 transition-transform">
@@ -74,31 +124,19 @@ export default function LoginPage() {
           </div>
         </Link>
         <h2 className="mt-6 text-2xl sm:text-3xl font-black text-onyx tracking-tight">
-          Sign in to your NSEC CP Account
+          Welcome back to CP Hub
         </h2>
         <p className="mt-2 text-sm text-onyx/70">
-          Sync your Codeforces, LeetCode, CodeChef, and GFG ratings into a single unified college leaderboard.
+          Sync your competitive ratings across Codeforces, LeetCode & CodeChef.
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-6 shadow-sm rounded-3xl border border-onyx/12 sm:px-10">
-          {/* Instant Unlock Info */}
-          <div className="mb-6 p-3 rounded-xl bg-golden-sand/15 border border-onyx/12 flex items-center gap-3">
-            <div className="text-2xl">✨</div>
-            <div className="text-left">
-              <p className="text-xs font-bold text-onyx">
-                Instant Level 1 (Spark Tier) Unlock!
-              </p>
-              <p className="text-[11px] text-onyx/70">
-                New NSEC students get instant Spark badge & mascot on signup.
-              </p>
-            </div>
-          </div>
 
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in zoom-in-95 duration-150">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{error}</span>
             </div>
           )}
@@ -132,68 +170,99 @@ export default function LoginPage() {
 
           <div className="relative flex py-2 items-center mb-5">
             <div className="flex-grow border-t border-onyx/12"></div>
-            <span className="flex-shrink mx-4 text-xs font-bold text-onyx/40 uppercase">Or email</span>
+            <span className="flex-shrink mx-4 text-[11px] font-bold text-onyx/40 uppercase tracking-wider">
+              Or sign in with email
+            </span>
             <div className="flex-grow border-t border-onyx/12"></div>
           </div>
 
           <form className="space-y-4" onSubmit={handleLogin}>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-onyx/70">
+              <label htmlFor="login-email" className="block text-xs font-bold uppercase tracking-wider text-onyx/70">
                 Email Address
               </label>
               <div className="mt-1">
                 <input
-                  id="email"
+                  id="login-email"
                   type="email"
                   required
-                  autoComplete="username"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam"
-                  placeholder="your.email@nsec.ac.in"
+                  className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam transition-all placeholder:text-onyx/30"
+                  placeholder="user@nsec.ac.in"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-onyx/70">
-                Password
-              </label>
-              <div className="mt-1">
+              <div className="flex items-center justify-between">
+                <label htmlFor="login-password" className="block text-xs font-bold uppercase tracking-wider text-onyx/70">
+                  Password
+                </label>
+              </div>
+              <div className="mt-1 relative">
                 <input
-                  id="current-password"
-                  type="password"
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam"
+                  className="modern-input w-full px-4 py-2.5 pr-10 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam transition-all placeholder:text-onyx/30"
+                  placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-onyx/40 hover:text-onyx transition-colors cursor-pointer"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
+            </div>
+
+            {/* Remember Me Toggle */}
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <div
+                  onClick={() => setRememberMe(!rememberMe)}
+                  className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${rememberMe
+                    ? 'bg-tomato-jam border-tomato-jam text-white'
+                    : 'border-onyx/30 bg-white'
+                    }`}
+                >
+                  {rememberMe && <Check className="w-3 h-3 stroke-[3]" />}
+                </div>
+                <span className="text-xs font-semibold text-onyx/80">Remember my login</span>
+              </label>
+
+              <span className="text-[11px] font-bold text-tomato-jam hover:underline cursor-pointer">
+                Forgot password?
+              </span>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 rounded-xl bg-tomato-jam hover:bg-[#E8890C] disabled:opacity-60 text-white font-extrabold text-sm shadow-md shadow-tomato-jam/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-3.5 px-4 rounded-xl bg-tomato-jam hover:bg-[#E8890C] disabled:opacity-60 text-white font-extrabold text-sm shadow-md shadow-tomato-jam/20 transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Signing In...</span>
+                  <span>Verifying & Signing In...</span>
                 </>
               ) : (
                 <>
-                  <span>Sign In & Sync Profiles</span>
+                  <span>Sign In to Dashboard</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
-
-
-          <div className="mt-6 text-center text-xs text-onyx/70">
+          <div className="mt-6 text-center text-xs text-onyx/70 border-t border-onyx/10 pt-5">
             Don&apos;t have an account yet?{' '}
             <Link href="/signup" className="font-bold text-tomato-jam hover:underline">
               Create student profile

@@ -12,7 +12,12 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = (session.user as any).id;
+    const sessionUser = session.user as { id?: string };
+    const userId = sessionUser.id;
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
 
     const student = await prisma.student.findUnique({
       where: { userId },
@@ -28,10 +33,11 @@ export async function POST() {
       message: 'Student platform stats updated successfully',
       stats,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Failed to sync platform stats';
     console.error('[POST /api/student/sync Error]:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to sync platform stats' },
+      { error: errorMsg },
       { status: 500 }
     );
   }

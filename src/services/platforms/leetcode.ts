@@ -6,6 +6,7 @@ const USER_PROFILE_QUERY = `
   query getUserProfile($username: String!) {
     matchedUser(username: $username) {
       username
+      submissionCalendar
       submitStatsGlobal {
         acSubmissionNum {
           difficulty
@@ -74,7 +75,19 @@ export async function fetchLeetCodeStats(username: string): Promise<LeetCodeFetc
     const rawRating = json.data.userContestRanking?.rating;
     const rating = rawRating ? Math.round(rawRating) : null;
 
-    return { solved, easy, medium, hard, rating };
+    let submissionCalendar: Record<string, number> | undefined;
+    if (json.data.matchedUser.submissionCalendar) {
+      try {
+        const parsed = JSON.parse(json.data.matchedUser.submissionCalendar);
+        if (parsed && typeof parsed === 'object') {
+          submissionCalendar = parsed;
+        }
+      } catch (parseErr) {
+        console.warn(`[LeetCode] Could not parse submissionCalendar for ${username}:`, parseErr);
+      }
+    }
+
+    return { solved, easy, medium, hard, rating, submissionCalendar };
   } catch (error: any) {
     console.error(`[LeetCode Fetch Error] Username: ${username} - ${error.message}`);
     throw error;

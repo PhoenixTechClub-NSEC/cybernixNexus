@@ -6,13 +6,14 @@ import prisma from '@/lib/prisma';
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    const currentUserId = (session?.user as any)?.id || null;
+    const sessionUser = session?.user as { id?: string } | undefined;
+    const currentUserId = sessionUser?.id || null;
 
     const { searchParams } = new URL(request.url);
     const limitParam = searchParams.get('limit');
     const take = limitParam ? parseInt(limitParam, 10) : 30;
 
-    // Fetch top 30 students ordered by totalScore desc using Prisma index
+    // Fetch top students ordered by totalScore desc using Prisma index
     const rawStudents = await prisma.student.findMany({
       orderBy: {
         stats: {
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
       },
     });
 
-    // Format top 30 users with rank
+    // Format top users with rank
     const students = rawStudents.map((student, index) => {
       const rank = student.stats?.ranking ?? (index + 1);
       return {
@@ -50,6 +51,8 @@ export async function GET(request: Request) {
           codeforces: student.codeforces,
           gfg: student.gfg,
           codechef: student.codechef,
+          github: student.github,
+          linkedin: student.linkedin,
         },
         stats: {
           leetcodeSolved: student.stats?.leetcodeSolved ?? 0,
@@ -100,6 +103,8 @@ export async function GET(request: Request) {
             codeforces: dbUser.codeforces,
             gfg: dbUser.gfg,
             codechef: dbUser.codechef,
+            github: dbUser.github,
+            linkedin: dbUser.linkedin,
           },
           stats: {
             leetcodeSolved: dbUser.stats?.leetcodeSolved ?? 0,
@@ -151,29 +156,55 @@ export async function GET(request: Request) {
       deptMap[dept].totalSolved += student.stats.leetcodeSolved + (student.stats.codeforcesSolved || 0);
     });
 
-    const departmentStats = Object.entries(deptMap).map(([dept, data]) => ({
-      department: dept,
-      studentCount: data.count,
-      averageScore: Math.round(data.totalScore / data.count),
-      totalSolved: data.totalSolved,
-    }));
+    const totalRegisteredStudents = await prisma.student.count();
+
+    const departmentStats = Object.entries(deptMap)
+      .map(([dept, data]) => ({
+        department: dept,
+        studentCount: data.count,
+        averageScore: Math.round(data.totalScore / data.count),
+        totalSolved: data.totalSolved,
+      }))
+      .sort((a, b) => b.averageScore - a.averageScore)
+      .map((d, idx) => ({
+        ...d,
+        rank: idx + 1,
+        seasonalMultiplier: idx === 0 ? 2.0 : idx === 1 ? 1.75 : idx === 2 ? 1.5 : 1.25,
+      }));
+
+    const tierDistribution = {
+      Phoenix: students.filter((s) => s.stats.totalScore > 30000).length,
+      Flame: students.filter((s) => s.stats.totalScore > 10000 && s.stats.totalScore <= 30000).length,
+      Ember: students.filter((s) => s.stats.totalScore > 2000 && s.stats.totalScore <= 10000).length,
+      Spark: students.filter((s) => s.stats.totalScore <= 2000).length,
+    };
+
+    const topDepartment = departmentStats[0] || {
+      department: 'CSE',
+      averageScore: 0,
+      seasonalMultiplier: 2.0,
+    };
 
     return NextResponse.json({
       success: true,
       currentUser,
       summary: {
         totalStudents,
+        totalRegisteredStudents,
         totalProblemsSolved,
         averageTotalScore,
         departmentStats,
+        topDepartment,
+        tierDistribution,
         topPerformers: students.slice(0, 5),
       },
       students,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Internal server error';
     console.error('[GET /api/dashboard Error]:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal server error' },
+      { success: false, error: errorMsg },
       { status: 500 }
     );
   }

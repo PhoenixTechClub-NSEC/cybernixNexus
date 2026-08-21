@@ -50,6 +50,10 @@ export interface UserProfile {
   bio: string;
   department: Department;
   year: string;
+  rollNumber?: string;
+  graduationYear?: number;
+  github?: string;
+  linkedin?: string;
   collegeRank: number;
   deptRank: number;
   level: number;
