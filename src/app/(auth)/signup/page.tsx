@@ -120,6 +120,7 @@ export default function SignupPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
+          image: cleanAvatarUrl || null,
           rollNumber: rollNumber.trim(),
           department: department.trim(),
           graduationYear: Number(graduationYear),

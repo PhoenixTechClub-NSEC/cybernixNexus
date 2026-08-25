@@ -183,6 +183,7 @@ export async function POST(request: Request) {
 
     const {
       name,
+      image,
       rollNumber,
       department,
       graduationYear,
@@ -199,6 +200,22 @@ export async function POST(request: Request) {
         { error: 'Missing required fields: name, rollNumber, department, graduationYear' },
         { status: 400 }
       );
+    }
+
+    // Update user image or name if provided
+    if (typeof image === 'string' && image.trim()) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          image: image.trim(),
+          ...(name ? { name: name.trim() } : {}),
+        },
+      });
+    } else if (name) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { name: name.trim() },
+      });
     }
 
     const parsedGradYear = Number(graduationYear);
