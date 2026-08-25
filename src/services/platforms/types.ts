@@ -28,6 +28,9 @@ export interface CodechefFetchResult {
 
 export interface PlatformStatsResult {
   leetcodeSolved: number;
+  leetcodeEasySolved: number;
+  leetcodeMediumSolved: number;
+  leetcodeHardSolved: number;
   leetcodeRating: number | null;
   codeforcesRating: number | null;
   codeforcesMaxRating: number | null;

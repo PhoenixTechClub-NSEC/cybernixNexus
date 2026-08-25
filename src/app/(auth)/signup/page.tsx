@@ -9,42 +9,25 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Eye,
-  EyeOff,
   User,
-  KeyRound,
   GraduationCap,
   Code2,
   Globe,
   Briefcase,
   ImageIcon,
+  Sparkles,
 } from 'lucide-react';
 import { useUser } from '@/components/providers/UserProvider';
 
 export default function SignupPage() {
   const router = useRouter();
   const { refreshUser } = useUser();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
 
-  // Automatically redirect if already logged in
-  useEffect(() => {
-    if (status === 'authenticated') {
-      router.replace('/dashboard');
-    }
-  }, [status, router]);
-
-  // User & Identity Fields
-  const [firstName, setFirstName] = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
-
-  // Account Credentials
+  // User & Identity Fields (pre-filled from Google)
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   // College & Academic Details (Student model)
   const [rollNumber, setRollNumber] = useState('');
@@ -64,6 +47,38 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Initialize from session and check if student already exists
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      const u = session.user;
+      if (u.name && !name) setName(u.name);
+      if (u.email && !email) setEmail(u.email);
+      if (u.image && !avatarUrl) setAvatarUrl(u.image);
+
+      // Check if student profile is already registered in DB
+      fetch('/api/student')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.student && data.student.profileComplete) {
+            router.replace('/dashboard');
+          } else if (data.student) {
+            // Pre-fill existing student fields if partially filled
+            if (data.student.name) setName(data.student.name);
+            if (data.student.rollNumber) setRollNumber(data.student.rollNumber);
+            if (data.student.department) setDepartment(data.student.department);
+            if (data.student.graduationYear) setGraduationYear(String(data.student.graduationYear));
+            if (data.student.github) setGithub(data.student.github);
+            if (data.student.linkedin) setLinkedin(data.student.linkedin);
+            if (data.student.leetcode) setLeetcode(data.student.leetcode);
+            if (data.student.codeforces) setCodeforces(data.student.codeforces);
+            if (data.student.gfg) setGfg(data.student.gfg);
+            if (data.student.codechef) setCodechef(data.student.codechef);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [status, session, router, name, email, avatarUrl]);
+
   // Sanitizer helper for handles (strips URLs and @ prefixes)
   const sanitizeHandle = (input: string) => {
     return input
@@ -73,40 +88,13 @@ export default function SignupPage() {
       .replace(/\/+$/, '');
   };
 
-  // Password strength score (0 to 3)
-  const getPasswordStrength = () => {
-    if (!password) return 0;
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (/[0-9]/.test(password) && /[a-zA-Z]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-    return score;
-  };
-
-  const strength = getPasswordStrength();
-
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleCompleteProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    const fullNameParts = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean);
-    const fullName = fullNameParts.join(' ');
-
-    if (!fullName) {
-      setError('Please provide your first and last name.');
-      setIsLoading(false);
-      return;
-    }
-
-    if (!password || password.length < 6) {
-      setError('Password must be at least 6 characters long.');
-      setIsLoading(false);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match. Please verify your password.');
+    if (!name.trim()) {
+      setError('Please provide your full name.');
       setIsLoading(false);
       return;
     }
@@ -126,17 +114,14 @@ export default function SignupPage() {
     const cleanAvatarUrl = avatarUrl.trim();
 
     try {
-      // 1. Call Backend Signup API Endpoint
-      const response = await fetch('/api/auth/signup', {
+      // Call Student Profile Save Endpoint
+      const response = await fetch('/api/student', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: fullName,
-          email: email.trim().toLowerCase(),
-          password,
-          image: cleanAvatarUrl || null,
+          name: name.trim(),
           rollNumber: rollNumber.trim(),
-          department,
+          department: department.trim(),
           graduationYear: Number(graduationYear),
           leetcode: cleanLeetcode || null,
           codeforces: cleanCodeforces || null,
@@ -150,42 +135,98 @@ export default function SignupPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create user account');
+        throw new Error(data.error || 'Failed to save student profile');
       }
 
-      // Save email for remember me persistence
-      try {
-        localStorage.setItem('cybernix_saved_email', email.trim().toLowerCase());
-        localStorage.setItem('cybernix_remember_me', 'true');
-      } catch { }
-
-      // 2. Sign in immediately with NextAuth credentials
-      const loginRes = await signIn('credentials', {
-        email: email.trim().toLowerCase(),
-        password,
-        redirect: false,
-      });
-
-      if (loginRes?.error) {
-        throw new Error('Account created! Please sign in manually.');
+      // Update avatar if customized
+      if (cleanAvatarUrl && cleanAvatarUrl !== session?.user?.image) {
+        // Can be stored in User record
       }
 
-      // 3. Refresh user state and smoothly navigate to dashboard
+      // Refresh global user state immediately
       await refreshUser();
+
+      // Navigate to dashboard
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'An error occurred during registration.');
+      setError(err.message || 'An error occurred while setting up your CP profile.');
       setIsLoading(false);
     }
   };
 
-  const handleGoogleSignup = async () => {
+  const handleGoogleSignInFirst = async () => {
     try {
-      await signIn('google', { callbackUrl: '/dashboard' });
+      await signIn('google', { callbackUrl: '/signup' });
     } catch {
-      setError('Failed to initiate Google sign up.');
+      setError('Failed to initiate Google sign in.');
     }
   };
+
+  // If not signed in yet with Google, prompt to connect Google account
+  if (status === 'unauthenticated') {
+    return (
+      <div className="min-h-screen bg-[#FFF1D6] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
+          <Link href="/" className="inline-flex items-center gap-2.5 group">
+            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-tomato-jam text-white shadow-xl shadow-tomato-jam/25 group-hover:scale-105 transition-transform">
+              <Flame className="w-8 h-8 fill-current animate-pulse" />
+            </div>
+            <div className="text-left">
+              <span className="font-black text-3xl tracking-tight text-onyx">
+                Cybernix<span className="text-tomato-jam">Nexus</span>
+              </span>
+              <p className="text-xs text-onyx/70 -mt-1 font-semibold">
+                NSEC Phoenix Tech Club
+              </p>
+            </div>
+          </Link>
+          <h2 className="mt-6 text-2xl sm:text-3xl font-black text-onyx tracking-tight">
+            Create your Student CP Profile
+          </h2>
+          <p className="mt-2 text-sm text-onyx/75 max-w-sm mx-auto">
+            Please connect your Google account to get started on the NSEC leaderboard.
+          </p>
+        </div>
+
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+          <div className="bg-white/95 backdrop-blur-md py-8 px-6 shadow-xl shadow-onyx/5 rounded-3xl border border-onyx/12 sm:px-10 text-center space-y-5">
+            <button
+              type="button"
+              onClick={handleGoogleSignInFirst}
+              className="w-full py-4 px-5 rounded-2xl border-2 border-onyx/15 bg-white hover:bg-golden-sand/20 text-onyx font-black text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3.5 cursor-pointer"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+
+            <p className="text-xs text-onyx/60">
+              Already connected?{' '}
+              <Link href="/login" className="font-bold text-tomato-jam hover:underline">
+                Sign in here
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FFF1D6] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -204,10 +245,10 @@ export default function SignupPage() {
           </div>
         </Link>
         <h2 className="mt-6 text-2xl sm:text-3xl font-black text-onyx tracking-tight">
-          Create your Student CP Profile
+          Complete Your Student CP Profile
         </h2>
         <p className="mt-2 text-sm text-onyx/70 max-w-lg mx-auto">
-          Join the NSEC leaderboard and automatically synchronize your solved problems across all platforms.
+          Connected via <span className="font-bold text-onyx">{email || session?.user?.email}</span>. Fill in your college details &amp; coding handles to join the live leaderboard.
         </p>
       </div>
 
@@ -220,47 +261,12 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Google OAuth Button */}
-          <button
-            type="button"
-            onClick={handleGoogleSignup}
-            className="w-full py-3 px-4 rounded-xl border border-onyx/20 bg-white hover:bg-golden-sand/15 text-onyx font-bold text-xs shadow-2xs transition-colors flex items-center justify-center gap-3 cursor-pointer mb-6"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-              />
-            </svg>
-            <span>Sign up with Google</span>
-          </button>
-
-          <div className="relative flex py-2 items-center mb-6">
-            <div className="flex-grow border-t border-onyx/12"></div>
-            <span className="flex-shrink mx-4 text-[11px] font-bold text-onyx/40 uppercase tracking-wider">
-              Or complete registration
-            </span>
-            <div className="flex-grow border-t border-onyx/12"></div>
-          </div>
-
-          <form className="space-y-6" onSubmit={handleSignup}>
-            {/* 1. Identity & PFP (URL only) */}
+          <form className="space-y-6" onSubmit={handleCompleteProfile}>
+            {/* 1. Identity & PFP */}
             <div>
               <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
                 <User className="w-4 h-4 text-tomato-jam" />
-                <h3 className="text-sm font-bold text-onyx">1. Personal Details & Profile Picture</h3>
+                <h3 className="text-sm font-bold text-onyx">1. Personal Details &amp; Profile Picture</h3>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-6 mb-5">
@@ -284,7 +290,7 @@ export default function SignupPage() {
                       type="url"
                       value={avatarUrl}
                       onChange={(e) => setAvatarUrl(e.target.value)}
-                      placeholder="https://example.com/your-photo.jpg (Optional URL)"
+                      placeholder="https://example.com/your-photo.jpg (Pre-filled from Google)"
                       className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
                     />
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-onyx/30">
@@ -294,148 +300,27 @@ export default function SignupPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="signup-first-name" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">First Name *</label>
-                  <input
-                    id="signup-first-name"
-                    type="text"
-                    required
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Name"
-                    className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="signup-middle-name" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">Middle Name</label>
-                  <input
-                    id="signup-middle-name"
-                    type="text"
-                    value={middleName}
-                    onChange={(e) => setMiddleName(e.target.value)}
-                    placeholder="Optional"
-                    className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="signup-last-name" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">Last Name *</label>
-                  <input
-                    id="signup-last-name"
-                    type="text"
-                    required
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Surname"
-                    className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                  />
-                </div>
+              <div>
+                <label htmlFor="signup-full-name" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                  Full Name *
+                </label>
+                <input
+                  id="signup-full-name"
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Satyaki Paul"
+                  className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
+                />
               </div>
             </div>
 
-            {/* 2. Account Credentials */}
-            <div>
-              <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
-                <KeyRound className="w-4 h-4 text-tomato-jam" />
-                <h3 className="text-sm font-bold text-onyx">2. Account Credentials</h3>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="signup-email" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                    Institutional Email Address *
-                  </label>
-                  <input
-                    id="signup-email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                    placeholder="your.email@nsec.ac.in"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="signup-password" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                      Password *
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="signup-password"
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="modern-input w-full px-4 py-2.5 pr-10 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                        placeholder="Minimum 6 characters"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-onyx/40 hover:text-onyx transition-colors cursor-pointer"
-                        tabIndex={-1}
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="signup-confirm-password" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                      Confirm Password *
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="signup-confirm-password"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        required
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="modern-input w-full px-4 py-2.5 pr-10 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                        placeholder="Repeat your password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-onyx/40 hover:text-onyx transition-colors cursor-pointer"
-                        tabIndex={-1}
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {password.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-onyx/10 overflow-hidden flex gap-1">
-                      <div
-                        className={`h-full rounded-full transition-all ${strength >= 1 ? 'bg-rose-500 w-1/3' : 'w-0'
-                          }`}
-                      />
-                      <div
-                        className={`h-full rounded-full transition-all ${strength >= 2 ? 'bg-amber-500 w-1/3' : 'w-0'
-                          }`}
-                      />
-                      <div
-                        className={`h-full rounded-full transition-all ${strength >= 3 ? 'bg-emerald-500 w-1/3' : 'w-0'
-                          }`}
-                      />
-                    </div>
-                    <span className="text-[10px] font-bold text-onyx/60">
-                      {strength === 1 ? 'Weak' : strength === 2 ? 'Medium' : strength === 3 ? 'Strong' : ''}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 3. Academic Info (Student model) */}
+            {/* 2. Academic Info (Student model) */}
             <div>
               <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
                 <GraduationCap className="w-4 h-4 text-tomato-jam" />
-                <h3 className="text-sm font-bold text-onyx">3. College Information</h3>
+                <h3 className="text-sm font-bold text-onyx">2. College Information</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
@@ -464,8 +349,8 @@ export default function SignupPage() {
                   >
                     <option value="CSE">CSE (Computer Science)</option>
                     <option value="IT">IT (Information Technology)</option>
-                    <option value="ECE">ECE (Electronics & Comm.)</option>
-                    <option value="AI&DS">AI & DS (AI & Data Science)</option>
+                    <option value="ECE">ECE (Electronics &amp; Comm.)</option>
+                    <option value="AI&DS">AI &amp; DS (AI &amp; Data Science)</option>
                     <option value="EE">EE (Electrical Eng.)</option>
                     <option value="ME">ME (Mechanical Eng.)</option>
                   </select>
@@ -491,11 +376,11 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* 4. Social & Developer Profiles (github, linkedin) */}
+            {/* 3. Social & Developer Profiles (github, linkedin) */}
             <div>
               <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
                 <Globe className="w-4 h-4 text-tomato-jam" />
-                <h3 className="text-sm font-bold text-onyx">4. Developer & Social Profiles</h3>
+                <h3 className="text-sm font-bold text-onyx">3. Developer &amp; Social Profiles</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -527,11 +412,11 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* 5. Platform Handles (leetcode, codeforces, gfg, codechef) */}
+            {/* 4. Platform Handles (leetcode, codeforces, gfg, codechef) */}
             <div>
               <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
                 <Code2 className="w-4 h-4 text-tomato-jam" />
-                <h3 className="text-sm font-bold text-onyx">5. Coding Handles (Auto-Synced)</h3>
+                <h3 className="text-sm font-bold text-onyx">4. Coding Handles (Auto-Synced)</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -597,22 +482,20 @@ export default function SignupPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Creating Account & Syncing Stats...</span>
+                  <span>Saving Profile &amp; Syncing Stats...</span>
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="w-5 h-5" />
-                  <span>Create Account & Join Leaderboard</span>
+                  <span>Complete Profile &amp; Go to Dashboard</span>
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-8 text-center text-xs text-onyx/70 border-t border-onyx/10 pt-6">
-            Already have an account?{' '}
-            <Link href="/login" className="font-bold text-tomato-jam hover:underline">
-              Sign in here
-            </Link>
+          <div className="mt-8 text-center text-xs text-onyx/60 border-t border-onyx/10 pt-6 flex items-center justify-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-tomato-jam" />
+            <span>You can update handles anytime in your Profile Settings</span>
           </div>
         </div>
       </div>

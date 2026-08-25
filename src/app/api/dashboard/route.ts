@@ -140,16 +140,27 @@ export async function GET(request: Request) {
         )
       : 0;
 
-    // Group department stats
+    // Group department stats and identify top coder per department
     const deptMap: Record<
       string,
-      { count: number; totalScore: number; totalSolved: number }
+      { count: number; totalScore: number; totalSolved: number; topCoderName: string; topCoderScore: number; topCoderAvatar: string | null }
     > = {};
 
     students.forEach((student) => {
       const dept = student.department || 'Unknown';
       if (!deptMap[dept]) {
-        deptMap[dept] = { count: 0, totalScore: 0, totalSolved: 0 };
+        deptMap[dept] = {
+          count: 0,
+          totalScore: 0,
+          totalSolved: 0,
+          topCoderName: student.name || 'NSEC Student',
+          topCoderScore: student.stats.totalScore,
+          topCoderAvatar: student.image,
+        };
+      } else if (student.stats.totalScore > deptMap[dept].topCoderScore) {
+        deptMap[dept].topCoderName = student.name || 'NSEC Student';
+        deptMap[dept].topCoderScore = student.stats.totalScore;
+        deptMap[dept].topCoderAvatar = student.image;
       }
       deptMap[dept].count += 1;
       deptMap[dept].totalScore += student.stats.totalScore;
@@ -164,6 +175,9 @@ export async function GET(request: Request) {
         studentCount: data.count,
         averageScore: Math.round(data.totalScore / data.count),
         totalSolved: data.totalSolved,
+        topCoderName: data.topCoderName,
+        topCoderScore: data.topCoderScore,
+        topCoderAvatar: data.topCoderAvatar,
       }))
       .sort((a, b) => b.averageScore - a.averageScore)
       .map((d, idx) => ({

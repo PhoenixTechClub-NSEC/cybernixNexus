@@ -10,17 +10,38 @@ import { PlatformStatsResult, LeetCodeFetchResult, CodeforcesFetchResult } from 
 //-Satyaki
 export function calculateTotalScore(stats: {
   leetcodeSolved: number;
+  leetcodeEasySolved?: number;
+  leetcodeMediumSolved?: number;
+  leetcodeHardSolved?: number;
   leetcodeRating: number | null;
   codeforcesRating: number | null;
   codeforcesSolved: number;
   gfgScore: number | null;
   codechefRating: number | null;
+  streakDays?: number;
 }): number {
-  const lcPoints = Math.max(0, stats.leetcodeSolved) * 10;
-  const cfSolvedPoints = Math.max(0, stats.codeforcesSolved) * 15; // CF problems worth more
-  const gfgPoints = stats.gfgScore ? Math.max(0, stats.gfgScore) : 0;
+  const easy = stats.leetcodeEasySolved ?? Math.round(Math.max(0, stats.leetcodeSolved) * 0.4);
+  const medium = stats.leetcodeMediumSolved ?? Math.round(Math.max(0, stats.leetcodeSolved) * 0.5);
+  const hard = stats.leetcodeHardSolved ?? Math.round(Math.max(0, stats.leetcodeSolved) * 0.1);
 
-  return Math.round(lcPoints + cfSolvedPoints + gfgPoints);
+  // LeetCode: (Easy * 10 + Medium * 30 + Hard * 75) * 1.5 Weight
+  const lcRawPoints = easy * 10 + medium * 30 + hard * 75;
+  const lcPoints = lcRawPoints * 1.5;
+
+  // Codeforces: Solved * 35 (reflecting higher difficulty) * 1.75 Weight
+  const cfSolvedPoints = Math.max(0, stats.codeforcesSolved) * 35 * 1.75;
+
+  // GFG Score: Score * 1.0 Weight
+  const gfgPoints = stats.gfgScore ? Math.max(0, stats.gfgScore) * 1.0 : 0;
+
+  // CodeChef Rating bonus contribution if available
+  const ccPoints = stats.codechefRating ? Math.max(0, stats.codechefRating - 1000) * 0.5 * 1.25 : 0;
+
+  // Streak Multiplier bonus: +0.01x per active streak day up to 1.60x (60 days)
+  const streak = Math.max(0, stats.streakDays ?? 0);
+  const streakMultiplier = Math.min(1.6, 1.0 + streak * 0.01);
+
+  return Math.round((lcPoints + cfSolvedPoints + gfgPoints + ccPoints) * streakMultiplier);
 }
 
 export async function recalculateRankings(): Promise<void> {
@@ -109,6 +130,15 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
     const leetcodeSolved = lcRes.status === 'fulfilled'
       ? lcRes.value.solved
       : (existingStats?.leetcodeSolved ?? 0);
+    const leetcodeEasySolved = lcRes.status === 'fulfilled'
+      ? lcRes.value.easy
+      : (existingStats?.leetcodeEasySolved ?? Math.round(leetcodeSolved * 0.4));
+    const leetcodeMediumSolved = lcRes.status === 'fulfilled'
+      ? lcRes.value.medium
+      : (existingStats?.leetcodeMediumSolved ?? Math.round(leetcodeSolved * 0.5));
+    const leetcodeHardSolved = lcRes.status === 'fulfilled'
+      ? lcRes.value.hard
+      : (existingStats?.leetcodeHardSolved ?? Math.round(leetcodeSolved * 0.1));
     const leetcodeRating = lcRes.status === 'fulfilled'
       ? lcRes.value.rating
       : (existingStats?.leetcodeRating ?? null);
@@ -157,6 +187,9 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
 
     const totalScore = calculateTotalScore({
       leetcodeSolved,
+      leetcodeEasySolved,
+      leetcodeMediumSolved,
+      leetcodeHardSolved,
       leetcodeRating,
       codeforcesRating,
       codeforcesSolved,
@@ -169,6 +202,9 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       create: {
         studentId: student.id,
         leetcodeSolved,
+        leetcodeEasySolved,
+        leetcodeMediumSolved,
+        leetcodeHardSolved,
         leetcodeRating,
         codeforcesRating,
         codeforcesMaxRating,
@@ -183,6 +219,9 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       },
       update: {
         leetcodeSolved,
+        leetcodeEasySolved,
+        leetcodeMediumSolved,
+        leetcodeHardSolved,
         leetcodeRating,
         codeforcesRating,
         codeforcesMaxRating,
@@ -317,6 +356,9 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
 
     return {
       leetcodeSolved: finalStats?.leetcodeSolved ?? 0,
+      leetcodeEasySolved: finalStats?.leetcodeEasySolved ?? 0,
+      leetcodeMediumSolved: finalStats?.leetcodeMediumSolved ?? 0,
+      leetcodeHardSolved: finalStats?.leetcodeHardSolved ?? 0,
       leetcodeRating: finalStats?.leetcodeRating ?? null,
       codeforcesRating: finalStats?.codeforcesRating ?? null,
       codeforcesMaxRating: finalStats?.codeforcesMaxRating ?? null,

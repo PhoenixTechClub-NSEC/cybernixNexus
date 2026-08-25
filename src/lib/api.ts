@@ -9,7 +9,7 @@ import {
   CURRENT_USER,
 } from './constants';
 
-export async function getCurrentUser(): Promise<UserProfile> {
+export async function getCurrentUser(): Promise<UserProfile | null> {
   try {
     const res = await fetch('/api/dashboard');
     if (res.ok) {
@@ -21,7 +21,7 @@ export async function getCurrentUser(): Promise<UserProfile> {
   } catch (err) {
     console.error('Failed to fetch current user from API', err);
   }
-  return CURRENT_USER;
+  return null;
 }
 
 export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]> {
@@ -39,6 +39,10 @@ export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]>
           const lcSolved = s.stats?.leetcodeSolved ?? 0;
           const cfSolved = s.stats?.codeforcesSolved ?? 0;
           const totalSolved = lcSolved + cfSolved;
+          const lcEasy = s.stats?.leetcodeEasySolved ?? Math.round(lcSolved * 0.4);
+          const lcMedium = s.stats?.leetcodeMediumSolved ?? Math.round(lcSolved * 0.5);
+          const lcHard = s.stats?.leetcodeHardSolved ?? Math.round(lcSolved * 0.1);
+          const nextTierScore = totalScore < 2000 ? 2000 : totalScore < 10000 ? 10000 : totalScore < 30000 ? 30000 : 55500;
 
           return {
             id: s.id,
@@ -54,51 +58,51 @@ export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]>
             level: Math.max(1, Math.min(100, Math.floor(totalScore / 500))),
             tier: totalScore > 30000 ? 'Phoenix' : totalScore > 10000 ? 'Flame' : totalScore > 2000 ? 'Ember' : 'Spark',
             cpScore: totalScore,
-            nextTierScore: 26500,
+            nextTierScore,
             currentStreak: totalSolved > 0 ? 1 : 0,
             maxStreak: totalSolved > 0 ? 1 : 0,
-          contestWinRate: 0,
-          solvedByDifficulty: {
-            easy: Math.round((s.stats?.leetcodeSolved || 0) * 0.4),
-            medium: Math.round((s.stats?.leetcodeSolved || 0) * 0.5),
-            hard: Math.round((s.stats?.leetcodeSolved || 0) * 0.1),
-            total: (s.stats?.leetcodeSolved || 0) + (s.stats?.codeforcesSolved || 0),
-          },
-          platforms: [
-            {
-              platform: 'Codeforces',
-              handle: s.handles?.codeforces || 'N/A',
-              rating: s.stats?.codeforcesRating || 0,
-              solvedCount: s.stats?.codeforcesSolved || 0,
-              weight: 1.75,
+            contestWinRate: 0,
+            solvedByDifficulty: {
+              easy: lcEasy,
+              medium: lcMedium,
+              hard: lcHard,
+              total: totalSolved,
             },
-            {
-              platform: 'LeetCode',
-              handle: s.handles?.leetcode || 'N/A',
-              rating: s.stats?.leetcodeRating || 0,
-              solvedCount: s.stats?.leetcodeSolved || 0,
-              weight: 1.5,
-            },
-            {
-              platform: 'CodeChef',
-              handle: s.handles?.codechef || 'N/A',
-              rating: s.stats?.codechefRating || 0,
-              solvedCount: 0,
-              weight: 1.25,
-            },
-            {
-              platform: 'GFG',
-              handle: s.handles?.gfg || 'N/A',
-              rating: s.stats?.gfgScore || 0,
-              solvedCount: 0,
-              weight: 1.0,
-            },
-          ],
-          badges: [],
-          dsaTopics: [],
-          recentActivities: [],
-        };
-      });
+            platforms: [
+              {
+                platform: 'Codeforces',
+                handle: s.handles?.codeforces || 'N/A',
+                rating: s.stats?.codeforcesRating || 0,
+                solvedCount: s.stats?.codeforcesSolved || 0,
+                weight: 1.75,
+              },
+              {
+                platform: 'LeetCode',
+                handle: s.handles?.leetcode || 'N/A',
+                rating: s.stats?.leetcodeRating || 0,
+                solvedCount: s.stats?.leetcodeSolved || 0,
+                weight: 1.5,
+              },
+              {
+                platform: 'CodeChef',
+                handle: s.handles?.codechef || 'N/A',
+                rating: s.stats?.codechefRating || 0,
+                solvedCount: 0,
+                weight: 1.25,
+              },
+              {
+                platform: 'GFG',
+                handle: s.handles?.gfg || 'N/A',
+                rating: s.stats?.gfgScore || 0,
+                solvedCount: s.stats?.gfgScore || 0,
+                weight: 1.0,
+              },
+            ],
+            badges: [],
+            dsaTopics: [],
+            recentActivities: [],
+          };
+        });
       }
     }
   } catch (err) {
@@ -118,9 +122,9 @@ export async function getDepartmentStats(): Promise<DepartmentStat[]> {
           rank: idx + 1,
           averageRating: d.averageScore || 0,
           totalSolved: d.totalSolved || 0,
-          topCoderName: 'NSEC Student',
-          topCoderScore: d.averageScore || 0,
-          seasonalMultiplier: idx === 0 ? 2.0 : idx === 1 ? 1.75 : 1.5,
+          topCoderName: d.topCoderName || 'NSEC Student',
+          topCoderScore: d.topCoderScore || 0,
+          seasonalMultiplier: d.seasonalMultiplier || (idx === 0 ? 2.0 : idx === 1 ? 1.75 : 1.5),
           activeStudentsCount: d.studentCount || 0,
         }));
       }

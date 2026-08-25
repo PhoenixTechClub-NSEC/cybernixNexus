@@ -79,15 +79,7 @@ export default function ContestsPage() {
     }
   };
 
-  const flagshipContest = contests.find((c) => c.isInternal) || {
-    id: 'flagship-default',
-    title: 'NSEC Avahan Cup 2026 — Inter-Department Battle',
-    platform: 'NSEC Internal',
-    startTime: DEFAULT_FLAGSHIP_START,
-    registeredCount: 218,
-    duration: '3 hours',
-    isInternal: true,
-  };
+  const flagshipContest = contests.find((c) => c.isInternal) || contests[0] || null;
 
   const filteredContests = contests.filter((cnt) => {
     if (filter === 'ALL') return true;
@@ -121,49 +113,63 @@ export default function ContestsPage() {
       )}
 
       {/* Flagship Championship Highlight */}
-      <div className="relative overflow-hidden rounded-3xl bg-onyx text-white p-6 sm:p-8 shadow-md border border-white/10">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tomato-jam text-white text-xs font-black uppercase tracking-wider">
-              <span>🏆 College Major</span>
-              <span>•</span>
-              <span>2.0x Seasonal Multiplier</span>
+      {flagshipContest && (
+        <div className="relative overflow-hidden rounded-3xl bg-onyx text-white p-6 sm:p-8 shadow-md border border-white/10">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tomato-jam text-white text-xs font-black uppercase tracking-wider">
+                <span>{flagshipContest.isInternal ? '🏆 NSEC Championship' : `🔥 ${flagshipContest.platform} Major`}</span>
+                <span>•</span>
+                <span>{flagshipContest.badge || '2.0x Multiplier'}</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-white">
+                {flagshipContest.title}
+              </h2>
+              <p className="text-xs sm:text-sm text-white/70 max-w-xl">
+                {flagshipContest.description || 'Solve algorithmic challenges curated by senior mentors. Scores count directly toward individual standings and inter-department trophies.'}
+              </p>
+              <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-golden-sand pt-1">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-tomato-jam" />
+                  {new Date(flagshipContest.startTime).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} ({flagshipContest.duration})
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-golden-sand" />
+                  {flagshipContest.registeredCount || 0} Registered Coders
+                </span>
+              </div>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">
-              {flagshipContest.title}
-            </h2>
-            <p className="text-xs sm:text-sm text-white/70 max-w-xl">
-              Solve algorithmic challenges curated by Phoenix Tech Club seniors. Scores count 2.0x toward the inter-department seasonal championship trophy.
-            </p>
-            <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-golden-sand pt-1">
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-tomato-jam" />
-                {new Date(flagshipContest.startTime).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} ({flagshipContest.duration})
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-golden-sand" />
-                {flagshipContest.registeredCount} Registered Students
-              </span>
-            </div>
-          </div>
 
-          <div className="shrink-0">
-            <button
-              type="button"
-              disabled={registeredMap[flagshipContest.id]}
-              onClick={() => handleRegisterContest(flagshipContest.id, flagshipContest.title)}
-              className={`px-8 py-3.5 rounded-2xl font-black text-sm shadow-lg transition-transform cursor-pointer ${
-                registeredMap[flagshipContest.id]
-                  ? 'bg-emerald-600 text-white cursor-default'
-                  : 'bg-tomato-jam text-white hover:scale-105 shadow-tomato-jam/30'
-              }`}
-            >
-              {registeredMap[flagshipContest.id] ? 'Enrolled in Championship ✓' : 'Register for Championship'}
-            </button>
+            <div className="shrink-0">
+              {flagshipContest.url && flagshipContest.url.startsWith('http') ? (
+                <a
+                  href={flagshipContest.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-8 py-3.5 rounded-2xl font-black text-sm shadow-lg transition-transform cursor-pointer inline-flex items-center gap-2 bg-tomato-jam text-white hover:scale-105 shadow-tomato-jam/30"
+                >
+                  <span>Open Contest Arena</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled={registeredMap[flagshipContest.id]}
+                  onClick={() => handleRegisterContest(flagshipContest.id, flagshipContest.title)}
+                  className={`px-8 py-3.5 rounded-2xl font-black text-sm shadow-lg transition-transform cursor-pointer ${
+                    registeredMap[flagshipContest.id]
+                      ? 'bg-emerald-600 text-white cursor-default'
+                      : 'bg-tomato-jam text-white hover:scale-105 shadow-tomato-jam/30'
+                  }`}
+                >
+                  {registeredMap[flagshipContest.id] ? 'Enrolled in Championship ✓' : 'Register for Match'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Grid: Multi-Platform Calendar on Left, List on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
