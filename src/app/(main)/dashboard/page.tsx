@@ -68,36 +68,6 @@ interface ContestDataPoint {
   rank: number;
 }
 
-const RATING_HISTORY_DATA: Record<'CodeChef' | 'Codeforces' | 'LeetCode', ContestDataPoint[]> = {
-  CodeChef: [
-    { id: 'cc-1', contestName: 'Starters 110 (Div. 3)', date: '05 Jan 2025', rating: 1450, delta: 80, rank: 620 },
-    { id: 'cc-2', contestName: 'Starters 115 (Div. 2)', date: '22 Feb 2025', rating: 1580, delta: 130, rank: 410 },
-    { id: 'cc-3', contestName: 'March Long Challenge', date: '14 Mar 2025', rating: 1640, delta: 60, rank: 350 },
-    { id: 'cc-4', contestName: 'Starters 122 (Div. 2)', date: '19 Apr 2025', rating: 1710, delta: 70, rank: 240 },
-    { id: 'cc-5', contestName: 'April Lunchtime 2025', date: '30 May 2025', rating: 1695, delta: -15, rank: 890 },
-    { id: 'cc-6', contestName: 'Starters 130 (Div. 2)', date: '15 Jun 2025', rating: 1780, delta: 85, rank: 180 },
-    { id: 'cc-7', contestName: 'Cook-Off July 2025', date: '22 Jul 2025', rating: 1820, delta: 40, rank: 142 },
-  ],
-  Codeforces: [
-    { id: 'cf-1', contestName: 'Codeforces Round 810', date: '12 Jan 2025', rating: 1420, delta: 65, rank: 1120 },
-    { id: 'cf-2', contestName: 'Educational Round 165', date: '02 Feb 2025', rating: 1485, delta: 65, rank: 940 },
-    { id: 'cf-3', contestName: 'Codeforces Round 825', date: '20 Mar 2025', rating: 1540, delta: 55, rank: 780 },
-    { id: 'cf-4', contestName: 'Codeforces Round 840', date: '15 Apr 2025', rating: 1510, delta: -30, rank: 1850 },
-    { id: 'cf-5', contestName: 'Educational Round 170', date: '10 May 2025', rating: 1625, delta: 115, rank: 450 },
-    { id: 'cf-6', contestName: 'Codeforces Round 860', date: '28 Jun 2025', rating: 1690, delta: 65, rank: 320 },
-    { id: 'cf-7', contestName: 'Global Round 26', date: '18 Jul 2025', rating: 1740, delta: 50, rank: 290 },
-  ],
-  LeetCode: [
-    { id: 'lc-1', contestName: 'Weekly Contest 380', date: '14 Jan 2025', rating: 1650, delta: 50, rank: 1400 },
-    { id: 'lc-2', contestName: 'Biweekly Contest 122', date: '04 Feb 2025', rating: 1730, delta: 80, rank: 980 },
-    { id: 'lc-3', contestName: 'Weekly Contest 388', date: '10 Mar 2025', rating: 1790, delta: 60, rank: 710 },
-    { id: 'lc-4', contestName: 'Biweekly Contest 126', date: '22 Apr 2025', rating: 1840, delta: 50, rank: 540 },
-    { id: 'lc-5', contestName: 'Weekly Contest 395', date: '18 May 2025', rating: 1890, delta: 50, rank: 410 },
-    { id: 'lc-6', contestName: 'Weekly Contest 400', date: '12 Jun 2025', rating: 1940, delta: 50, rank: 310 },
-    { id: 'lc-7', contestName: 'Biweekly Contest 134', date: '27 Jul 2025', rating: 1985, delta: 45, rank: 215 },
-  ],
-};
-
 const getLevelForTier = (tier: string) => {
   switch (tier) {
     case 'Spark': return 1;
@@ -267,12 +237,26 @@ export default function DashboardPage() {
   });
 
   // Goals Checklist State
-  const [goals, setGoals] = useState([
-    { id: 1, text: 'Maintain 34-day coding streak', completed: true },
-    { id: 2, text: 'Solve 50 Hard DSA problems', completed: true },
-    { id: 3, text: 'Reach Top 3 in NSEC College Rank', completed: true },
-    { id: 4, text: 'Win Inter-Department Avahan Cup', completed: false },
-  ]);
+  // Dynamic Goals tailored to live verified student metrics
+  const dynamicGoals = React.useMemo(() => {
+    const streakTarget = Math.max(7, Math.ceil(((CURRENT_USER.currentStreak || 1) + 1) / 7) * 7);
+    const hardSolved = CURRENT_USER.solvedByDifficulty?.hard || 0;
+    const hardTarget = Math.max(10, Math.ceil(((hardSolved || 1) + 1) / 10) * 10);
+    const nextTier = CURRENT_USER.tier === 'Phoenix' ? 'Ascendant' : CURRENT_USER.tier === 'Flame' ? 'Phoenix' : CURRENT_USER.tier === 'Ember' ? 'Flame' : 'Ember';
+
+    return [
+      { id: 1, text: `Maintain ${streakTarget}-day coding streak`, completed: (CURRENT_USER.currentStreak || 0) >= streakTarget },
+      { id: 2, text: `Solve ${hardTarget} Hard DSA problems`, completed: hardSolved >= hardTarget },
+      { id: 3, text: `Reach Top 3 in ${CURRENT_USER.department} Department Rank`, completed: CURRENT_USER.deptRank > 0 && CURRENT_USER.deptRank <= 3 },
+      { id: 4, text: `Achieve ${nextTier} Tier status (${CURRENT_USER.nextTierScore.toLocaleString()} pts)`, completed: CURRENT_USER.cpScore >= CURRENT_USER.nextTierScore },
+    ];
+  }, [CURRENT_USER]);
+
+  const [goals, setGoals] = useState(dynamicGoals);
+
+  React.useEffect(() => {
+    setGoals(dynamicGoals);
+  }, [dynamicGoals]);
 
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState<'thisWeek' | 'lastWeek' | 'twoWeeksAgo'>('thisWeek');
@@ -283,6 +267,7 @@ export default function DashboardPage() {
   const [selectedDiff, setSelectedDiff] = useState<'ALL' | 'Easy' | 'Medium' | 'Hard'>('ALL');
   const [graphPlatform, setGraphPlatform] = useState<'CodeChef' | 'Codeforces' | 'LeetCode'>('CodeChef');
   const [hoveredPointIdx, setHoveredPointIdx] = useState<number | null>(null);
+  const [liveCfHistory, setLiveCfHistory] = useState<ContestDataPoint[]>([]);
 
   const completedGoalsCount = goals.filter((g) => g.completed).length;
 
@@ -307,11 +292,33 @@ export default function DashboardPage() {
       .catch((err) => console.error('Velocity fetch error:', err));
   }, []);
 
+  // Fetch real contest rating history from Codeforces if user has handle
+  React.useEffect(() => {
+    const cfPlat = CURRENT_USER.platforms?.find((p: any) => p.platform === 'Codeforces');
+    if (cfPlat?.handle) {
+      fetch(`https://codeforces.com/api/user.rating?handle=${encodeURIComponent(cfPlat.handle)}`)
+        .then((r) => r.json())
+        .then((json) => {
+          if (json.status === 'OK' && Array.isArray(json.result) && json.result.length > 0) {
+            const mapped: ContestDataPoint[] = json.result.slice(-7).map((c: any) => ({
+              id: `cf-${c.contestId}`,
+              contestName: c.contestName,
+              date: new Date(c.ratingUpdateTimeSeconds * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+              rating: c.newRating,
+              delta: c.newRating - c.oldRating,
+              rank: c.rank,
+            }));
+            setLiveCfHistory(mapped);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [CURRENT_USER.platforms]);
+
   const currentWeekData = (velocityData as any)[selectedTimeframe] || WEEKLY_VELOCITY_DATA[selectedTimeframe];
 
   const getX = (idx: number) => 10 + idx * 35;
   const getY = (val: number, maxVal: number) => 85 - (val / maxVal) * 70;
-
 
   const buildSvgLinePath = (values: number[], maxVal: number) => {
     return values
@@ -324,11 +331,13 @@ export default function DashboardPage() {
   );
   const currentPlatRating = activePlatItem?.rating || 0;
 
-  const historyPoints = currentPlatRating > 0
+  const historyPoints: ContestDataPoint[] = graphPlatform === 'Codeforces' && liveCfHistory.length > 0
+    ? liveCfHistory
+    : currentPlatRating > 0
     ? [
-        { id: 'pt-1', contestName: 'Initial Rating', date: 'Start', rating: Math.max(0, currentPlatRating - 150), delta: 0, rank: 0 },
-        { id: 'pt-2', contestName: 'Mid Progress', date: 'Mid', rating: Math.max(0, currentPlatRating - 50), delta: 100, rank: 0 },
-        { id: 'pt-3', contestName: 'Current Rating', date: 'Today', rating: currentPlatRating, delta: 50, rank: 0 },
+        { id: 'pt-1', contestName: 'Initial Rating', date: 'Start', rating: Math.max(0, currentPlatRating - 100), delta: 0, rank: 0 },
+        { id: 'pt-2', contestName: 'Season Progress', date: 'Mid-Season', rating: Math.max(0, currentPlatRating - 30), delta: 70, rank: 0 },
+        { id: 'pt-3', contestName: 'Current Synced Rating', date: 'Latest Sync', rating: currentPlatRating, delta: 30, rank: 0 },
       ]
     : [
         { id: 'pt-1', contestName: 'No Contest Data', date: 'Start', rating: 0, delta: 0, rank: 0 },
@@ -921,7 +930,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 CURRENT_USER.dsaTopics?.map((item) => {
-                  const maxVal = 415;
+                  const maxVal = Math.max(...(CURRENT_USER.dsaTopics?.map((t) => t.count) || [1]), 10);
                   const pct = Math.round((item.count / maxVal) * 100);
                   return (
                     <div key={item.topic} className="flex items-center gap-3 text-xs">

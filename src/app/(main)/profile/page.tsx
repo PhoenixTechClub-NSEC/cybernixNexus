@@ -144,12 +144,29 @@ export default function ProfilePage() {
                   Current Tier Companion
                 </span>
                 <h3 className="text-xl font-black text-onyx">
-                  Level {CURRENT_USER.level} Mascot: FLAMIRO (The Flame Bird)
+                  Level {CURRENT_USER.level} Mascot: {
+                    CURRENT_USER.tier === 'Spark' ? 'Spark (The Genesis Spark)' :
+                    CURRENT_USER.tier === 'Ember' ? 'FLAMCHI (The Ember Chick)' :
+                    CURRENT_USER.tier === 'Flame' ? 'FLAMIRO (The Flame Bird)' :
+                    CURRENT_USER.tier === 'Phoenix' ? 'PYRAVIAN (The Inferno Phoenix)' :
+                    'ASCENDANT PHOENIX (Supreme Legend)'
+                  }
                 </h3>
                 <p className="text-xs sm:text-sm text-onyx/70">
-                  Your mascot evolves as you solve problems and maintain consistency! Reaching{' '}
-                  <strong>26,500 points (Level 51)</strong> will evolve FLAMIRO into{' '}
-                  <span className="text-tomato-jam font-bold">PYRAVIAN (The Inferno Phoenix)</span>.
+                  {CURRENT_USER.tier === 'Ascendant' ? (
+                    <span>You have reached the legendary <strong>Ascendant Phoenix</strong> status! Your skills shine across all departments.</span>
+                  ) : (
+                    <span>
+                      Your mascot evolves as you solve problems and maintain consistency! Reaching{' '}
+                      <strong>{CURRENT_USER.nextTierScore.toLocaleString()} points</strong> will evolve your companion into{' '}
+                      <span className="text-tomato-jam font-bold">
+                        {CURRENT_USER.tier === 'Spark' ? 'FLAMCHI (Ember Tier)' :
+                         CURRENT_USER.tier === 'Ember' ? 'FLAMIRO (Flame Tier)' :
+                         CURRENT_USER.tier === 'Flame' ? 'PYRAVIAN (Inferno Phoenix)' :
+                         'ASCENDANT PHOENIX'}
+                      </span>.
+                    </span>
+                  )}
                 </p>
               </div>
               <div className="w-full md:w-80">
@@ -176,36 +193,42 @@ export default function ProfilePage() {
         <div className="space-y-6">
           <div>
             <h3 className="text-xl font-black text-onyx">
-              Unlocked Achievement Badges
+              Unlocked Achievement Badges ({CURRENT_USER.badges.length})
             </h3>
             <p className="text-xs text-onyx/70 mt-0.5">
               Awards for milestones like unlocking tiers, winning contests, or maintaining long solving streaks.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {CURRENT_USER.badges.map((badge) => (
-              <div
-                key={badge.id}
-                className="rounded-2xl bg-white border border-onyx/12 p-5 shadow-sm hover:border-tomato-jam/50 transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="w-12 h-12 rounded-2xl bg-golden-sand/15 border border-onyx/12 flex items-center justify-center text-2xl mb-3 shadow-2xs">
-                    {badge.icon}
+          {CURRENT_USER.badges.length === 0 ? (
+            <div className="p-8 text-center bg-white rounded-3xl border border-onyx/12 text-xs font-bold text-onyx/50">
+              No achievement badges unlocked yet. Start solving problems and syncing platform handles to unlock badges!
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {CURRENT_USER.badges.map((badge) => (
+                <div
+                  key={badge.id}
+                  className="rounded-2xl bg-white border border-onyx/12 p-5 shadow-sm hover:border-tomato-jam/50 transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="w-12 h-12 rounded-2xl bg-golden-sand/15 border border-onyx/12 flex items-center justify-center text-2xl mb-3 shadow-2xs">
+                      {badge.icon}
+                    </div>
+                    <h4 className="font-bold text-onyx">{badge.title}</h4>
+                    <p className="text-xs text-onyx/70 mt-1 leading-relaxed">
+                      {badge.description}
+                    </p>
                   </div>
-                  <h4 className="font-bold text-onyx">{badge.title}</h4>
-                  <p className="text-xs text-onyx/70 mt-1 leading-relaxed">
-                    {badge.description}
-                  </p>
-                </div>
 
-                <div className="mt-4 pt-3 border-t border-onyx/12 flex items-center justify-between text-[11px] text-onyx/70">
-                  <span>Category: {badge.category}</span>
-                  <span className="text-tomato-jam font-semibold">{badge.unlockedAt}</span>
+                  <div className="mt-4 pt-3 border-t border-onyx/12 flex items-center justify-between text-[11px] text-onyx/70">
+                    <span>Category: {badge.category}</span>
+                    <span className="text-tomato-jam font-semibold">{badge.unlockedAt || 'Earned'}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

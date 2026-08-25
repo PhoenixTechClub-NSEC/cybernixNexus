@@ -102,6 +102,9 @@ model StudentStats {
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   leetcodeSolved      Int  @default(0)
+  leetcodeEasySolved  Int  @default(0)
+  leetcodeMediumSolved Int @default(0)
+  leetcodeHardSolved  Int  @default(0)
   leetcodeRating      Int?
 
   codeforcesRating    Int?

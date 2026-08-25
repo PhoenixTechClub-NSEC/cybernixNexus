@@ -60,26 +60,41 @@ export async function GET() {
       30
     ) + 5;
 
+    const sumTwoWeeksAgo = twoWeeksAgoLC.reduce((a, b) => a + b, 0) + twoWeeksAgoCF.reduce((a, b) => a + b, 0);
+    const sumLastWeek = lastWeekLC.reduce((a, b) => a + b, 0) + lastWeekCF.reduce((a, b) => a + b, 0);
+    const sumThisWeek = thisWeekLC.reduce((a, b) => a + b, 0) + thisWeekCF.reduce((a, b) => a + b, 0);
+
+    const calcChange = (curr: number, prev: number): string => {
+      if (prev === 0 && curr === 0) return '+0%';
+      if (prev === 0) return `+${curr * 100}%`;
+      const diff = Math.round(((curr - prev) / prev) * 100);
+      return diff >= 0 ? `+${diff}%` : `${diff}%`;
+    };
+
+    const thisWeekChange = calcChange(sumThisWeek, sumLastWeek);
+    const lastWeekChange = calcChange(sumLastWeek, sumTwoWeeksAgo);
+    const twoWeeksAgoChange = sumTwoWeeksAgo > 0 ? `+${Math.min(100, sumTwoWeeksAgo * 10)}%` : '+0%';
+
     return NextResponse.json({
       success: true,
       velocity: {
         thisWeek: {
           label: 'This Week',
-          change: '+24%',
+          change: thisWeekChange,
           leetcode: thisWeekLC,
           codeforces: thisWeekCF,
           maxVal,
         },
         lastWeek: {
           label: 'Last Week',
-          change: '+18%',
+          change: lastWeekChange,
           leetcode: lastWeekLC,
           codeforces: lastWeekCF,
           maxVal,
         },
         twoWeeksAgo: {
           label: '2 Weeks Ago',
-          change: '+12%',
+          change: twoWeeksAgoChange,
           leetcode: twoWeeksAgoLC,
           codeforces: twoWeeksAgoCF,
           maxVal,

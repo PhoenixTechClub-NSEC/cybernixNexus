@@ -35,9 +35,8 @@ export default function RankingsPage() {
   const [topDeptInfo, setTopDeptInfo] = useState<{ department: string; seasonalMultiplier: number; averageScore: number }>({
     department: 'CSE',
     seasonalMultiplier: 2.0,
-    averageScore: 1845,
+    averageScore: 0,
   });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = async () => {
@@ -53,12 +52,12 @@ export default function RankingsPage() {
             statsRes.summary.departmentStats.map((d: any, idx: number) => ({
               name: d.department,
               rank: idx + 1,
-              averageRating: d.averageScore || 1500,
+              averageRating: d.averageScore || 0,
               totalSolved: d.totalSolved || 0,
-              topCoderName: 'NSEC Student',
-              topCoderScore: d.averageScore || 0,
+              topCoderName: d.topCoderName || 'NSEC Student',
+              topCoderScore: d.topCoderScore || 0,
               seasonalMultiplier: d.seasonalMultiplier || (idx === 0 ? 2.0 : idx === 1 ? 1.75 : 1.5),
-              activeStudentsCount: d.studentCount || 1,
+              activeStudentsCount: d.studentCount || 0,
             }))
           );
         }
@@ -121,15 +120,19 @@ export default function RankingsPage() {
   }, [displayLeaderboardUsers, CURRENT_USER.department, selectedDeptYear]);
 
   const userDeptStat = useMemo(() => {
-    return (
-      departmentStats.find((d) => d.name === (CURRENT_USER.department || 'CSE')) || {
-        name: CURRENT_USER.department || 'CSE',
-        rank: 1,
-        averageRating: 1845,
-        seasonalMultiplier: 2.0,
-      }
-    );
-  }, [departmentStats, CURRENT_USER.department]);
+    const found = departmentStats.find((d) => d.name === (CURRENT_USER.department || 'CSE'));
+    if (found) return found;
+    return {
+      name: (CURRENT_USER.department || 'CSE') as any,
+      rank: 1,
+      averageRating: topDeptInfo.averageScore || 0,
+      totalSolved: 0,
+      topCoderName: CURRENT_USER.name || 'NSEC Student',
+      topCoderScore: CURRENT_USER.cpScore || 0,
+      seasonalMultiplier: topDeptInfo.seasonalMultiplier || 2.0,
+      activeStudentsCount: 1,
+    };
+  }, [departmentStats, CURRENT_USER, topDeptInfo]);
 
   return (
     <div className="space-y-6 pb-14">

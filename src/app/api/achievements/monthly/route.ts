@@ -58,7 +58,12 @@ export async function POST(req: Request) {
     const month = body.month || (now.getMonth() + 1);
     const year = body.year || now.getFullYear();
 
-    // Calculate top problem solver from studentStats
+    // Delete existing automated monthly achievements for this month/year
+    await prisma.monthlyAchievement.deleteMany({
+      where: { month, year, isManual: false },
+    });
+
+    // 1. Problem solver of the month
     const topSolver = await prisma.studentStats.findFirst({
       orderBy: { leetcodeSolved: 'desc' },
       include: { student: { include: { user: true } } },
@@ -73,8 +78,63 @@ export async function POST(req: Request) {
           year,
           studentId: topSolver.student.id,
           department: topSolver.student.department,
-          scoreOrMetric: `${topSolver.leetcodeSolved} Problems Solved`,
+          scoreOrMetric: `${topSolver.leetcodeSolved + topSolver.codeforcesSolved} Problems Solved`,
           badgeIcon: '⚡',
+          isManual: false,
+        },
+      });
+    }
+
+    // 2. CP Champion (highest rating)
+    const topRated = await prisma.studentStats.findFirst({
+      where: { codeforcesRating: { not: null } },
+      orderBy: { codeforcesRating: 'desc' },
+      include: { student: { include: { user: true } } },
+    });
+
+    if (topRated && topRated.student) {
+      await prisma.monthlyAchievement.create({
+        data: {
+          category: 'CP Champion of the month',
+          title: 'Highest Rated Algorithmic Star',
+          month,
+          year,
+          studentId: topRated.student.id,
+          department: topRated.student.department,
+          scoreOrMetric: `${topRated.codeforcesRating} CF Rating`,
+          badgeIcon: '🏆',
+          isManual: false,
+        },
+      });
+    }
+
+    // 3. Top Department of the Month
+    const allStats = await prisma.studentStats.findMany({
+      include: { student: { select: { department: true } } },
+    });
+
+    const deptScores: Record<string, { total: number; count: number }> = {};
+    allStats.forEach((st) => {
+      const dept = st.student?.department || 'CSE';
+      if (!deptScores[dept]) deptScores[dept] = { total: 0, count: 0 };
+      deptScores[dept].total += st.totalScore;
+      deptScores[dept].count += 1;
+    });
+
+    const topDeptEntry = Object.entries(deptScores)
+      .map(([dept, d]) => ({ dept, avg: Math.round(d.total / d.count) }))
+      .sort((a, b) => b.avg - a.avg)[0];
+
+    if (topDeptEntry) {
+      await prisma.monthlyAchievement.create({
+        data: {
+          category: 'Department of the month',
+          title: 'Inter-Department Champion',
+          month,
+          year,
+          department: topDeptEntry.dept,
+          scoreOrMetric: `${topDeptEntry.avg} Avg CP Score`,
+          badgeIcon: '🏛️',
           isManual: false,
         },
       });

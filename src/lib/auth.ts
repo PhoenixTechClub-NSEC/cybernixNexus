@@ -1,15 +1,8 @@
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 import prisma from '@/lib/prisma';
 import { syncStudentStats } from '@/services/platforms/sync';
-
-export function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password).digest('hex');
-}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
@@ -17,41 +10,6 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    }),
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email and password are required');
-        }
-
-        const email = credentials.email.toLowerCase().trim();
-
-        const user = await prisma.user.findUnique({
-          where: { email },
-        });
-
-        if (!user || !user.password) {
-          throw new Error('Invalid email or password');
-        }
-
-        const sha256Hash = hashPassword(credentials.password);
-        let isValid = sha256Hash === user.password;
-
-        if (!isValid && user.password.startsWith('$2')) {
-          isValid = await bcrypt.compare(credentials.password, user.password);
-        }
-
-        if (!isValid) {
-          throw new Error('Invalid email or password');
-        }
-
-        return user;
-      },
     }),
   ],
   session: {
