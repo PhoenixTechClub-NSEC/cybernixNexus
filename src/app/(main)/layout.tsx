@@ -3,9 +3,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Navbar } from '@/components/layout/Navbar';
-import { Search, Bell, Plus } from 'lucide-react';
+import { Search, Bell, Plus, Loader2 } from 'lucide-react';
 import { useUser } from '@/components/providers/UserProvider';
 
 export default function MainLayout({
@@ -13,9 +15,18 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { status } = useSession();
+  const router = useRouter();
   const { user: CURRENT_USER } = useUser();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  // Redirect unauthenticated users immediately
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.replace('/login');
+    }
+  }, [status, router]);
 
   // Close notifications when clicking outside
   useEffect(() => {
@@ -29,6 +40,15 @@ export default function MainLayout({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className="min-h-screen w-full bg-[#FFF1D6] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-tomato-jam" />
+      </div>
+    );
+  }
+
   
   return (
     <div className="min-h-screen w-full bg-[#FFF1D6] text-onyx flex flex-col">
