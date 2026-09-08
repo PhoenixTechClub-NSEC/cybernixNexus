@@ -108,4 +108,4 @@ curl -X GET "https://your-domain.com/api/cron/sync" \
 ---
 
 ## 📜 Maintainers
-Maintained by *Phoenix the Official Tech Club of NSEC*.
+Maintained by Cybernix the technical wing of *Phoenix the Official Tech Club of NSEC*.
