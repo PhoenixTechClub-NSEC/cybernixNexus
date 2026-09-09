@@ -49,7 +49,6 @@ export async function GET(request: Request) {
         handles: {
           leetcode: student.leetcode,
           codeforces: student.codeforces,
-          gfg: student.gfg,
           codechef: student.codechef,
           github: student.github,
           linkedin: student.linkedin,
@@ -60,7 +59,6 @@ export async function GET(request: Request) {
           codeforcesRating: student.stats?.codeforcesRating ?? null,
           codeforcesMaxRating: student.stats?.codeforcesMaxRating ?? null,
           codeforcesSolved: student.stats?.codeforcesSolved ?? 0,
-          gfgScore: student.stats?.gfgScore ?? null,
           codechefRating: student.stats?.codechefRating ?? null,
           totalScore: student.stats?.totalScore ?? 0,
           ranking: student.stats?.ranking ?? rank,
@@ -101,7 +99,6 @@ export async function GET(request: Request) {
           handles: {
             leetcode: dbUser.leetcode,
             codeforces: dbUser.codeforces,
-            gfg: dbUser.gfg,
             codechef: dbUser.codechef,
             github: dbUser.github,
             linkedin: dbUser.linkedin,
@@ -112,7 +109,6 @@ export async function GET(request: Request) {
             codeforcesRating: dbUser.stats?.codeforcesRating ?? null,
             codeforcesMaxRating: dbUser.stats?.codeforcesMaxRating ?? null,
             codeforcesSolved: dbUser.stats?.codeforcesSolved ?? 0,
-            gfgScore: dbUser.stats?.gfgScore ?? null,
             codechefRating: dbUser.stats?.codechefRating ?? null,
             totalScore: dbUser.stats?.totalScore ?? 0,
             ranking: dbUser.stats?.ranking ?? 1,

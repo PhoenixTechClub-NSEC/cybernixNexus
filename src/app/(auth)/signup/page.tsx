@@ -38,10 +38,8 @@ export default function SignupPage() {
   const [github, setGithub] = useState('');
   const [linkedin, setLinkedin] = useState('');
 
-  // Coding Platform Handles
   const [leetcode, setLeetcode] = useState('');
   const [codeforces, setCodeforces] = useState('');
-  const [gfg, setGfg] = useState('');
   const [codechef, setCodechef] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
@@ -71,7 +69,6 @@ export default function SignupPage() {
             if (data.student.linkedin) setLinkedin(data.student.linkedin);
             if (data.student.leetcode) setLeetcode(data.student.leetcode);
             if (data.student.codeforces) setCodeforces(data.student.codeforces);
-            if (data.student.gfg) setGfg(data.student.gfg);
             if (data.student.codechef) setCodechef(data.student.codechef);
           }
         })
@@ -107,7 +104,6 @@ export default function SignupPage() {
 
     const cleanLeetcode = sanitizeHandle(leetcode);
     const cleanCodeforces = sanitizeHandle(codeforces);
-    const cleanGfg = sanitizeHandle(gfg);
     const cleanCodechef = sanitizeHandle(codechef);
     const cleanGithub = sanitizeHandle(github);
     const cleanLinkedin = sanitizeHandle(linkedin);
@@ -126,7 +122,6 @@ export default function SignupPage() {
           graduationYear: Number(graduationYear),
           leetcode: cleanLeetcode || null,
           codeforces: cleanCodeforces || null,
-          gfg: cleanGfg || null,
           codechef: cleanCodechef || null,
           github: cleanGithub || null,
           linkedin: cleanLinkedin || null,
@@ -413,7 +408,7 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* 4. Platform Handles (leetcode, codeforces, gfg, codechef) */}
+            {/* 4. Platform Handles (leetcode, codeforces, codechef) */}
             <div>
               <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
                 <Code2 className="w-4 h-4 text-tomato-jam" />
@@ -443,19 +438,6 @@ export default function SignupPage() {
                     value={codeforces}
                     onChange={(e) => setCodeforces(e.target.value)}
                     placeholder="e.g. tourist"
-                    className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="signup-gfg" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                    GeeksforGeeks Handle
-                  </label>
-                  <input
-                    id="signup-gfg"
-                    type="text"
-                    value={gfg}
-                    onChange={(e) => setGfg(e.target.value)}
-                    placeholder="e.g. coder_nsec"
                     className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
                   />
                 </div>
