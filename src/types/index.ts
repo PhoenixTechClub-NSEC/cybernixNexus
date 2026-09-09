@@ -2,7 +2,7 @@ export type TierName = 'Spark' | 'Ember' | 'Flame' | 'Phoenix' | 'Ascendant';
 
 export type Department = 'CSE' | 'IT' | 'ECE' | 'AI&DS' | 'EE' | 'ME';
 
-export type PlatformName = 'Codeforces' | 'LeetCode' | 'CodeChef' | 'GFG' | 'HackerRank';
+export type PlatformName = 'Codeforces' | 'LeetCode' | 'CodeChef' | 'HackerRank';
 
 export interface LevelTierInfo {
   levelRange: string;

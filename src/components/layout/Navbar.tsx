@@ -50,7 +50,6 @@ export function Navbar() {
   const streakMultiplier = (1 + (CURRENT_USER.currentStreak || 1) * 0.01).toFixed(2);
 
   const headerRef = useRef<HTMLElement>(null);
-  const navbarFlameRef = useRef<HTMLImageElement>(null);
   const streakFlameRef = useRef<SVGSVGElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -70,14 +69,6 @@ export function Navbar() {
         opacity: 0,
         duration: 0.45,
         ease: 'power2.out',
-      });
-
-      gsap.from('.navbar-logo', {
-        x: -15,
-        opacity: 0,
-        duration: 0.45,
-        ease: 'power2.out',
-        delay: 0.1,
       });
 
       gsap.from('.navbar-nav-item', {
@@ -116,25 +107,6 @@ export function Navbar() {
     },
     { dependencies: [mobileMenuOpen] }
   );
-
-  // Interactive contextSafe Hover Micro-Animations (Zero lag, no memory leak)
-  const handleLogoEnter = contextSafe(() => {
-    gsap.to(navbarFlameRef.current, {
-      scale: 1.25,
-      rotation: -15,
-      duration: 0.3,
-      ease: 'back.out(3)',
-    });
-  });
-
-  const handleLogoLeave = contextSafe(() => {
-    gsap.to(navbarFlameRef.current, {
-      scale: 1,
-      rotation: 0,
-      duration: 0.25,
-      ease: 'power2.out',
-    });
-  });
 
   const handleNavEnter = contextSafe((e: React.MouseEvent<HTMLAnchorElement>) => {
     const icon = e.currentTarget.querySelector('.nav-icon');
@@ -252,7 +224,7 @@ export function Navbar() {
       {/* Top Banner for NSEC Inter-Department Competition */}
       <div className="navbar-banner bg-gradient-to-r from-tomato-jam via-onyx to-pine-teal text-white text-xs py-1.5 px-2 sm:px-4 text-center font-medium">
         <span className="inline-flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 animate-pulse text-golden-sand shrink-0" />
+          <Sparkles className="w-3.5 h-3.5 text-golden-sand shrink-0" />
           <span className="truncate max-w-[200px] sm:max-w-none">
             <strong className="hidden sm:inline">NSEC Avahan League 2026: </strong>
             <span className="hidden sm:inline">{topDept.name} currently leads Dept Battles with a </span>
@@ -275,22 +247,19 @@ export function Navbar() {
           {/* Logo */}
           <Link
             href="/dashboard"
-            onMouseEnter={handleLogoEnter}
-            onMouseLeave={handleLogoLeave}
             className="navbar-logo flex items-center gap-3 cursor-pointer"
           >
             <div className="flex items-center justify-center w-10 h-10 shrink-0">
               <img
-                ref={navbarFlameRef}
                 src="/pheonix_mod1.png"
                 alt="Phoenix Logo"
-                className="w-10 h-10 object-contain drop-shadow-sm scale-[3] will-change-transform"
+                className="w-10 h-10 object-contain drop-shadow-sm scale-[3]"
                 width="40"
                 height="40"
                 fetchPriority="high"
               />
             </div>
-            <div>
+            <div className="pr-3">
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-xl tracking-tight text-onyx">
                   Cybernix <span className="text-tomato-jam">Nexus</span>
@@ -343,7 +312,7 @@ export function Navbar() {
             >
               <Flame
                 ref={streakFlameRef}
-                className="w-4 h-4 fill-tomato-jam text-tomato-jam animate-bounce will-change-transform"
+                className="w-4 h-4 fill-tomato-jam text-tomato-jam will-change-transform"
               />
               <span>{CURRENT_USER.currentStreak}-Day Streak</span>
               <span className="text-[10px] bg-tomato-jam text-white px-1.5 py-0.2 rounded-full">
@@ -374,27 +343,14 @@ export function Navbar() {
                 onMouseEnter={handleProfileEnter}
                 onMouseLeave={handleProfileLeave}
                 suppressHydrationWarning
-                className="navbar-pill flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl border border-onyx/12 hover:border-tomato-jam/50 hover:bg-golden-sand/10 transition-colors duration-200 will-change-transform cursor-pointer"
+                className="relative rounded-full border border-onyx/12 hover:border-tomato-jam/50 hover:bg-golden-sand/10 transition-colors duration-200 will-change-transform cursor-pointer focus:outline-none focus:ring-2 focus:ring-tomato-jam/50"
               >
                 <img
                   src={CURRENT_USER.avatar}
                   alt={CURRENT_USER.name}
-                  className="avatar-img w-8 h-8 rounded-full object-cover ring-2 ring-tomato-jam/40 will-change-transform"
+                  className="avatar-img w-9 h-9 rounded-full object-cover ring-2 ring-tomato-jam/40 will-change-transform"
                   fetchPriority="high"
                 />
-                <div className="text-left">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-onyx leading-none">
-                      {CURRENT_USER.name}
-                    </span>
-                    <span className="text-[10px] font-semibold text-tomato-jam bg-golden-sand/20 px-1 rounded">
-                      {CURRENT_USER.department}
-                    </span>
-                  </div>
-                  <div className="mt-0.5">
-                    <LevelBadge level={CURRENT_USER.level} tier={CURRENT_USER.tier} size="sm" />
-                  </div>
-                </div>
               </button>
 
               {/* Desktop Profile Dropdown Menu */}

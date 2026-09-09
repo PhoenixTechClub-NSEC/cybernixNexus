@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ContestCalendar } from '@/features/calendar/components/ContestCalendar';
 import {
   Calendar,
@@ -9,6 +9,7 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react';
+import CapybaraLoader from '@/components/ui/CapybaraLoader';
 
 interface ContestItem {
   id: string;
@@ -79,13 +80,17 @@ export default function ContestsPage() {
     }
   };
 
-  const flagshipContest = contests.find((c) => c.isInternal) || contests[0] || null;
+  const flagshipContest = useMemo(() => contests.find((c) => c.isInternal) || contests[0] || null, [contests]);
 
-  const filteredContests = contests.filter((cnt) => {
+  const filteredContests = useMemo(() => contests.filter((cnt) => {
     if (filter === 'ALL') return true;
     if (filter === 'Internal') return cnt.isInternal;
     return cnt.platform === filter;
-  });
+  }), [contests, filter]);
+
+  if (isLoading) {
+    return <CapybaraLoader />;
+  }
 
   return (
     <div className="space-y-8 pb-12">

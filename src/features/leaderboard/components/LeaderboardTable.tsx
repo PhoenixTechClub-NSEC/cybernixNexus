@@ -156,26 +156,19 @@ export function LeaderboardTable({
     >
       {/* Header Filters */}
       <div className="p-5 border-b border-onyx/12 bg-golden-sand/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Department filter tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0">
-          {departments.map((dept) => {
-            const isSelected = selectedDept === dept;
-            return (
-              <button
-                key={dept}
-                onClick={() => setSelectedDept(dept)}
-                onMouseEnter={handlePillEnter}
-                onMouseLeave={handlePillLeave}
-                className={`px-3 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap transition-colors cursor-pointer will-change-transform ${
-                  isSelected
-                    ? 'bg-dark-amethyst text-white shadow-xs'
-                    : 'bg-white text-onyx/70 hover:bg-golden-sand/15 border border-onyx/12'
-                }`}
-              >
-                {dept}
-              </button>
-            );
-          })}
+        {/* Department filter dropdown */}
+        <div className="flex items-center pb-2 md:pb-0">
+          <select
+            value={selectedDept}
+            onChange={(e) => setSelectedDept(e.target.value as Department | 'ALL')}
+            className="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-[#FFF1D6] text-onyx border border-golden-sand/40 hover:border-tomato-jam/50 focus:outline-none focus:ring-2 focus:ring-tomato-jam/20 focus:border-tomato-jam cursor-pointer shadow-sm transition-all"
+          >
+            {departments.map((dept) => (
+              <option key={dept} value={dept}>
+                {dept === 'ALL' ? 'All Departments' : `${dept} Dept`}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Search Input & Sort Selector */}
@@ -233,14 +226,14 @@ export function LeaderboardTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="w-full">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-onyx/12 bg-golden-sand/5 text-[11px] font-bold uppercase tracking-wider text-onyx/70">
               <th className="py-3 px-4 text-center w-14">Rank</th>
               <th className="py-3 px-4">Student Name</th>
               <th className="py-3 px-4">Department</th>
-              <th className="py-3 px-4">Level & Tier</th>
+              <th className="py-3 px-4">Level</th>
               <th className="py-3 px-4 text-center">Streak</th>
               <th className="py-3 px-4 text-right">Problems Solved</th>
               <th className="py-3 px-6 text-right">CP Score</th>
@@ -287,20 +280,15 @@ export function LeaderboardTable({
 
                     {/* Student Name & Avatar */}
                     <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-col items-start gap-1.5">
                         <img
                           src={user.avatar}
                           alt={user.name}
                           className="row-avatar w-9 h-9 rounded-full object-cover ring-1 ring-pine-teal/20 will-change-transform"
                         />
-                        <div>
-                          <p className="font-bold text-onyx group-hover:text-tomato-jam transition-colors">
-                            {user.name}
-                          </p>
-                          <p className="text-xs text-onyx/70 font-medium">
-                            {user.year} • NSEC College
-                          </p>
-                        </div>
+                        <p className="font-bold text-onyx group-hover:text-tomato-jam transition-colors">
+                          {user.name}
+                        </p>
                       </div>
                     </td>
 

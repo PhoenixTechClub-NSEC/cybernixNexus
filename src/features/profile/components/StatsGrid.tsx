@@ -19,8 +19,7 @@ export function StatsGrid({ user }: StatsGridProps) {
         return 'border-golden-sand/40 bg-golden-sand/8 text-onyx';
       case 'HackerRank':
         return 'border-onyx/12 bg-pine-teal/5 text-onyx/70';
-      case 'GFG':
-        return 'border-onyx/12 bg-pine-teal/5 text-onyx/70';
+
       default:
         return 'border-onyx/12 bg-pine-teal/5 text-onyx';
     }
@@ -109,7 +108,7 @@ export function StatsGrid({ user }: StatsGridProps) {
                 Multi-Platform Rating Synchronization
               </h4>
               <p className="text-xs text-onyx/70 mt-0.5">
-                Connected profiles across Codeforces, LeetCode, CodeChef, HackerRank, and GFG.
+                Connected profiles across Codeforces, LeetCode, CodeChef, and HackerRank.
               </p>
             </div>
             <span className="inline-flex items-center gap-1 text-xs font-bold text-onyx/70 bg-pine-teal/5 px-2.5 py-1 rounded-full border border-onyx/12">

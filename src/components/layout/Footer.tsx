@@ -277,7 +277,7 @@ export function Footer() {
           <p>© 2026 Cybernix Nexus • Netaji Subhash Engineering College. All rights reserved.</p>
           <div className="flex items-center gap-4 mt-2 sm:mt-0">
             <span className="inline-flex items-center gap-1 text-tomato-jam font-medium">
-              <span className="w-2 h-2 rounded-full bg-tomato-jam animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-tomato-jam"></span>
               Live Synced: {totalStudents > 0 ? totalStudents : '14+'} Registered Coders
             </span>
           </div>

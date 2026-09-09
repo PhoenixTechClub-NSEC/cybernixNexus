@@ -13,6 +13,7 @@ import {
   Award,
   Sparkles,
 } from 'lucide-react';
+import ParticlesBackground from '@/components/ui/ParticlesBackground';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
     try {
-      await signIn('google', { callbackUrl: '/' });
+      await signIn('google', { callbackUrl: '/login' });
     } catch {
       setError('Failed to initiate Google sign in. Please try again.');
       setIsLoading(false);
@@ -55,9 +56,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#FFF1D6] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Particles.js Interactive Background */}
+      <ParticlesBackground />
+
       {/* Background Ambient Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-tomato-jam/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-80 h-80 bg-golden-sand/40 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-tomato-jam/10 rounded-full blur-3xl pointer-events-none z-0" />
+      <div className="absolute bottom-10 right-10 w-80 h-80 bg-golden-sand/40 rounded-full blur-2xl pointer-events-none z-0" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center relative z-10">
         <Link href="/" className="inline-flex items-center gap-2.5 group">
@@ -82,7 +86,7 @@ export default function LoginPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <div className="bg-white/95 backdrop-blur-md py-8 px-6 shadow-xl shadow-onyx/5 rounded-3xl border border-onyx/12 sm:px-10 space-y-6">
+        <div className="bg-white/20 backdrop-blur-xl py-8 px-6 shadow-2xl shadow-onyx/10 rounded-3xl border border-white/50 sm:px-10 space-y-6">
 
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in zoom-in-95 duration-150">

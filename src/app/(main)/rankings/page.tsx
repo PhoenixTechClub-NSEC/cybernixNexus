@@ -15,11 +15,12 @@ import {
   RefreshCw,
   CheckCircle2,
 } from 'lucide-react';
+import CapybaraLoader from '@/components/ui/CapybaraLoader';
 
 export default function RankingsPage() {
   const { user: CURRENT_USER } = useUser();
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [visualTab, setVisualTab] = useState<'podium' | 'battles' | 'tiers'>('podium');
+  const [visualTab, setVisualTab] = useState<'podium' | 'battles'>('podium');
   const [selectedDeptYear, setSelectedDeptYear] = useState<string>('ALL');
   const [isSyncing, setIsSyncing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -134,6 +135,10 @@ export default function RankingsPage() {
     };
   }, [departmentStats, CURRENT_USER, topDeptInfo]);
 
+  if (isLoading) {
+    return <CapybaraLoader />;
+  }
+
   return (
     <div className="space-y-6 pb-14">
       {/* Top Banner & Title */}
@@ -182,67 +187,22 @@ export default function RankingsPage() {
           <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-golden-sand/15 blur-3xl pointer-events-none"></div>
           <div className="absolute -bottom-16 -left-16 w-56 h-56 rounded-full bg-tomato-jam/10 blur-3xl pointer-events-none"></div>
 
-          {/* Header & Visual Mode Switcher */}
+          {/* Header */}
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-tomato-jam">
                 🏆 Championship Podium &amp; Multipliers
               </span>
               <h2 className="text-lg sm:text-xl font-black text-onyx mt-0.5">
-                {visualTab === 'podium' && 'Top 3 Student Podium'}
-                {visualTab === 'battles' && 'Department Battles & Mdept Bonus'}
-                {visualTab === 'tiers' && 'College Tier Distribution'}
+                Top 3 Student Podium
               </h2>
-            </div>
-
-            {/* Visual Mode Tabs */}
-            <div className="flex items-center gap-1 bg-golden-sand/15 p-1 rounded-xl border border-onyx/12 shrink-0">
-              <button
-                onClick={() => setVisualTab('podium')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  visualTab === 'podium'
-                    ? 'bg-white text-onyx shadow-2xs font-extrabold'
-                    : 'text-onyx/70 hover:text-onyx'
-                }`}
-              >
-                Podium
-              </button>
-              <button
-                onClick={() => setVisualTab('battles')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  visualTab === 'battles'
-                    ? 'bg-white text-onyx shadow-2xs font-extrabold'
-                    : 'text-onyx/70 hover:text-onyx'
-                }`}
-              >
-                Battles
-              </button>
-              <button
-                onClick={() => setVisualTab('tiers')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  visualTab === 'tiers'
-                    ? 'bg-white text-onyx shadow-2xs font-extrabold'
-                    : 'text-onyx/70 hover:text-onyx'
-                }`}
-              >
-                Tiers
-              </button>
             </div>
           </div>
 
-          {isLoading ? (
-            <div className="relative z-10 py-10 flex flex-col items-center justify-center min-h-[200px]">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-tomato-jam mb-4"></div>
-              <p className="text-xs font-bold text-onyx/50 animate-pulse">Syncing Leaderboard...</p>
-            </div>
-          ) : (
-            <>
-          {/* TAB 1: TOP 3 PODIUM VISUAL */}
-          {visualTab === 'podium' && (
-            <div className="relative z-10 py-2">
-              <Podium users={displayLeaderboardUsers} onSelectUser={setSelectedUser} />
-            </div>
-          )}
+          {/* TOP 3 PODIUM VISUAL */}
+          <div className="relative z-10 py-2">
+            <Podium users={displayLeaderboardUsers} onSelectUser={setSelectedUser} />
+          </div>
 
           {/* TAB 2: DEPARTMENT BATTLE BUBBLES VISUALIZER */}
           {visualTab === 'battles' && (
@@ -300,36 +260,7 @@ export default function RankingsPage() {
             </div>
           )}
 
-          {/* TAB 3: TIER DISTRIBUTION */}
-          {visualTab === 'tiers' && (
-            <div className="relative z-10 space-y-3 py-2">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                <div className="p-3.5 rounded-2xl bg-golden-sand/15 border border-onyx/12">
-                  <p className="text-xl font-black text-onyx">{tierDistribution.Phoenix || 0}</p>
-                  <p className="text-[11px] font-extrabold text-tomato-jam mt-0.5">Phoenix Tier</p>
-                  <p className="text-[10px] text-onyx/60">30,000+ pts</p>
-                </div>
-                <div className="p-3.5 rounded-2xl bg-golden-sand/15 border border-onyx/12">
-                  <p className="text-xl font-black text-onyx">{tierDistribution.Flame || 0}</p>
-                  <p className="text-[11px] font-extrabold text-pine-teal mt-0.5">Flame Tier</p>
-                  <p className="text-[10px] text-onyx/60">10,000+ pts</p>
-                </div>
-                <div className="p-3.5 rounded-2xl bg-golden-sand/15 border border-onyx/12">
-                  <p className="text-xl font-black text-onyx">{tierDistribution.Ember || 0}</p>
-                  <p className="text-[11px] font-extrabold text-onyx mt-0.5">Ember Tier</p>
-                  <p className="text-[10px] text-onyx/60">2,000+ pts</p>
-                </div>
-                <div className="p-3.5 rounded-2xl bg-golden-sand/15 border border-onyx/12">
-                  <p className="text-xl font-black text-onyx">{tierDistribution.Spark || 0}</p>
-                  <p className="text-[11px] font-extrabold text-onyx/70 mt-0.5">Spark Tier</p>
-                  <p className="text-[10px] text-onyx/60">0+ pts</p>
-                </div>
-              </div>
-            </div>
-          )}
 
-            </>
-          )}
 
           {/* Bottom legend note */}
           <div className="relative z-10 pt-3 mt-3 border-t border-onyx/10 flex items-center justify-between text-[11px] text-onyx/70">
@@ -346,7 +277,7 @@ export default function RankingsPage() {
 
       {/* BOTTOM ROW: 70% Global All Students List on Left + 30% User's Department (CSE) on Right (both self-start, zero stretch) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT 70% (8 COLUMNS): Whole List of ALL Students */}
+        {/* LEFT (8 COLUMNS): Whole List of ALL Students */}
         <div className="lg:col-span-8 rounded-3xl bg-white border border-onyx/12 p-6 shadow-sm self-start content-visibility-auto">
           <div className="mb-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -381,7 +312,7 @@ export default function RankingsPage() {
           </div>
         </div>
 
-        {/* RIGHT 30% (4 COLUMNS): User's Department Standings & Rules (naturally sized cards, ZERO stretching) */}
+        {/* RIGHT (4 COLUMNS): User's Department Standings & Rules */}
         <div className="lg:col-span-4 space-y-6 self-start content-visibility-auto">
           {/* Card 1: CSE Dept Leaderboard with Year Filter */}
           <div className="rounded-3xl bg-white border border-onyx/12 p-6 shadow-sm self-start">

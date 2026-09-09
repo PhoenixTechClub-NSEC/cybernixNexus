@@ -18,9 +18,9 @@ export function LevelBadge({
   const tierInfo = LEVEL_TIERS.find((t) => t.tierName === tier) || LEVEL_TIERS[0];
 
   const sizeStyles = {
-    sm: 'text-xs px-2 py-0.5 gap-1 rounded-md font-medium',
-    md: 'text-xs px-2.5 py-1 gap-1.5 rounded-lg font-semibold',
-    lg: 'text-sm px-3.5 py-1.5 gap-2 rounded-xl font-bold shadow-sm',
+    sm: 'text-[10px] px-1.5 py-0.5 gap-1 rounded-md font-bold whitespace-nowrap',
+    md: 'text-xs px-2 py-1 gap-1.5 rounded-lg font-bold whitespace-nowrap',
+    lg: 'text-sm px-3 py-1.5 gap-2 rounded-xl font-black shadow-sm whitespace-nowrap',
   };
 
   const badgeIconMap: Record<TierName, string> = {
@@ -37,8 +37,7 @@ export function LevelBadge({
       title={`Level ${level} (${tierInfo.levelRange}) — ${tierInfo.mascotName}`}
     >
       <span className="text-base leading-none">{badgeIconMap[tier]}</span>
-      <span>{tier}</span>
-      <span className="opacity-75 font-normal">• Lvl {level}</span>
+      <span className="font-bold">Lvl {level}</span>
       {showMascotName && (
         <span className="ml-1 text-[10px] uppercase tracking-wider px-1.5 py-0.5 bg-white/80 rounded border border-current/20">
           {tierInfo.mascotName}

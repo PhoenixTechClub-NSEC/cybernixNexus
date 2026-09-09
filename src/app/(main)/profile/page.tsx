@@ -3,8 +3,6 @@
 
 import React, { useState } from 'react';
 import { useUser } from '@/components/providers/UserProvider';
-import { LevelBadge } from '@/features/gamification/components/LevelBadge';
-import { MascotRenderer } from '@/features/gamification/components/MascotRenderer';
 import { Heatmap } from '@/features/profile/components/Heatmap';
 import { StatsGrid } from '@/features/profile/components/StatsGrid';
 import {
@@ -58,12 +56,6 @@ export default function ProfilePage() {
               </p>
 
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1">
-                <LevelBadge
-                  level={CURRENT_USER.level}
-                  tier={CURRENT_USER.tier}
-                  size="md"
-                  showMascotName={true}
-                />
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 text-white text-xs font-bold border border-white/15">
                   <Flame className="w-3.5 h-3.5 text-tomato-jam fill-current" />
                   <span>{CURRENT_USER.currentStreak}-Day Active Streak</span>
@@ -136,45 +128,6 @@ export default function ProfilePage() {
       {/* TAB CONTENT: OVERVIEW */}
       {activeTab === 'overview' && (
         <div className="space-y-8">
-          {/* Mascot Evolution Card */}
-          <div className="rounded-3xl bg-white border border-onyx/12 p-6 shadow-sm">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex-1 space-y-2 text-center md:text-left">
-                <span className="text-xs font-bold uppercase tracking-wider text-tomato-jam">
-                  Current Tier Companion
-                </span>
-                <h3 className="text-xl font-black text-onyx">
-                  Level {CURRENT_USER.level} Mascot: {
-                    CURRENT_USER.tier === 'Spark' ? 'Spark (The Genesis Spark)' :
-                    CURRENT_USER.tier === 'Ember' ? 'FLAMCHI (The Ember Chick)' :
-                    CURRENT_USER.tier === 'Flame' ? 'FLAMIRO (The Flame Bird)' :
-                    CURRENT_USER.tier === 'Phoenix' ? 'PYRAVIAN (The Inferno Phoenix)' :
-                    'ASCENDANT PHOENIX (Supreme Legend)'
-                  }
-                </h3>
-                <p className="text-xs sm:text-sm text-onyx/70">
-                  {CURRENT_USER.tier === 'Ascendant' ? (
-                    <span>You have reached the legendary <strong>Ascendant Phoenix</strong> status! Your skills shine across all departments.</span>
-                  ) : (
-                    <span>
-                      Your mascot evolves as you solve problems and maintain consistency! Reaching{' '}
-                      <strong>{CURRENT_USER.nextTierScore.toLocaleString()} points</strong> will evolve your companion into{' '}
-                      <span className="text-tomato-jam font-bold">
-                        {CURRENT_USER.tier === 'Spark' ? 'FLAMCHI (Ember Tier)' :
-                         CURRENT_USER.tier === 'Ember' ? 'FLAMIRO (Flame Tier)' :
-                         CURRENT_USER.tier === 'Flame' ? 'PYRAVIAN (Inferno Phoenix)' :
-                         'ASCENDANT PHOENIX'}
-                      </span>.
-                    </span>
-                  )}
-                </p>
-              </div>
-              <div className="w-full md:w-80">
-                <MascotRenderer tier={CURRENT_USER.tier} size="md" showCard={true} />
-              </div>
-            </div>
-          </div>
-
           {/* ACTIVITY HEATMAP */}
           <Heatmap
             studentId={CURRENT_USER.id}

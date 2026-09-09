@@ -73,7 +73,6 @@ model Student {
 
   leetcode        String?
   codeforces      String?
-  gfg             String?
   codechef        String?
   github          String?
   linkedin        String?
@@ -115,8 +114,6 @@ model StudentStats {
   codeforcesAvatar    String?
   codeforcesContribution Int?
 
-  gfgScore            Int?
-
   codechefRating      Int?
 
   totalScore          Int  @default(0)
@@ -148,7 +145,6 @@ model DailySnapshot {
 
   leetcodeSolved   Int      @default(0)
   codeforcesSolved Int      @default(0)
-  gfgScore         Int      @default(0)
   codechefRating   Int      @default(0)
   totalScore       Int      @default(0)
 
@@ -184,7 +180,7 @@ model Editorial {
   id           String             @id @default(cuid())
   title        String
   problemUrl   String?
-  platform     String             // "Codeforces" | "LeetCode" | "CodeChef" | "GFG" | "AtCoder" | "HackerRank"
+  platform     String             // "Codeforces" | "LeetCode" | "CodeChef" | "AtCoder" | "HackerRank"
   difficulty   String             // "Easy" | "Medium" | "Hard"
   tags         String[]           // Array of string tags
   summary      String             @db.Text

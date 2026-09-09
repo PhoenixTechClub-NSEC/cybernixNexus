@@ -7,7 +7,6 @@ import { syncStudentStats } from '@/services/platforms';
 interface UpdateHandlesRequestBody {
   leetcode?: string | null;
   codeforces?: string | null;
-  gfg?: string | null;
   codechef?: string | null;
   github?: string | null;
   linkedin?: string | null;
@@ -37,7 +36,6 @@ export async function POST(request: Request) {
     const {
       leetcode,
       codeforces,
-      gfg,
       codechef,
       github,
       linkedin,
@@ -74,7 +72,6 @@ export async function POST(request: Request) {
           graduationYear: validGradYear,
           leetcode: typeof leetcode === 'string' && leetcode.trim() ? leetcode.trim() : null,
           codeforces: typeof codeforces === 'string' && codeforces.trim() ? codeforces.trim() : null,
-          gfg: typeof gfg === 'string' && gfg.trim() ? gfg.trim() : null,
           codechef: typeof codechef === 'string' && codechef.trim() ? codechef.trim() : null,
           github: typeof github === 'string' && github.trim() ? github.trim() : null,
           linkedin: typeof linkedin === 'string' && linkedin.trim() ? linkedin.trim() : null,
@@ -99,18 +96,15 @@ export async function POST(request: Request) {
     // Check changed platform handles
     const oldLc = (student.leetcode || '').trim();
     const oldCf = (student.codeforces || '').trim();
-    const oldGfg = (student.gfg || '').trim();
     const oldCc = (student.codechef || '').trim();
 
     const newLc = typeof leetcode === 'string' ? leetcode.trim() : oldLc;
     const newCf = typeof codeforces === 'string' ? codeforces.trim() : oldCf;
-    const newGfg = typeof gfg === 'string' ? gfg.trim() : oldGfg;
     const newCc = typeof codechef === 'string' ? codechef.trim() : oldCc;
 
     const changedPlatforms = {
       leetcode: oldLc !== newLc,
       codeforces: oldCf !== newCf,
-      gfg: oldGfg !== newGfg,
       codechef: oldCc !== newCc,
     };
 
@@ -133,7 +127,6 @@ export async function POST(request: Request) {
       data: {
         leetcode: newLc || null,
         codeforces: newCf || null,
-        gfg: newGfg || null,
         codechef: newCc || null,
         ...(typeof github === 'string' ? { github: github.trim() || null } : {}),
         ...(typeof linkedin === 'string' ? { linkedin: linkedin.trim() || null } : {}),

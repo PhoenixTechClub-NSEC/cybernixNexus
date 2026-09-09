@@ -1,7 +1,6 @@
 import prisma from '@/lib/prisma';
 import { fetchLeetCodeStats } from './leetcode';
 import { fetchCodeforcesStats } from './codeforces';
-import { fetchGfgStats } from './gfg';
 import { fetchCodechefStats } from './codechef';
 import { PlatformStatsResult, LeetCodeFetchResult, CodeforcesFetchResult } from './types';
 
@@ -16,7 +15,6 @@ export function calculateTotalScore(stats: {
   leetcodeRating: number | null;
   codeforcesRating: number | null;
   codeforcesSolved: number;
-  gfgScore: number | null;
   codechefRating: number | null;
   streakDays?: number;
 }): number {
@@ -31,9 +29,6 @@ export function calculateTotalScore(stats: {
   // Codeforces: Solved * 35 (reflecting higher difficulty) * 1.75 Weight
   const cfSolvedPoints = Math.max(0, stats.codeforcesSolved) * 35 * 1.75;
 
-  // GFG Score: Score * 1.0 Weight
-  const gfgPoints = stats.gfgScore ? Math.max(0, stats.gfgScore) * 1.0 : 0;
-
   // CodeChef Rating bonus contribution if available
   const ccPoints = stats.codechefRating ? Math.max(0, stats.codechefRating - 1000) * 0.5 * 1.25 : 0;
 
@@ -41,7 +36,7 @@ export function calculateTotalScore(stats: {
   const streak = Math.max(0, stats.streakDays ?? 0);
   const streakMultiplier = Math.min(1.6, 1.0 + streak * 0.01);
 
-  return Math.round((lcPoints + cfSolvedPoints + gfgPoints + ccPoints) * streakMultiplier);
+  return Math.round((lcPoints + cfSolvedPoints + ccPoints) * streakMultiplier);
 }
 
 export async function recalculateRankings(): Promise<void> {
@@ -120,10 +115,9 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
   const errors: Record<string, string> = {};
 
   try {
-    const [lcRes, cfRes, gfgRes, ccRes] = await Promise.allSettled([
+    const [lcRes, cfRes, ccRes] = await Promise.allSettled([
       student.leetcode ? fetchLeetCodeStats(student.leetcode) : Promise.resolve<LeetCodeFetchResult>({ solved: 0, easy: 0, medium: 0, hard: 0, rating: null, submissionCalendar: {} }),
       student.codeforces ? fetchCodeforcesStats(student.codeforces) : Promise.resolve<CodeforcesFetchResult>({ rating: null, maxRating: null, rank: null, maxRank: null, solved: 0, avatar: null, contribution: null, dailySubmissions: {} }),
-      student.gfg ? fetchGfgStats(student.gfg) : Promise.resolve({ score: null }),
       student.codechef ? fetchCodechefStats(student.codechef) : Promise.resolve({ rating: null }),
     ]);
 
@@ -171,13 +165,6 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       errors.codeforces = cfRes.reason?.message || 'Failed to fetch Codeforces stats';
     }
 
-    const gfgScore = gfgRes.status === 'fulfilled'
-      ? gfgRes.value.score
-      : (existingStats?.gfgScore ?? null);
-    if (gfgRes.status === 'rejected') {
-      errors.gfg = gfgRes.reason?.message || 'Failed to fetch GFG stats';
-    }
-
     const codechefRating = ccRes.status === 'fulfilled'
       ? ccRes.value.rating
       : (existingStats?.codechefRating ?? null);
@@ -193,7 +180,6 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       leetcodeRating,
       codeforcesRating,
       codeforcesSolved,
-      gfgScore,
       codechefRating,
     });
 
@@ -213,7 +199,6 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         codeforcesSolved,
         codeforcesAvatar,
         codeforcesContribution,
-        gfgScore,
         codechefRating,
         totalScore,
       },
@@ -230,7 +215,6 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         codeforcesSolved,
         codeforcesAvatar,
         codeforcesContribution,
-        gfgScore,
         codechefRating,
         totalScore,
       },
@@ -279,7 +263,6 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
           date: snapDate,
           leetcodeSolved: counts.lc,
           codeforcesSolved: counts.cf,
-          gfgScore: 0,
           codechefRating: 0,
           totalScore: dayScore,
         },
@@ -311,14 +294,12 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         date: today,
         leetcodeSolved: todayActivity.lc,
         codeforcesSolved: todayActivity.cf,
-        gfgScore: gfgScore ?? 0,
         codechefRating: codechefRating ?? 0,
         totalScore,
       },
       update: {
         leetcodeSolved: todayActivity.lc,
         codeforcesSolved: todayActivity.cf,
-        gfgScore: gfgScore ?? 0,
         codechefRating: codechefRating ?? 0,
         totalScore,
       },
@@ -336,7 +317,7 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
     const hasErrors = Object.keys(errors).length > 0;
     const isTotalFailure =
       hasErrors &&
-      [student.leetcode, student.codeforces, student.gfg, student.codechef].filter(Boolean).length ===
+      [student.leetcode, student.codeforces, student.codechef].filter(Boolean).length ===
       Object.keys(errors).length;
 
     await prisma.syncJob.update({
@@ -367,7 +348,6 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       codeforcesSolved: finalStats?.codeforcesSolved ?? 0,
       codeforcesAvatar: finalStats?.codeforcesAvatar ?? null,
       codeforcesContribution: finalStats?.codeforcesContribution ?? null,
-      gfgScore: finalStats?.gfgScore ?? null,
       codechefRating: finalStats?.codechefRating ?? null,
       totalScore: finalStats?.totalScore ?? 0,
       ranking: finalStats?.ranking ?? null,

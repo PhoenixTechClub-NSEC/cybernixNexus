@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { UserProfile } from '@/types';
+import { UserProfile, TierName } from '@/types';
+import CapybaraLoader from '@/components/ui/CapybaraLoader';
 
 const INITIAL_EMPTY_USER: UserProfile = {
   id: '',
@@ -42,9 +43,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { status } = useSession();
   const [user, setUser] = useState<UserProfile>(INITIAL_EMPTY_USER);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   const fetchStudentProfile = async () => {
     try {
+      setIsLoadingProfile(true);
       const res = await fetch('/api/student');
       if (!res.ok) return;
       const data = await res.json();
@@ -57,7 +60,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const totalSolved = lcSolved + cfSolved;
 
         const level = Math.max(1, Math.min(100, Math.floor(totalScore / 500)));
-        const tier = totalScore > 30000 ? 'Phoenix' : totalScore > 10000 ? 'Flame' : totalScore > 2000 ? 'Ember' : 'Spark';
+        const tier = (totalScore > 30000 ? 'Phoenix' : totalScore > 10000 ? 'Flame' : totalScore > 2000 ? 'Ember' : 'Spark') as TierName;
 
         let currentStreak = totalSolved > 0 ? 1 : 0;
         let maxStreak = totalSolved > 0 ? 1 : 0;
@@ -94,7 +97,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           { topic: 'Math & Greedy', count: Math.round(totalSolved * 0.17), color: 'bg-tomato-jam' },
         ];
 
-        setUser({
+        const newUserProfile = {
           id: s.id,
           name: s.name || s.user?.email?.split('@')[0] || 'NSEC Student',
           username: s.user?.email ? s.user.email.split('@')[0] : 'student',
@@ -136,29 +139,51 @@ export function UserProvider({ children }: { children: ReactNode }) {
               ...(s.stats?.codeforcesAvatar ? { cfAvatar: s.stats.codeforcesAvatar } : {}),
               ...(s.stats?.codeforcesContribution != null ? { cfContribution: s.stats.codeforcesContribution } : {}),
             },
-            { platform: 'GFG' as const, handle: s.gfg || '', rating: s.stats?.gfgScore || 0, solvedCount: s.stats?.gfgScore || 0, weight: 1.0 },
+
             { platform: 'CodeChef' as const, handle: s.codechef || '', rating: s.stats?.codechefRating || 0, solvedCount: 0, weight: 1.25 },
           ],
           badges: s.badges || [],
           dsaTopics,
           recentActivities: s.recentActivities || [],
-        });
+        };
+
+        setUser(newUserProfile);
+        try {
+          localStorage.setItem('cybernix_user_cache', JSON.stringify(newUserProfile));
+        } catch (e) {}
       } else if (data.user?.image || data.user?.name || data.user?.email) {
-        setUser((prev) => ({
-          ...prev,
-          name: data.user.name || data.user.email?.split('@')[0] || 'NSEC Student',
-          email: data.user.email || '',
-          avatar: data.user.image || prev.avatar,
-        }));
+        setUser((prev) => {
+          const updated = {
+            ...prev,
+            name: data.user.name || data.user.email?.split('@')[0] || 'NSEC Student',
+            email: data.user.email || '',
+            avatar: data.user.image || prev.avatar,
+          };
+          try {
+            localStorage.setItem('cybernix_user_cache', JSON.stringify(updated));
+          } catch (e) {}
+          return updated;
+        });
       }
     } catch (err) {
       console.error('Failed to fetch student profile', err);
+    } finally {
+      setIsLoadingProfile(false);
     }
   };
 
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem('cybernix_user_cache');
+      if (cached) {
+        setUser(JSON.parse(cached));
+      }
+    } catch (e) {}
+
     setIsHydrated(true);
-    fetchStudentProfile();
+    if (status !== 'loading') {
+      fetchStudentProfile();
+    }
   }, [status]);
 
   const updateUser = (updates: Partial<UserProfile>) => {
@@ -180,12 +205,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     await signOut({ callbackUrl: '/login', redirect: true });
   };
 
-  if (!isHydrated) {
-    return (
-      <UserContext.Provider value={{ user: INITIAL_EMPTY_USER, updateUser, refreshUser, logout }}>
-        {children}
-      </UserContext.Provider>
-    );
+  if (!isHydrated || status === 'loading') {
+    return <CapybaraLoader />;
   }
 
   return (

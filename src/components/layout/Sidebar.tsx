@@ -26,7 +26,6 @@ export function Sidebar() {
   const { user: CURRENT_USER, logout } = useUser();
 
   const sidebarRef = useRef<HTMLElement>(null);
-  const logoFlameRef = useRef<HTMLImageElement>(null);
   const navRef = useRef<HTMLElement>(null);
 
   // Active Tab Bubble Sliding Animation
@@ -67,14 +66,6 @@ export function Sidebar() {
   // Initial Staggered Mount Animations (60fps, GPU transform-only)
   const { contextSafe } = useGSAP(
     () => {
-      // Animate Logo Entrance
-      gsap.from('.sidebar-logo', {
-        y: -15,
-        opacity: 0,
-        duration: 0.5,
-        ease: 'back.out(1.7)',
-      });
-
       // Staggered Nav Items Entrance
       gsap.from('.nav-item-wrapper', {
         x: -20,
@@ -101,25 +92,6 @@ export function Sidebar() {
 
   // Modal Open Animation
 
-
-  // Interactive contextSafe Hover Micro-Animations (Zero lag, no memory leak)
-  const handleLogoEnter = contextSafe(() => {
-    gsap.to(logoFlameRef.current, {
-      scale: 1.25,
-      rotation: 15,
-      duration: 0.35,
-      ease: 'back.out(3)',
-    });
-  });
-
-  const handleLogoLeave = contextSafe(() => {
-    gsap.to(logoFlameRef.current, {
-      scale: 1,
-      rotation: 0,
-      duration: 0.25,
-      ease: 'power2.out',
-    });
-  });
 
   const handleNavEnter = contextSafe((e: React.MouseEvent<HTMLAnchorElement>) => {
     const icon = e.currentTarget.querySelector('.nav-icon');
@@ -202,7 +174,7 @@ export function Sidebar() {
     <>
       <aside
         ref={sidebarRef}
-        className="w-64 shrink-0 hidden lg:flex flex-col justify-between bg-dark-amethyst text-white py-8 pr-0 pl-4 h-screen sticky top-0 z-30 relative"
+        className="w-72 shrink-0 hidden lg:flex flex-col justify-between bg-dark-amethyst text-white py-8 pr-0 pl-4 h-screen sticky top-0 z-30 relative"
       >
         {/* The Dynamic Sliding Bubble */}
         <div
@@ -228,22 +200,19 @@ export function Sidebar() {
         </div>
 
         <div className="space-y-8">
-          {/* Brand Logo with Interactive GSAP Micro-Animation */}
+          {/* Brand Logo */}
           <Link
             href="/dashboard"
-            onMouseEnter={handleLogoEnter}
-            onMouseLeave={handleLogoLeave}
-            className="sidebar-logo flex items-center gap-3 px-3 mb-6 cursor-pointer"
+            className="sidebar-logo flex items-center gap-3 px-3 pr-6 mb-6 cursor-pointer"
           >
             <div className="flex items-center justify-center w-10 h-10 shrink-0">
               <img
-                ref={logoFlameRef}
                 src="/pheonix_mod1.png"
                 alt="Phoenix Logo"
-                className="w-10 h-10 object-contain drop-shadow-md scale-[3] brightness-0 invert will-change-transform"
+                className="w-10 h-10 object-contain drop-shadow-md scale-[3] brightness-0 invert"
               />
             </div>
-            <div>
+            <div className="pr-4">
               <span className="font-extrabold text-2xl tracking-tight text-white flex items-center gap-1">
                 Cybernix <span className="text-golden-sand">Nexus</span>
               </span>
@@ -304,7 +273,7 @@ export function Sidebar() {
                 className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-white bg-tomato-jam/20 border border-tomato-jam/30 cursor-pointer transition-colors hover:bg-tomato-jam/30"
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-tomato-jam animate-pulse"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-tomato-jam"></span>
                   <span>{CURRENT_USER.department || 'CSE'} Dept</span>
                 </div>
                 <span className="dept-badge text-xs font-black text-golden-sand bg-onyx px-2 py-0.5 rounded-md border border-golden-sand/30 will-change-transform">

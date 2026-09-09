@@ -90,13 +90,6 @@ export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]>
                 solvedCount: 0,
                 weight: 1.25,
               },
-              {
-                platform: 'GFG',
-                handle: s.handles?.gfg || 'N/A',
-                rating: s.stats?.gfgScore || 0,
-                solvedCount: s.stats?.gfgScore || 0,
-                weight: 1.0,
-              },
             ],
             badges: [],
             dsaTopics: [],

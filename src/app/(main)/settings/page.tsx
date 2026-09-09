@@ -17,7 +17,7 @@ import {
   ImageIcon,
 } from 'lucide-react';
 
-const STANDARD_PLATFORMS = ['LeetCode', 'Codeforces', 'GFG', 'CodeChef'] as const;
+const STANDARD_PLATFORMS = ['LeetCode', 'Codeforces', 'CodeChef'] as const;
 
 export default function SettingsPage() {
   const { user, updateUser, refreshUser } = useUser();
@@ -36,14 +36,12 @@ export default function SettingsPage() {
   const [platformHandles, setPlatformHandles] = useState<Record<string, string>>({
     LeetCode: '',
     Codeforces: '',
-    GFG: '',
     CodeChef: '',
   });
 
   const initialHandlesRef = useRef<Record<string, string>>({
     LeetCode: '',
     Codeforces: '',
-    GFG: '',
     CodeChef: '',
   });
   const initialNameRef = useRef<string>(user.name);
@@ -73,7 +71,6 @@ export default function SettingsPage() {
           const handles = {
             LeetCode: s.leetcode || '',
             Codeforces: s.codeforces || '',
-            GFG: s.gfg || '',
             CodeChef: s.codechef || '',
           };
           setPlatformHandles(handles);
@@ -135,7 +132,6 @@ export default function SettingsPage() {
     const currentHandles = {
       LeetCode: platformHandles['LeetCode'] || '',
       Codeforces: platformHandles['Codeforces'] || '',
-      GFG: platformHandles['GFG'] || '',
       CodeChef: platformHandles['CodeChef'] || '',
     };
 
@@ -143,7 +139,6 @@ export default function SettingsPage() {
     const hasHandleChanges =
       currentHandles.LeetCode.trim() !== (initial.LeetCode || '').trim() ||
       currentHandles.Codeforces.trim() !== (initial.Codeforces || '').trim() ||
-      currentHandles.GFG.trim() !== (initial.GFG || '').trim() ||
       currentHandles.CodeChef.trim() !== (initial.CodeChef || '').trim();
 
     const hasAcademicChanges =
@@ -171,7 +166,6 @@ export default function SettingsPage() {
         body: JSON.stringify({
           leetcode: currentHandles.LeetCode,
           codeforces: currentHandles.Codeforces,
-          gfg: currentHandles.GFG,
           codechef: currentHandles.CodeChef,
           name,
           avatar: dpUrl.trim() || null,
@@ -218,13 +212,7 @@ export default function SettingsPage() {
           solvedCount: data.stats?.codeforcesSolved ?? getExisting('Codeforces')?.solvedCount ?? 0,
           weight: 1.2,
         },
-        {
-          platform: 'GFG' as const,
-          handle: currentHandles.GFG,
-          rating: 0,
-          solvedCount: data.stats?.gfgScore ?? getExisting('GFG')?.solvedCount ?? 0,
-          weight: 0.8,
-        },
+
         {
           platform: 'CodeChef' as const,
           handle: currentHandles.CodeChef,

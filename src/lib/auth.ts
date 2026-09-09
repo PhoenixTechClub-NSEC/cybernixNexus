@@ -11,7 +11,7 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
       httpOptions: {
-        timeout: 10000,
+        timeout: 40000,
       },
     }),
   ],
@@ -34,17 +34,17 @@ export const authOptions: NextAuthOptions = {
         if (user?.id) {
           const student = await prisma.student.findUnique({
             where: { userId: user.id },
-            select: { id: true, leetcode: true, codeforces: true, gfg: true, codechef: true },
+            select: { id: true, leetcode: true, codeforces: true, codechef: true },
           });
           // Only sync if the student has at least one platform handle configured
-          const hasHandles = !!(student?.leetcode || student?.codeforces || student?.gfg || student?.codechef);
+          const hasHandles = !!(student?.leetcode || student?.codeforces || student?.codechef);
           studentId = (student && hasHandles) ? student.id : null;
         } else if (user?.email) {
           const student = await prisma.student.findFirst({
             where: { user: { email: user.email } },
-            select: { id: true, leetcode: true, codeforces: true, gfg: true, codechef: true },
+            select: { id: true, leetcode: true, codeforces: true, codechef: true },
           });
-          const hasHandles = !!(student?.leetcode || student?.codeforces || student?.gfg || student?.codechef);
+          const hasHandles = !!(student?.leetcode || student?.codeforces || student?.codechef);
           studentId = (student && hasHandles) ? student.id : null;
         }
 

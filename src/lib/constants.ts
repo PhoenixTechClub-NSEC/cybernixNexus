@@ -20,7 +20,6 @@ export const FORMULA_INFO = {
     Codeforces: 1.75,
     LeetCode: 1.5,
     CodeChef: 1.25,
-    GFG: 1.0,
     HackerRank: 1.0,
   },
   departmentMultipliers: {

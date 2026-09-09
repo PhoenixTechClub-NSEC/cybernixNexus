@@ -18,10 +18,6 @@ export interface CodeforcesFetchResult {
   dailySubmissions?: Record<string, number>;
 }
 
-export interface GfgFetchResult {
-  score: number | null;
-}
-
 export interface CodechefFetchResult {
   rating: number | null;
 }
@@ -39,7 +35,6 @@ export interface PlatformStatsResult {
   codeforcesSolved: number;
   codeforcesAvatar: string | null;
   codeforcesContribution: number | null;
-  gfgScore: number | null;
   codechefRating: number | null;
   totalScore: number;
   ranking: number | null;
