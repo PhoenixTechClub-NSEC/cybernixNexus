@@ -98,3 +98,10 @@ yarn-error.log*
 /coverage/
 /.nyc_output/
 test-results/
+
+# =========================================
+# 9. OTHER
+# =========================================
+pnpm-lock.yaml
+package-lock.json
+yarn-lock.yaml
