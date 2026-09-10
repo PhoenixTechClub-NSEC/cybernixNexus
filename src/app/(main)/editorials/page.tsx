@@ -48,9 +48,11 @@ export default function EditorialsPage() {
     if (isPublishModalOpen || selectedEditorial) {
       document.body.style.overflow = 'hidden';
       document.documentElement.style.overflow = 'hidden';
+      (window as any).lenis?.stop();
     } else {
       document.body.style.overflow = 'unset';
       document.documentElement.style.overflow = 'unset';
+      (window as any).lenis?.start();
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -68,6 +70,7 @@ export default function EditorialsPage() {
     return () => {
       document.body.style.overflow = 'unset';
       document.documentElement.style.overflow = 'unset';
+      (window as any).lenis?.start();
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isPublishModalOpen, isSubmitting, selectedEditorial]);

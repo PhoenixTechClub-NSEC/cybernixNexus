@@ -17,8 +17,11 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
       touchMultiplier: 1.5,
     });
 
+    (window as any).lenis = lenis;
+
     return () => {
       lenis.destroy();
+      delete (window as any).lenis;
     };
   }, []);
 
