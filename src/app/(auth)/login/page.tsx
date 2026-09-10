@@ -47,7 +47,18 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
     try {
-      await signIn('google', { callbackUrl: '/login' });
+      const callbackUrl = new URL(window.location.href).searchParams.get('callbackUrl') || '/dashboard';
+      const result = await signIn('google', { callbackUrl, redirect: false });
+
+      if (result?.error) {
+        setError('Google sign in failed. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (result?.url) {
+        router.push(result.url);
+      }
     } catch {
       setError('Failed to initiate Google sign in. Please try again.');
       setIsLoading(false);

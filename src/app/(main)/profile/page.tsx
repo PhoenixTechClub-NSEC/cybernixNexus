@@ -101,7 +101,7 @@ export default function ProfilePage() {
               : 'text-onyx/70 hover:bg-golden-sand/12 hover:text-onyx'
           }`}
         >
-          Overview & Codolio Stats
+          Overview & Analytics
         </button>
         <button
           onClick={() => setActiveTab('badges')}
@@ -136,7 +136,7 @@ export default function ProfilePage() {
             totalSolved={CURRENT_USER.solvedByDifficulty.total}
           />
 
-          {/* CODOLIO INSPIRED STATS & DSA BREAKDOWN */}
+          {/* STATS & DSA BREAKDOWN */}
           <StatsGrid user={CURRENT_USER} />
         </div>
       )}

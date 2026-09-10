@@ -51,12 +51,31 @@ export default function SettingsPage() {
   const initialRollRef = useRef<string>(user.rollNumber || '');
   const initialGithubRef = useRef<string>(user.github || '');
   const initialLinkedinRef = useRef<string>(user.linkedin || '');
+  const initialUsernameRef = useRef<string>(user.username || user.name.toLowerCase().replace(/\s+/g, '_'));
+  const initialBioRef = useRef<string>(user.bio || '');
 
   const [isSaving, setIsSaving] = useState(false);
   const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
   const [platformName, setPlatformName] = useState('Codeforces');
   const [platformHandle, setPlatformHandle] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isPlatformModalOpen) return;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsPlatformModalOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.documentElement.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPlatformModalOpen]);
 
   // Fetch student profile & platform handles from DB on mount
   useEffect(() => {
@@ -104,6 +123,14 @@ export default function SettingsPage() {
             setDpUrl(s.user.image);
             initialDpUrlRef.current = s.user.image;
           }
+          if (s.username) {
+            setUsername(s.username);
+            initialUsernameRef.current = s.username;
+          }
+          if (s.bio) {
+            setBio(s.bio);
+            initialBioRef.current = s.bio;
+          }
         }
       } catch (err) {
         console.error('[SettingsPage] Error fetching DB handles:', err);
@@ -149,7 +176,10 @@ export default function SettingsPage() {
       linkedin.trim() !== initialLinkedinRef.current.trim();
 
     const hasProfileChanges =
-      name !== initialNameRef.current || dpUrl !== initialDpUrlRef.current;
+      name !== initialNameRef.current ||
+      dpUrl !== initialDpUrlRef.current ||
+      username.trim() !== initialUsernameRef.current.trim() ||
+      bio.trim() !== initialBioRef.current.trim();
 
     // Do NOT trigger endpoint if no changes are done
     if (!hasHandleChanges && !hasProfileChanges && !hasAcademicChanges) {
@@ -174,6 +204,8 @@ export default function SettingsPage() {
           rollNumber: rollNumber.trim(),
           github: github.trim() || null,
           linkedin: linkedin.trim() || null,
+          username: username.trim() || null,
+          bio: bio.trim() || null,
         }),
       });
 
@@ -192,6 +224,8 @@ export default function SettingsPage() {
       initialRollRef.current = rollNumber.trim();
       initialGithubRef.current = github.trim();
       initialLinkedinRef.current = linkedin.trim();
+      initialUsernameRef.current = username.trim();
+      initialBioRef.current = bio.trim();
 
       // Update global UserProvider state & trigger page re-sync
       const getExisting = (platform: string) =>
@@ -510,8 +544,17 @@ export default function SettingsPage() {
 
       {/* CONNECT NEW PLATFORM MODAL */}
       {isPlatformModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-[2rem] bg-white shadow-2xl p-8 relative will-change-transform">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="connect-platform-title"
+          onClick={() => setIsPlatformModalOpen(false)}
+          className="fixed inset-0 z-50 flex h-dvh items-center justify-center overflow-hidden overscroll-none bg-black/80 backdrop-blur-xl p-4 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            className="w-full max-w-md rounded-[2rem] bg-white shadow-2xl p-8 relative will-change-transform"
+          >
             <button
               onClick={() => setIsPlatformModalOpen(false)}
               className="absolute top-5 right-5 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
@@ -519,7 +562,7 @@ export default function SettingsPage() {
               <X className="w-4 h-4" />
             </button>
 
-            <h3 className="text-xl font-black text-slate-900 mb-1.5">
+            <h3 id="connect-platform-title" className="text-xl font-black text-slate-900 mb-1.5">
               Connect Coding Platform
             </h3>
             <p className="text-sm text-slate-500 mb-6">

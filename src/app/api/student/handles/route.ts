@@ -15,6 +15,8 @@ interface UpdateHandlesRequestBody {
   department?: string;
   graduationYear?: number | string;
   rollNumber?: string;
+  username?: string | null;
+  bio?: string | null;
 }
 
 export async function POST(request: Request) {
@@ -44,6 +46,8 @@ export async function POST(request: Request) {
       department,
       graduationYear,
       rollNumber,
+      username,
+      bio,
     } = body;
 
     let student = await prisma.student.findUnique({
@@ -75,6 +79,8 @@ export async function POST(request: Request) {
           codechef: typeof codechef === 'string' && codechef.trim() ? codechef.trim() : null,
           github: typeof github === 'string' && github.trim() ? github.trim() : null,
           linkedin: typeof linkedin === 'string' && linkedin.trim() ? linkedin.trim() : null,
+          username: typeof username === 'string' && username.trim() ? username.trim() : null,
+          bio: typeof bio === 'string' && bio.trim() ? bio.trim() : null,
           profileComplete: true,
         },
       });
@@ -134,6 +140,8 @@ export async function POST(request: Request) {
         ...(department ? { department: department.trim() } : {}),
         ...(graduationYear ? { graduationYear: validGradYear } : {}),
         ...(rollNumber ? { rollNumber: rollNumber.trim() } : {}),
+        ...(typeof username === 'string' ? { username: username.trim() || null } : {}),
+        ...(typeof bio === 'string' ? { bio: bio.trim() || null } : {}),
       },
       include: {
         stats: true,

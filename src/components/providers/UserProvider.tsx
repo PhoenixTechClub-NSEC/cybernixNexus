@@ -57,7 +57,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const totalScore = s.stats?.totalScore ?? 0;
         const lcSolved = s.stats?.leetcodeSolved ?? 0;
         const cfSolved = s.stats?.codeforcesSolved ?? 0;
-        const totalSolved = lcSolved + cfSolved;
+        const ccSolved = (s.stats as any)?.codechefSolved ?? 0;
+        const totalSolved = lcSolved + cfSolved + ccSolved;
 
         const level = Math.max(1, Math.min(100, Math.floor(totalScore / 500)));
         const tier = (totalScore > 30000 ? 'Phoenix' : totalScore > 10000 ? 'Flame' : totalScore > 2000 ? 'Ember' : 'Spark') as TierName;
@@ -100,10 +101,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const newUserProfile = {
           id: s.id,
           name: s.name || s.user?.email?.split('@')[0] || 'NSEC Student',
-          username: s.user?.email ? s.user.email.split('@')[0] : 'student',
+          username: s.username || (s.user?.email ? s.user.email.split('@')[0] : 'student'),
           avatar: dbImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
           email: s.user?.email || '',
-          bio: `${s.department} '${String(gradYear).slice(2)} @ NSEC`,
+          bio: s.bio || `${s.department} '${String(gradYear).slice(2)} @ NSEC`,
           department: s.department || 'CSE',
           year: yearString,
           rollNumber: s.rollNumber || '',
@@ -140,7 +141,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
               ...(s.stats?.codeforcesContribution != null ? { cfContribution: s.stats.codeforcesContribution } : {}),
             },
 
-            { platform: 'CodeChef' as const, handle: s.codechef || '', rating: s.stats?.codechefRating || 0, solvedCount: 0, weight: 1.25 },
+            { platform: 'CodeChef' as const, handle: s.codechef || '', rating: s.stats?.codechefRating || 0, solvedCount: ccSolved, weight: 1.25 },
           ],
           badges: s.badges || [],
           dsaTopics,

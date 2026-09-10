@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 - **Zero Dummy Data in Production**: Removed all fake students, generated mock snapshots, and demo buttons. Cleaned `prisma/seed.ts` and purged all dummy tables.
-- **No Mock Fallbacks in Production (`src/lib/api.ts` & `src/lib/constants.ts`)**: Removed fallback constants `LEADERBOARD_USERS`, `DEPARTMENT_STATS`, `FAKE_EDITORIALS`, `FAKE_CONTESTS`, `SYNCED_PLATFORM_PROFILES`, and `CODOLIO_STATS` in favor of clean empty array returns.
+- **No Mock Fallbacks in Production (`src/lib/api.ts` & `src/lib/constants.ts`)**: Removed fallback constants `LEADERBOARD_USERS`, `DEPARTMENT_STATS`, `FAKE_EDITORIALS`, `FAKE_CONTESTS`, `SYNCED_PLATFORM_PROFILES`, and `DSA_TOPIC_STATS` in favor of clean empty array returns.
 - **Signup Validation (`/api/auth/signup`)**: Pre-validates roll number uniqueness to prevent unhandled database constraint conflicts and provides clean error reporting.
 
 ---

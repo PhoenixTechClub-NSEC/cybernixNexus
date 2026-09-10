@@ -118,7 +118,7 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
     const [lcRes, cfRes, ccRes] = await Promise.allSettled([
       student.leetcode ? fetchLeetCodeStats(student.leetcode) : Promise.resolve<LeetCodeFetchResult>({ solved: 0, easy: 0, medium: 0, hard: 0, rating: null, submissionCalendar: {} }),
       student.codeforces ? fetchCodeforcesStats(student.codeforces) : Promise.resolve<CodeforcesFetchResult>({ rating: null, maxRating: null, rank: null, maxRank: null, solved: 0, avatar: null, contribution: null, dailySubmissions: {} }),
-      student.codechef ? fetchCodechefStats(student.codechef) : Promise.resolve({ rating: null }),
+      student.codechef ? fetchCodechefStats(student.codechef) : Promise.resolve({ rating: null, stars: null, globalRank: null, solved: 0 }),
     ]);
 
     const leetcodeSolved = lcRes.status === 'fulfilled'
@@ -168,6 +168,9 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
     const codechefRating = ccRes.status === 'fulfilled'
       ? ccRes.value.rating
       : (existingStats?.codechefRating ?? null);
+    const codechefSolved = ccRes.status === 'fulfilled'
+      ? ccRes.value.solved
+      : ((existingStats as any)?.codechefSolved ?? 0);
     if (ccRes.status === 'rejected') {
       errors.codechef = ccRes.reason?.message || 'Failed to fetch CodeChef stats';
     }
@@ -200,6 +203,7 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         codeforcesAvatar,
         codeforcesContribution,
         codechefRating,
+        codechefSolved,
         totalScore,
       },
       update: {
@@ -216,6 +220,7 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         codeforcesAvatar,
         codeforcesContribution,
         codechefRating,
+        codechefSolved,
         totalScore,
       },
     });
@@ -264,6 +269,7 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
           leetcodeSolved: counts.lc,
           codeforcesSolved: counts.cf,
           codechefRating: 0,
+          codechefSolved: 0,
           totalScore: dayScore,
         },
         update: {
@@ -295,12 +301,14 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         leetcodeSolved: todayActivity.lc,
         codeforcesSolved: todayActivity.cf,
         codechefRating: codechefRating ?? 0,
+        codechefSolved: codechefSolved,
         totalScore,
       },
       update: {
         leetcodeSolved: todayActivity.lc,
         codeforcesSolved: todayActivity.cf,
         codechefRating: codechefRating ?? 0,
+        codechefSolved: codechefSolved,
         totalScore,
       },
     });
@@ -349,6 +357,9 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       codeforcesAvatar: finalStats?.codeforcesAvatar ?? null,
       codeforcesContribution: finalStats?.codeforcesContribution ?? null,
       codechefRating: finalStats?.codechefRating ?? null,
+      codechefStars: (finalStats as any)?.codechefStars ?? null,
+      codechefGlobalRank: (finalStats as any)?.codechefGlobalRank ?? null,
+      codechefSolved: (finalStats as any)?.codechefSolved ?? 0,
       totalScore: finalStats?.totalScore ?? 0,
       ranking: finalStats?.ranking ?? null,
       departmentRanking: finalStats?.departmentRanking ?? null,

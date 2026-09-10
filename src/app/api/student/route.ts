@@ -192,6 +192,8 @@ export async function POST(request: Request) {
       codechef,
       github,
       linkedin,
+      username,
+      bio,
     } = body;
 
     if (!name || !rollNumber || !department || !graduationYear) {
@@ -233,6 +235,8 @@ export async function POST(request: Request) {
         codechef: typeof codechef === 'string' && codechef.trim() ? codechef.trim() : null,
         github: typeof github === 'string' && github.trim() ? github.trim() : null,
         linkedin: typeof linkedin === 'string' && linkedin.trim() ? linkedin.trim() : null,
+        username: typeof username === 'string' && username.trim() ? username.trim() : null,
+        bio: typeof bio === 'string' && bio.trim() ? bio.trim() : null,
         profileComplete: true,
       },
       update: {
@@ -245,6 +249,8 @@ export async function POST(request: Request) {
         codechef: typeof codechef === 'string' && codechef.trim() ? codechef.trim() : null,
         ...(typeof github === 'string' ? { github: github.trim() || null } : {}),
         ...(typeof linkedin === 'string' ? { linkedin: linkedin.trim() || null } : {}),
+        ...(typeof username === 'string' ? { username: username.trim() || null } : {}),
+        ...(typeof bio === 'string' ? { bio: bio.trim() || null } : {}),
         profileComplete: true,
       },
     });

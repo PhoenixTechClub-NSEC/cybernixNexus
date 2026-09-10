@@ -67,6 +67,8 @@ model Student {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   name            String
+  username        String?  @unique
+  bio             String?  @db.Text
   rollNumber      String   @unique
   department      String
   graduationYear  Int
@@ -115,6 +117,9 @@ model StudentStats {
   codeforcesContribution Int?
 
   codechefRating      Int?
+  codechefStars       String?
+  codechefGlobalRank  String?
+  codechefSolved      Int  @default(0)
 
   totalScore          Int  @default(0)
   ranking             Int?
@@ -146,6 +151,7 @@ model DailySnapshot {
   leetcodeSolved   Int      @default(0)
   codeforcesSolved Int      @default(0)
   codechefRating   Int      @default(0)
+  codechefSolved   Int      @default(0)
   totalScore       Int      @default(0)
 
   createdAt        DateTime @default(now())

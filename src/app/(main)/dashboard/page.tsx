@@ -942,7 +942,7 @@ export default function DashboardPage() {
                 <span>DSA Topic Analysis</span>
               </h3>
               <span className="text-xs font-semibold text-pine-teal">
-                {CURRENT_USER.solvedByDifficulty?.total || 0} Solved
+                {(CURRENT_USER.solvedByDifficulty?.total || 0) > 0 ? `${CURRENT_USER.solvedByDifficulty?.total} Solved` : 'Problem Breakdown'}
               </span>
             </div>
 
@@ -1056,32 +1056,84 @@ export default function DashboardPage() {
               <span>Contest Rankings</span>
             </h4>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
+              {/* LEETCODE */}
+              {(() => {
+                const lcPlat = CURRENT_USER.platforms?.find((p: any) => p.platform === 'LeetCode');
+                const lcRating = lcPlat?.rating || 0;
+                const lcBadge = lcRating >= 2150 ? 'Guardian' : lcRating >= 1850 ? 'Knight' : lcRating > 0 ? 'Contestant' : '';
+                return (
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-golden-sand/10 to-transparent border border-pine-teal/15 hover:border-pine-teal/30 hover:shadow-sm hover:-translate-y-0.5 transition-all group relative overflow-hidden flex items-center justify-between">
+                    <div className="absolute -right-2 -top-2 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
+                      <Trophy className="w-20 h-20" />
+                    </div>
+                    <div className="relative z-10 flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-pine-teal/20 shadow-xs flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform text-amber-500">
+                        <Award className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <h5 className="font-extrabold text-onyx text-xs sm:text-sm truncate">LeetCode</h5>
+                        {lcRating > 0 ? (
+                          <p className="text-[10px] font-semibold text-pine-teal mt-0.5 truncate">
+                            Contest Rating: <span className="text-onyx">{lcRating}</span>
+                          </p>
+                        ) : (
+                          <p className="text-[10px] font-semibold text-pine-teal mt-0.5 truncate">
+                            Contest Rating
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="relative z-10 text-right shrink-0 ml-2">
+                      <div className="text-xl sm:text-2xl font-black text-onyx group-hover:text-amber-500 transition-colors leading-none">
+                        {lcRating > 0 ? lcRating : '-'}
+                      </div>
+                      {lcBadge ? (
+                        <div className="text-[9px] font-bold px-1.5 py-0.5 mt-1.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20 inline-block uppercase max-w-[80px] truncate">
+                          {lcBadge}
+                        </div>
+                      ) : (
+                        lcRating > 0 && (
+                          <div className="text-[9px] font-bold px-1.5 py-0.5 mt-1.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20 inline-block">
+                            Rating
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* CODECHEF */}
               {(() => {
                 const ccPlat = CURRENT_USER.platforms?.find((p: any) => p.platform === 'CodeChef');
                 const ccRating = ccPlat?.rating || 0;
                 return (
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-golden-sand/30 border border-pine-teal/20 space-y-2 min-h-[100px] flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all group gpu-accelerated relative overflow-hidden">
-                    <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Trophy className="w-16 h-16" />
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-golden-sand/10 to-transparent border border-pine-teal/15 hover:border-pine-teal/30 hover:shadow-sm hover:-translate-y-0.5 transition-all group relative overflow-hidden flex items-center justify-between">
+                    <div className="absolute -right-2 -top-2 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
+                      <Trophy className="w-20 h-20" />
                     </div>
-                    <div className="relative z-10 flex items-center justify-between text-[11px]">
-                      <span className="font-extrabold text-onyx tracking-tight">CODECHEF</span>
-                      {ccRating > 0 && (
-                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-tomato-jam text-white shadow-sm">
-                          {ccRating}
-                        </span>
-                      )}
+                    <div className="relative z-10 flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-pine-teal/20 shadow-xs flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform text-tomato-jam">
+                        <Award className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <h5 className="font-extrabold text-onyx text-xs sm:text-sm truncate">CodeChef</h5>
+                        {ccRating > 0 && (
+                          <p className="text-[10px] font-semibold text-pine-teal mt-0.5 truncate">
+                            Max Rating: <span className="text-onyx">{ccRating}</span>
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="relative z-10 flex items-end justify-between pt-1">
-                      <span className="text-2xl font-black text-onyx leading-none group-hover:text-tomato-jam transition-colors">
+                    <div className="relative z-10 text-right shrink-0 ml-2">
+                      <div className="text-xl sm:text-2xl font-black text-onyx group-hover:text-tomato-jam transition-colors leading-none">
                         {ccRating > 0 ? ccRating : '-'}
-                      </span>
+                      </div>
                       {ccRating > 0 && (
-                        <span className="text-[10px] text-pine-teal font-semibold mb-0.5">
-                          max: {ccRating}
-                        </span>
+                        <div className="text-[9px] font-bold px-1.5 py-0.5 mt-1.5 rounded-md bg-tomato-jam/10 text-tomato-jam border border-tomato-jam/20 inline-block">
+                          Rating
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1095,26 +1147,31 @@ export default function DashboardPage() {
                 const cfRank = (cfPlat as any)?.cfRank || (cfRating > 0 ? 'Rated' : '');
                 const cfMaxRating = (cfPlat as any)?.cfMaxRating || cfRating;
                 return (
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-golden-sand/30 border border-pine-teal/20 space-y-2 min-h-[100px] flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all group gpu-accelerated relative overflow-hidden">
-                    <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                      <Trophy className="w-16 h-16" />
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-golden-sand/10 to-transparent border border-pine-teal/15 hover:border-pine-teal/30 hover:shadow-sm hover:-translate-y-0.5 transition-all group relative overflow-hidden flex items-center justify-between">
+                    <div className="absolute -right-2 -top-2 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
+                      <Trophy className="w-20 h-20" />
                     </div>
-                    <div className="relative z-10 flex items-center justify-between text-[11px]">
-                      <span className="font-extrabold text-onyx tracking-tight truncate max-w-[60px]">CF</span>
-                      {cfRank && cfRank.toLowerCase() !== 'unrated' && (
-                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-pine-teal text-white uppercase truncate max-w-[60px] shadow-sm">
-                          {cfRank}
-                        </span>
-                      )}
+                    <div className="relative z-10 flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-pine-teal/20 shadow-xs flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform text-pine-teal">
+                        <Award className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <h5 className="font-extrabold text-onyx text-xs sm:text-sm truncate">Codeforces</h5>
+                        {cfMaxRating > 0 && (
+                          <p className="text-[10px] font-semibold text-pine-teal mt-0.5 truncate">
+                            Max Rating: <span className="text-onyx">{cfMaxRating}</span>
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="relative z-10 flex items-end justify-between pt-1">
-                      <span className="text-2xl font-black text-onyx leading-none group-hover:text-pine-teal transition-colors">
+                    <div className="relative z-10 text-right shrink-0 ml-2">
+                      <div className="text-xl sm:text-2xl font-black text-onyx group-hover:text-pine-teal transition-colors leading-none">
                         {cfRating > 0 ? cfRating : '-'}
-                      </span>
-                      {cfMaxRating > 0 && (
-                        <span className="text-[10px] text-pine-teal font-semibold mb-0.5">
-                          max: {cfMaxRating}
-                        </span>
+                      </div>
+                      {cfRank && cfRank.toLowerCase() !== 'unrated' && (
+                        <div className="text-[9px] font-bold px-1.5 py-0.5 mt-1.5 rounded-md bg-pine-teal/10 text-pine-teal border border-pine-teal/20 inline-block uppercase max-w-[80px] truncate">
+                          {cfRank}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1210,9 +1267,11 @@ export default function DashboardPage() {
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white/15 text-white border border-white/20">
                       {plat.badge}
                     </span>
-                    <span className="text-xs text-teal-200/90 font-medium">
-                      • {plat.solvedCount} Solved
-                    </span>
+                    {plat.solvedCount > 0 && (
+                      <span className="text-xs text-teal-200/90 font-medium">
+                        • {plat.solvedCount} Solved
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -1297,9 +1356,15 @@ export default function DashboardPage() {
                     <p className="text-base font-black text-white">
                       {plat.rating.toLocaleString()} <span className="text-xs text-golden-sand/80 font-medium">Rating</span>
                     </p>
-                    <p className="text-xs text-teal-200/90 font-medium">
-                      {plat.solvedCount} Solved ({plat.percentage}%)
-                    </p>
+                    {plat.solvedCount > 0 ? (
+                      <p className="text-xs text-teal-200/90 font-medium">
+                        {plat.solvedCount} Solved ({plat.percentage}%)
+                      </p>
+                    ) : (
+                      <p className="text-xs text-teal-200/90 font-medium">
+                        {plat.percentage > 0 ? `${plat.percentage}%` : 'Synced'}
+                      </p>
+                    )}
                   </div>
                   <ChevronRight className="w-4 h-4 text-golden-sand/80 group-hover:text-white transition-colors" />
                 </div>

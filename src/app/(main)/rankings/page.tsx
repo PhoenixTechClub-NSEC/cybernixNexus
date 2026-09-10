@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { getLeaderboard, getDepartmentStats } from '@/lib/api';
+import { getLeaderboard } from '@/lib/api';
 import { Podium } from '@/features/leaderboard/components/Podium';
 import { LeaderboardTable } from '@/features/leaderboard/components/LeaderboardTable';
 import { ContestCalendar } from '@/features/calendar/components/ContestCalendar';
@@ -20,25 +20,36 @@ import CapybaraLoader from '@/components/ui/CapybaraLoader';
 export default function RankingsPage() {
   const { user: CURRENT_USER } = useUser();
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [visualTab, setVisualTab] = useState<'podium' | 'battles'>('podium');
+  const [visualTab] = useState<'podium' | 'battles'>('podium');
   const [selectedDeptYear, setSelectedDeptYear] = useState<string>('ALL');
   const [isSyncing, setIsSyncing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [leaderboardUsers, setLeaderboardUsers] = useState<UserProfile[]>([]);
   const [departmentStats, setDepartmentStats] = useState<DepartmentStat[]>([]);
-  const [tierDistribution, setTierDistribution] = useState<Record<string, number>>({
-    Phoenix: 0,
-    Flame: 0,
-    Ember: 0,
-    Spark: 0,
-  });
   const [topDeptInfo, setTopDeptInfo] = useState<{ department: string; seasonalMultiplier: number; averageScore: number }>({
     department: 'CSE',
     seasonalMultiplier: 2.0,
     averageScore: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    if (!selectedUser) return;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedUser(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.documentElement.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedUser]);
 
   const loadData = async () => {
     try {
@@ -61,9 +72,6 @@ export default function RankingsPage() {
               activeStudentsCount: d.studentCount || 0,
             }))
           );
-        }
-        if (statsRes.summary.tierDistribution) {
-          setTierDistribution(statsRes.summary.tierDistribution);
         }
         if (statsRes.summary.topDepartment) {
           setTopDeptInfo(statsRes.summary.topDepartment);
@@ -156,7 +164,7 @@ export default function RankingsPage() {
           </p>
         </div>
 
-        {/* Seasonal Bonus & Live Sync Button */}
+        {/* Live Sync Button */}
         <div className="flex items-center gap-3">
           <button
             onClick={handleLiveSync}
@@ -166,16 +174,6 @@ export default function RankingsPage() {
             <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
             <span>{isSyncing ? 'Syncing Platforms...' : 'Sync CP Standings'}</span>
           </button>
-
-          <div className="flex items-center gap-3 bg-white px-3.5 py-2.5 rounded-2xl border border-onyx/12 shadow-2xs">
-            <div className="w-9 h-9 rounded-xl bg-tomato-jam text-white flex items-center justify-center font-black text-xs shrink-0">
-              {topDeptInfo.seasonalMultiplier.toFixed(1)}x
-            </div>
-            <div>
-              <p className="text-xs font-black text-onyx">{topDeptInfo.department} Dept Leader #1</p>
-              <p className="text-[11px] text-onyx/70">Seasonal CP Multiplier Bonus Active</p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -314,19 +312,19 @@ export default function RankingsPage() {
 
         {/* RIGHT (4 COLUMNS): User's Department Standings & Rules */}
         <div className="lg:col-span-4 space-y-6 self-start content-visibility-auto">
-          {/* Card 1: CSE Dept Leaderboard with Year Filter */}
+          {/* Card 1: Dept Leaderboard with Year Filter */}
           <div className="rounded-3xl bg-white border border-onyx/12 p-6 shadow-sm self-start">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-tomato-jam">
                 🏛️ Your Department
               </span>
               <span className="px-2 py-0.5 rounded-full bg-tomato-jam/15 text-tomato-jam text-[10px] font-black border border-tomato-jam/30">
-                CSE ONLY • 2.0x
+                {CURRENT_USER.department || 'CSE'} ONLY • {userDeptStat.seasonalMultiplier.toFixed(1)}x
               </span>
             </div>
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-xl font-black text-onyx">
-                CSE Dept Leaderboard
+                {CURRENT_USER.department || 'CSE'} Dept Leaderboard
               </h3>
 
               {/* Year Filter Switcher */}
@@ -344,7 +342,7 @@ export default function RankingsPage() {
             </div>
 
             <p className="text-xs text-onyx/70 mt-0.5">
-              Showing Computer Science students (30% department view).
+              Showing {CURRENT_USER.department || 'Computer Science'} students (30% department view).
             </p>
 
             {/* Vertical Department Standings List */}
@@ -427,30 +425,22 @@ export default function RankingsPage() {
             </div>
           </div>
 
-          {/* Card 2: Seasonal Multiplier Rule Card (soft cream background, zero stretch) */}
-          <div className="rounded-3xl bg-[#FFF1D6] border border-onyx/12 p-5 shadow-2xs self-start space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-tomato-jam">
-                ⚡ Championship Rule
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-onyx/10 text-onyx text-[10px] font-extrabold">
-                Active Season
-              </span>
-            </div>
-            <h4 className="text-sm font-black text-onyx">
-              {topDeptInfo.seasonalMultiplier.toFixed(1)}x Seasonal Multiplier Active
-            </h4>
-            <p className="text-xs text-onyx/70 leading-relaxed">
-              Because {topDeptInfo.department} maintains the #1 overall college average rating ({topDeptInfo.averageScore} pts), all solved problems by {topDeptInfo.department} students earn {topDeptInfo.seasonalMultiplier}x points.
-            </p>
-          </div>
         </div>
       </div>
 
       {/* STUDENT DETAIL MODAL */}
       {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-lg rounded-3xl bg-white border border-onyx/12 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="student-detail-title"
+          onClick={() => setSelectedUser(null)}
+          className="fixed inset-0 z-50 flex h-dvh items-center justify-center overflow-hidden overscroll-none bg-black/80 backdrop-blur-xl p-4"
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            className="w-full max-w-lg rounded-3xl bg-white border border-onyx/12 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+          >
             {/* Header */}
             <div className="bg-onyx p-6 text-white relative border-b border-tomato-jam/40">
               <button
@@ -467,7 +457,7 @@ export default function RankingsPage() {
                   loading="lazy"
                 />
                 <div>
-                  <h3 className="text-xl font-black">{selectedUser.name}</h3>
+                  <h3 id="student-detail-title" className="text-xl font-black">{selectedUser.name}</h3>
                   <p className="text-xs text-golden-sand">
                     {selectedUser.department} • {selectedUser.year} • Rank #{selectedUser.collegeRank}
                   </p>

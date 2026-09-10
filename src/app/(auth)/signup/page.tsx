@@ -26,6 +26,8 @@ export default function SignupPage() {
 
   // User & Identity Fields (pre-filled from Google)
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [bio, setBio] = useState('');
   const [email, setEmail] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
 
@@ -70,6 +72,8 @@ export default function SignupPage() {
             if (data.student.leetcode) setLeetcode(data.student.leetcode);
             if (data.student.codeforces) setCodeforces(data.student.codeforces);
             if (data.student.codechef) setCodechef(data.student.codechef);
+            if (data.student.username) setUsername(data.student.username);
+            if (data.student.bio) setBio(data.student.bio);
           }
         })
         .catch(() => {});
@@ -125,6 +129,8 @@ export default function SignupPage() {
           codechef: cleanCodechef || null,
           github: cleanGithub || null,
           linkedin: cleanLinkedin || null,
+          username: username.trim() || null,
+          bio: bio.trim() || null,
         }),
       });
 
@@ -310,6 +316,20 @@ export default function SignupPage() {
                   className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
                 />
               </div>
+
+              <div>
+                <label htmlFor="signup-username" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                  Username
+                </label>
+                <input
+                  id="signup-username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. your_username"
+                  className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
+                />
+              </div>
             </div>
 
             {/* 2. Academic Info (Student model) */}
@@ -453,6 +473,30 @@ export default function SignupPage() {
                     placeholder="e.g. chef_student"
                     className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* 5. About You (Bio) */}
+            <div>
+              <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
+                <Sparkles className="w-4 h-4 text-golden-sand" />
+                <h3 className="text-sm font-bold text-onyx">5. About You</h3>
+              </div>
+              <div>
+                <label htmlFor="signup-bio" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                  Short Bio / Description
+                </label>
+                <textarea
+                  id="signup-bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam resize-none placeholder:text-onyx/30"
+                  placeholder="Tell us about your competitive programming goals and interests..."
+                />
+                <div className="flex justify-end mt-1">
+                  <span className="text-[10px] font-bold text-onyx/50">{bio.length} / 160 chars</span>
                 </div>
               </div>
             </div>

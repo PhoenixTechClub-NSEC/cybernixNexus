@@ -142,10 +142,6 @@ export function StatsGrid({ user }: StatsGridProps) {
                     <p className="text-[10px] uppercase font-bold opacity-75">Rating</p>
                     <p className="text-base font-black">{platform.rating}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] uppercase font-bold opacity-75">Solved</p>
-                    <p className="text-base font-black">{platform.solvedCount}</p>
-                  </div>
                 </div>
               </a>
             ))}
@@ -153,7 +149,7 @@ export function StatsGrid({ user }: StatsGridProps) {
         </div>
       </div>
 
-      {/* Codolio-Style DSA Topic Analysis Bar Charts */}
+      {/* DSA Topic Analysis Bar Charts */}
       <div className="rounded-2xl bg-white border border-onyx/12 p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
           <div>
@@ -168,7 +164,7 @@ export function StatsGrid({ user }: StatsGridProps) {
             </p>
           </div>
           <div className="text-xs font-semibold text-onyx/70 bg-golden-sand/10 px-3 py-1.5 rounded-lg border border-golden-sand/30">
-            Codolio Style Breakdown
+            Topic Breakdown
           </div>
         </div>
 

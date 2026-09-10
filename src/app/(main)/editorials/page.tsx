@@ -47,8 +47,10 @@ export default function EditorialsPage() {
   useEffect(() => {
     if (isPublishModalOpen || selectedEditorial) {
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
+      document.documentElement.style.overflow = 'unset';
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -65,6 +67,7 @@ export default function EditorialsPage() {
 
     return () => {
       document.body.style.overflow = 'unset';
+      document.documentElement.style.overflow = 'unset';
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isPublishModalOpen, isSubmitting, selectedEditorial]);
@@ -539,8 +542,17 @@ export default function EditorialsPage() {
 
       {/* FULL TUTORIAL MODAL / DRAWER */}
       {selectedEditorial && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-3xl bg-white border border-onyx/12 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="editorial-view-title"
+          onClick={() => setSelectedEditorial(null)}
+          className="fixed inset-0 z-50 flex h-dvh items-center justify-center overflow-hidden overscroll-none bg-black/80 backdrop-blur-xl p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-3xl bg-white border border-onyx/12 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+          >
             {/* Modal Header */}
             <div className="bg-onyx p-6 text-white relative shrink-0 border-b border-tomato-jam/40">
               <button
@@ -554,7 +566,7 @@ export default function EditorialsPage() {
                 <span>•</span>
                 <span>{selectedEditorial.difficulty}</span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black">{selectedEditorial.title}</h2>
+              <h2 id="editorial-view-title" className="text-xl sm:text-2xl font-black">{selectedEditorial.title}</h2>
               <div className="flex items-center gap-2 mt-3 text-xs">
                 <img
                   src={selectedEditorial.authorAvatar}
@@ -711,11 +723,11 @@ export default function EditorialsPage() {
           aria-modal="true"
           aria-labelledby="publish-editorial-title"
           onClick={() => !isSubmitting && setIsPublishModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-onyx/80 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex h-dvh items-center justify-center overflow-hidden overscroll-none p-3 sm:p-4 md:p-6 bg-onyx/85 backdrop-blur-xl animate-in fade-in duration-200"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-3xl h-full max-h-[92vh] sm:max-h-[88vh] flex flex-col rounded-3xl bg-white border border-onyx/12 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            className="w-full max-w-3xl h-full max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] flex flex-col rounded-3xl bg-white border border-onyx/12 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
             data-lenis-prevent="true"
           >
             {/* 1. FIXED MODAL HEADER */}

@@ -5,9 +5,6 @@ import {
   DepartmentStat,
   MonthlyAchievement,
 } from '@/types';
-import {
-  CURRENT_USER,
-} from './constants';
 
 export async function getCurrentUser(): Promise<UserProfile | null> {
   try {

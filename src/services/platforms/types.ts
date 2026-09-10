@@ -20,6 +20,9 @@ export interface CodeforcesFetchResult {
 
 export interface CodechefFetchResult {
   rating: number | null;
+  stars: string | null;
+  globalRank: string | null;
+  solved: number;
 }
 
 export interface PlatformStatsResult {
@@ -36,6 +39,9 @@ export interface PlatformStatsResult {
   codeforcesAvatar: string | null;
   codeforcesContribution: number | null;
   codechefRating: number | null;
+  codechefStars: string | null;
+  codechefGlobalRank: string | null;
+  codechefSolved: number;
   totalScore: number;
   ranking: number | null;
   departmentRanking: number | null;
