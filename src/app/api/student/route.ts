@@ -12,42 +12,80 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const sessionUser = session.user as { id?: string };
+    const sessionUser = session.user as { id?: string; email?: string };
     const userId = sessionUser.id;
 
-    if (!userId) {
+    if (!userId && !sessionUser.email) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
-    const student = await prisma.student.findUnique({
-      where: { userId },
-      include: {
-        stats: true,
-        user: {
-          select: { email: true, image: true, name: true },
+    let student = userId
+      ? await prisma.student.findUnique({
+          where: { userId },
+          include: {
+            stats: true,
+            user: {
+              select: { email: true, image: true, name: true },
+            },
+            syncJobs: {
+              take: 5,
+              orderBy: { createdAt: 'desc' },
+            },
+            editorials: {
+              take: 5,
+              orderBy: { createdAt: 'desc' },
+              select: { id: true, title: true, platform: true, createdAt: true },
+            },
+            dailySnapshots: {
+              take: 10,
+              orderBy: { date: 'desc' },
+              where: { totalScore: { gt: 0 } },
+            },
+          },
+        })
+      : null;
+
+    if (!student && sessionUser.email) {
+      student = await prisma.student.findFirst({
+        where: { user: { email: sessionUser.email } },
+        include: {
+          stats: true,
+          user: {
+            select: { email: true, image: true, name: true },
+          },
+          syncJobs: {
+            take: 5,
+            orderBy: { createdAt: 'desc' },
+          },
+          editorials: {
+            take: 5,
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, title: true, platform: true, createdAt: true },
+          },
+          dailySnapshots: {
+            take: 10,
+            orderBy: { date: 'desc' },
+            where: { totalScore: { gt: 0 } },
+          },
         },
-        syncJobs: {
-          take: 5,
-          orderBy: { createdAt: 'desc' },
-        },
-        editorials: {
-          take: 5,
-          orderBy: { createdAt: 'desc' },
-          select: { id: true, title: true, platform: true, createdAt: true },
-        },
-        dailySnapshots: {
-          take: 10,
-          orderBy: { date: 'desc' },
-          where: { totalScore: { gt: 0 } },
-        },
-      },
-    });
+      });
+    }
 
     if (!student) {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { email: true, image: true, name: true },
-      });
+      let dbUser = userId
+        ? await prisma.user.findUnique({
+            where: { id: userId },
+            select: { email: true, image: true, name: true },
+          })
+        : null;
+
+      if (!dbUser && sessionUser.email) {
+        dbUser = await prisma.user.findUnique({
+          where: { email: sessionUser.email },
+          select: { email: true, image: true, name: true },
+        });
+      }
+
       return NextResponse.json({ student: null, user: dbUser }, { status: 200 });
     }
 
@@ -172,10 +210,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const sessionUser = session.user as { id?: string };
+    const sessionUser = session.user as { id?: string; email?: string; name?: string };
     const userId = sessionUser.id;
 
-    if (!userId) {
+    if (!userId && !sessionUser.email) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
@@ -203,19 +241,42 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update user image or name if provided
-    if (typeof image === 'string' && image.trim()) {
-      await prisma.user.update({
-        where: { id: userId },
+    // Resolve or recover the DB User record
+    let dbUser = userId ? await prisma.user.findUnique({ where: { id: userId } }) : null;
+    if (!dbUser && sessionUser.email) {
+      dbUser = await prisma.user.findUnique({ where: { email: sessionUser.email } });
+    }
+
+    // If user record is missing in DB (e.g. database push/reset occurred with active session), auto-create
+    if (!dbUser && sessionUser.email) {
+      dbUser = await prisma.user.create({
         data: {
-          image: image.trim(),
-          ...(name ? { name: name.trim() } : {}),
+          ...(userId ? { id: userId } : {}),
+          email: sessionUser.email,
+          name: name.trim() || sessionUser.name || 'Student',
+          image: typeof image === 'string' && image.trim() ? image.trim() : null,
         },
       });
-    } else if (name) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { name: name.trim() },
+    }
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User account not found. Please log in again.' }, { status: 404 });
+    }
+
+    const effectiveUserId = dbUser.id;
+
+    // Safely update user image or name if provided using updateMany (which never throws P2025 if 0 records match)
+    const userUpdateData: { image?: string; name?: string } = {};
+    if (typeof image === 'string' && image.trim()) {
+      userUpdateData.image = image.trim();
+    }
+    if (name) {
+      userUpdateData.name = name.trim();
+    }
+    if (Object.keys(userUpdateData).length > 0) {
+      await prisma.user.updateMany({
+        where: { id: effectiveUserId },
+        data: userUpdateData,
       });
     }
 
@@ -223,9 +284,9 @@ export async function POST(request: Request) {
     const validGradYear = isNaN(parsedGradYear) ? 2026 : parsedGradYear;
 
     const student = await prisma.student.upsert({
-      where: { userId },
+      where: { userId: effectiveUserId },
       create: {
-        userId,
+        userId: effectiveUserId,
         name: name.trim(),
         rollNumber: rollNumber.trim(),
         department: department.trim(),

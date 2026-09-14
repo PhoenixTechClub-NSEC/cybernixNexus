@@ -84,10 +84,22 @@ export const authOptions: NextAuthOptions = {
           session.user.image = token.picture as string;
         }
         if (token.sub) {
-          const dbUser = await prisma.user.findUnique({
+          let dbUser = await prisma.user.findUnique({
             where: { id: token.sub },
-            select: { image: true, student: { select: { profileComplete: true, id: true } } },
+            select: { id: true, image: true, student: { select: { profileComplete: true, id: true } } },
           });
+
+          // Fallback: If token.sub didn't find a record, check by email
+          if (!dbUser && session.user.email) {
+            dbUser = await prisma.user.findUnique({
+              where: { email: session.user.email },
+              select: { id: true, image: true, student: { select: { profileComplete: true, id: true } } },
+            });
+            if (dbUser) {
+              (session.user as any).id = dbUser.id;
+            }
+          }
+
           if (dbUser?.image) {
             session.user.image = dbUser.image;
           }
@@ -100,12 +112,26 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, profile }) {
       if (user) {
         token.sub = user.id;
+        // Verify if user exists in DB with actual cuid to avoid provider ID mismatch
+        if (user.email) {
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { email: user.email },
+              select: { id: true },
+            });
+            if (dbUser) {
+              token.sub = dbUser.id;
+            }
+          } catch (e) {
+            console.error('[NextAuth JWT] Error finding user by email:', e);
+          }
+        }
         const googlePicture = user.image || (profile as any)?.picture;
         if (googlePicture) {
           token.picture = googlePicture;
           try {
             await prisma.user.updateMany({
-              where: { id: user.id },
+              where: { id: token.sub },
               data: { image: googlePicture },
             });
           } catch {
