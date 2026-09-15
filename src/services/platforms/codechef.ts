@@ -90,7 +90,7 @@ function parseCodechefHtml(html: string): CodechefParsingResult {
   // Strategy 2: Look for "fully" in headings or divs
   if (solved === 0) {
     const headings = $('h5, h4, h3, div, span').filter((_, elem) => {
-      return $(elem).text().match(/Fully Solved/i);
+      return /Fully Solved/i.test($(elem).text());
     });
     
     for (let i = 0; i < headings.length; i++) {

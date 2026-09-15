@@ -120,15 +120,15 @@ model StudentStats {
   codechefStars       String?
   codechefGlobalRank  String?
   codechefSolved      Int  @default(0)
-  codechefFailCount   Int  @default(0)  // Track consecutive sync failures for CodeChef
-  codechefLastError   String? @db.Text // Last error message from CodeChef sync
+  codechefFailCount   Int  @default(0)  
+  codechefLastError   String? @db.Text 
 
   totalScore          Int  @default(0)
   ranking             Int?
   departmentRanking   Int?
 
-  lastSyncError       String? @db.Text // Last error from any platform during sync
-  consecutiveFailures Int  @default(0) // Track how many syncs failed in a row
+  lastSyncError       String? @db.Text 
+  consecutiveFailures Int  @default(0) 
 
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())

@@ -22,12 +22,12 @@ import { authOptions } from '@/lib/auth';
  */
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: studentId } = await params;
     const { searchParams } = new URL(req.url);
     const platform = searchParams.get('platform') || 'all';
-    const studentId = params.id;
 
     // Fetch student and stats
     const student = await prisma.student.findUnique({

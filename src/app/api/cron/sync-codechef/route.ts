@@ -222,7 +222,6 @@ export async function GET(req: Request) {
       processed: batchResult.totalRequested,
       succeeded,
       failed,
-      skipped: MAX_CODECHEF_FAILURES - (student?.stats?.codechefFailCount ?? 0),
       batchMetrics: {
         averageDuration: batchResult.averageDuration,
         totalDuration: batchResult.totalDuration,

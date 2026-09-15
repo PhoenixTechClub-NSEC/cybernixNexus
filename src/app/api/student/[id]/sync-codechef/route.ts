@@ -20,8 +20,11 @@ import { fetchCodechefStats } from '@/services/platforms/codechef';
  */
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+  const studentId = id;
+
   try {
     // Get session
     const session = await getServerSession(authOptions);
@@ -31,8 +34,6 @@ export async function POST(
         { status: 401 }
       );
     }
-
-    const studentId = params.id;
 
     // Verify user owns this student profile
     const student = await prisma.student.findUnique({
@@ -141,11 +142,12 @@ export async function POST(
  */
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const studentId = params.id;
+  const { id } = await params;
+  const studentId = id;
 
+  try {
     const student = await prisma.student.findUnique({
       where: { id: studentId },
       include: {

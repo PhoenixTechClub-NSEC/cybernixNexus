@@ -1,4 +1,4 @@
-import pLimit, { Limit } from 'p-limit';
+import pLimit from 'p-limit';
 import { fetchCodechefStats } from './codechef';
 import { fetchLeetCodeStats } from './leetcode';
 import { fetchCodeforcesStats } from './codeforces';
@@ -69,7 +69,7 @@ interface QueueItem {
  * Batch scraper utility for managing concurrent platform scrapes
  */
 export class BatchScraper {
-  private limit: Limit;
+  private limit: ReturnType<typeof pLimit>;
   private concurrency: number;
   private delayMs: number;
   private timeout: number;
