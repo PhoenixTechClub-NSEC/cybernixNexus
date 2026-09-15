@@ -11,7 +11,7 @@ Cybernix Nexus is a production-grade competitive programming hub for Netaji Subh
 * **Styling & UI:** Tailwind CSS v4, GSAP animations, Lucide React icons
 * **Scraper & Sync Engine:** Custom asynchronous platform fetchers (`leetcode.ts`, `codeforces.ts`, `gfg.ts`, `codechef.ts`)
 * **Package Manager:** pnpm
- 
+ it's done bro
 ---
 
 ## 🗄️ Database Schema & Models
