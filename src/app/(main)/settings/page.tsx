@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useUser } from '@/components/providers/UserProvider';
+import CodeforcesVerificationModal from '@/components/profile/CodeforcesVerificationModal';
 import {
   Save,
   Globe,
@@ -15,6 +16,8 @@ import {
   Loader2,
   GraduationCap,
   ImageIcon,
+  ShieldCheck,
+  ShieldAlert,
 } from 'lucide-react';
 
 const STANDARD_PLATFORMS = ['LeetCode', 'Codeforces', 'CodeChef'] as const;
@@ -60,6 +63,15 @@ export default function SettingsPage() {
   const [platformHandle, setPlatformHandle] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Codeforces verification modal
+  const [isCfVerifyModalOpen, setIsCfVerifyModalOpen] = useState(false);
+  const [cfVerifiedHandle, setCfVerifiedHandle] = useState<string | null>(
+    // Pre-mark as verified if the platform already has a saved handle from DB
+    null
+  );
+  // Tracks what the user has typed before verifying
+  const [cfPendingHandle, setCfPendingHandle] = useState('');
+
   useEffect(() => {
     if (!isPlatformModalOpen) return;
 
@@ -94,6 +106,12 @@ export default function SettingsPage() {
           };
           setPlatformHandles(handles);
           initialHandlesRef.current = handles;
+
+          // Mark existing saved CF handle as verified (it was verified when saved)
+          if (s.codeforces) {
+            setCfVerifiedHandle(s.codeforces);
+            setCfPendingHandle(s.codeforces);
+          }
 
           if (s.name) {
             setName(s.name);
@@ -146,11 +164,38 @@ export default function SettingsPage() {
     e.preventDefault();
     if (!platformHandle.trim()) return;
 
+    // If Codeforces is chosen, open the verification modal instead of adding directly
+    if (platformName === 'Codeforces') {
+      setIsPlatformModalOpen(false);
+      setIsCfVerifyModalOpen(true);
+      return;
+    }
+
     setPlatformHandles((prev) => ({ ...prev, [platformName]: platformHandle.trim() }));
     setIsPlatformModalOpen(false);
     setPlatformHandle('');
     setToastMessage(`Added ${platformName} (@${platformHandle.trim()}) to list.`);
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleCfVerificationSuccess = async (verifiedHandle: string, data?: any) => {
+    // Update platform handles state with the verified Codeforces handle
+    setPlatformHandles((prev) => ({ ...prev, Codeforces: verifiedHandle }));
+    setCfVerifiedHandle(verifiedHandle);
+    setCfPendingHandle(verifiedHandle);
+    initialHandlesRef.current = {
+      ...initialHandlesRef.current,
+      Codeforces: verifiedHandle,
+    };
+    setIsCfVerifyModalOpen(false);
+
+    // If stats were already synced (settings page, student exists), refresh user
+    if (data?.stats) {
+      await refreshUser();
+    }
+
+    setToastMessage(`✅ Codeforces @${verifiedHandle} verified and linked successfully!`);
+    setTimeout(() => setToastMessage(null), 5000);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -477,23 +522,98 @@ export default function SettingsPage() {
               />
             </div>
 
-            {STANDARD_PLATFORMS.map((plat) => (
-              <div key={plat} className="space-y-2">
-                <label className="flex items-center gap-2 text-xs font-bold text-onyx uppercase tracking-wider">
-                  <span className={`font-extrabold text-sm ${plat === 'Codeforces' ? 'text-tomato-jam' : plat === 'LeetCode' ? 'text-golden-sand' : 'text-pine-teal'}`}>
-                    {plat.charAt(0)}
-                  </span>{' '}
-                  {plat} Username / Handle
-                </label>
-                <input
-                  type="text"
-                  value={platformHandles[plat] || ''}
-                  onChange={(e) => setPlatformHandles({ ...platformHandles, [plat]: e.target.value })}
-                  placeholder="Enter handle"
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-onyx/30 placeholder:text-onyx/30"
-                />
-              </div>
-            ))}
+            {STANDARD_PLATFORMS.map((plat) =>
+              plat === 'Codeforces' ? (
+                // Codeforces: editable input + Verify button (ownership required)
+                <div key={plat} className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-bold text-onyx uppercase tracking-wider">
+                    <span className="font-extrabold text-sm text-tomato-jam">C</span>{' '}
+                    Codeforces Handle
+                  </label>
+
+                  {cfVerifiedHandle && platformHandles['Codeforces'] === cfVerifiedHandle ? (
+                    // ── Verified state: locked field + Re-verify option ──
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type="text"
+                            readOnly
+                            value={cfVerifiedHandle}
+                            className="w-full px-4 py-2.5 pr-10 rounded-xl border border-emerald-400/50 bg-emerald-50/40 text-sm text-emerald-900 font-semibold cursor-default select-none"
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCfVerifiedHandle(null);
+                            setCfPendingHandle(platformHandles['Codeforces'] || '');
+                          }}
+                          className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-onyx/60 bg-onyx/6 hover:bg-onyx/10 transition-colors cursor-pointer whitespace-nowrap"
+                        >
+                          Change
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3" />
+                        Ownership verified — linked as @{cfVerifiedHandle}
+                      </p>
+                    </div>
+                  ) : (
+                    // ── Unverified / editing state: editable input + Verify button ──
+                    <div className="space-y-1.5">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={cfPendingHandle}
+                          onChange={(e) => {
+                            setCfPendingHandle(e.target.value);
+                            // Clear verified status if user edits the handle
+                            if (cfVerifiedHandle) setCfVerifiedHandle(null);
+                          }}
+                          placeholder="e.g. tourist"
+                          className="flex-1 px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-tomato-jam/50 placeholder:text-onyx/30"
+                        />
+                        <button
+                          type="button"
+                          disabled={!cfPendingHandle.trim()}
+                          onClick={() => setIsCfVerifyModalOpen(true)}
+                          className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-tomato-jam bg-tomato-jam/10 hover:bg-tomato-jam/20 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          Verify &amp; Link
+                        </button>
+                      </div>
+                      {cfPendingHandle.trim() && (
+                        <p className="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
+                          <ShieldAlert className="w-3.5 h-3.5" />
+                          Handle must be verified before saving
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div key={plat} className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-bold text-onyx uppercase tracking-wider">
+                    <span className={`font-extrabold text-sm ${plat === 'LeetCode' ? 'text-golden-sand' : 'text-pine-teal'}`}>
+                      {plat.charAt(0)}
+                    </span>{' '}
+                    {plat} Username / Handle
+                  </label>
+                  <input
+                    type="text"
+                    value={platformHandles[plat] || ''}
+                    onChange={(e) => setPlatformHandles({ ...platformHandles, [plat]: e.target.value })}
+                    placeholder="Enter handle"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm text-onyx focus:outline-none focus:ring-2 focus:ring-onyx/30 placeholder:text-onyx/30"
+                  />
+                </div>
+              )
+            )}
           </div>
         </div>
 
@@ -542,7 +662,7 @@ export default function SettingsPage() {
 
       </form>
 
-      {/* CONNECT NEW PLATFORM MODAL */}
+      {/* CONNECT NEW PLATFORM MODAL (non-Codeforces) */}
       {isPlatformModalOpen && (
         <div
           role="dialog"
@@ -579,37 +699,56 @@ export default function SettingsPage() {
                   onChange={(e) => setPlatformName(e.target.value)}
                   className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-tomato-jam transition-shadow"
                 >
-                  <option value="Codeforces">Codeforces</option>
+                  <option value="Codeforces">Codeforces (requires verification)</option>
                   <option value="LeetCode">LeetCode</option>
                   <option value="CodeChef">CodeChef</option>
                   <option value="GFG">GeeksforGeeks</option>
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-slate-700 mb-2 uppercase tracking-wider">
-                  Handle / Username
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={platformHandle}
-                  onChange={(e) => setPlatformHandle(e.target.value)}
-                  placeholder="e.g. tourist"
-                  className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-tomato-jam transition-shadow placeholder:text-slate-400"
-                />
-              </div>
+              {platformName !== 'Codeforces' && (
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-2 uppercase tracking-wider">
+                    Handle / Username
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={platformHandle}
+                    onChange={(e) => setPlatformHandle(e.target.value)}
+                    placeholder="e.g. tourist"
+                    className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-tomato-jam transition-shadow placeholder:text-slate-400"
+                  />
+                </div>
+              )}
+
+              {platformName === 'Codeforces' && (
+                <div className="p-4 rounded-2xl bg-tomato-jam/8 border border-tomato-jam/20 text-xs text-onyx/80 font-medium flex items-start gap-2.5">
+                  <ShieldCheck className="w-4 h-4 shrink-0 text-tomato-jam mt-0.5" />
+                  <span>
+                    Codeforces accounts require <strong>ownership verification</strong>. Clicking continue will open the verification flow where you'll set your Codeforces First Name to a generated code.
+                  </span>
+                </div>
+              )}
 
               <button
                 type="submit"
-                className="w-full py-4 rounded-2xl bg-tomato-jam text-white font-extrabold text-sm shadow-md hover:bg-[#E8890C] transition-colors cursor-pointer"
+                className="w-full py-4 rounded-2xl bg-tomato-jam text-white font-extrabold text-sm shadow-md hover:bg-[#D93D42] transition-colors cursor-pointer"
               >
-                Add to Profiles
+                {platformName === 'Codeforces' ? 'Continue to Verification →' : 'Add to Profiles'}
               </button>
             </form>
           </div>
         </div>
       )}
+
+      {/* CODEFORCES OWNERSHIP VERIFICATION MODAL */}
+      <CodeforcesVerificationModal
+        isOpen={isCfVerifyModalOpen}
+        onClose={() => setIsCfVerifyModalOpen(false)}
+        initialHandle={cfPendingHandle || platformHandles['Codeforces'] || ''}
+        onSuccess={handleCfVerificationSuccess}
+      />
     </div>
   );
 }

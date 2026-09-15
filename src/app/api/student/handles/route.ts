@@ -132,6 +132,30 @@ export async function POST(request: Request) {
 
     const hasHandleChanges = Object.values(changedPlatforms).some(Boolean);
 
+    // If Codeforces handle is changing to a new non-empty value, require verification
+    if (changedPlatforms.codeforces && newCf) {
+      const verifiedToken = await prisma.verificationToken.findFirst({
+        where: {
+          identifier: `cf-verified:${effectiveUserId}`,
+          expires: { gt: new Date() },
+        },
+      });
+
+      if (!verifiedToken || verifiedToken.token.toLowerCase() !== newCf.toLowerCase()) {
+        return NextResponse.json(
+          {
+            error: `Codeforces handle "${newCf}" has not been verified. Please verify account ownership before linking.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      // Consume verified token
+      await prisma.verificationToken.deleteMany({
+        where: { identifier: `cf-verified:${effectiveUserId}` },
+      });
+    }
+
     // Update user image URL or name safely using updateMany
     if (avatar !== undefined || name) {
       await prisma.user.updateMany({

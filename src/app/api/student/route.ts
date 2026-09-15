@@ -283,6 +283,37 @@ export async function POST(request: Request) {
     const parsedGradYear = Number(graduationYear);
     const validGradYear = isNaN(parsedGradYear) ? 2026 : parsedGradYear;
 
+    // Check Codeforces verification if a new/different Codeforces handle is being submitted
+    if (typeof codeforces === 'string' && codeforces.trim()) {
+      const existingStudent = await prisma.student.findUnique({
+        where: { userId: effectiveUserId },
+        select: { codeforces: true },
+      });
+      const currentCf = existingStudent?.codeforces?.trim().toLowerCase();
+      const targetCf = codeforces.trim().toLowerCase();
+
+      if (currentCf !== targetCf) {
+        const verifiedToken = await prisma.verificationToken.findFirst({
+          where: {
+            identifier: `cf-verified:${effectiveUserId}`,
+            expires: { gt: new Date() },
+          },
+        });
+
+        if (!verifiedToken || verifiedToken.token.toLowerCase() !== targetCf) {
+          return NextResponse.json(
+            { error: `Codeforces handle "${codeforces.trim()}" must be verified before saving. Please verify ownership first.` },
+            { status: 400 }
+          );
+        }
+
+        // Consume verified token
+        await prisma.verificationToken.deleteMany({
+          where: { identifier: `cf-verified:${effectiveUserId}` },
+        });
+      }
+    }
+
     const student = await prisma.student.upsert({
       where: { userId: effectiveUserId },
       create: {
