@@ -16,8 +16,11 @@ import {
   Briefcase,
   ImageIcon,
   Sparkles,
+  ShieldCheck,
+  ShieldAlert,
 } from 'lucide-react';
 import { useUser } from '@/components/providers/UserProvider';
+import CodeforcesVerificationModal from '@/components/profile/CodeforcesVerificationModal';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -46,6 +49,11 @@ export default function SignupPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Codeforces verification
+  const [isCfVerifyModalOpen, setIsCfVerifyModalOpen] = useState(false);
+  const [cfVerified, setCfVerified] = useState(false);
+  const [cfVerifiedHandle, setCfVerifiedHandle] = useState('');
 
   // Initialize from session and check if student already exists
   useEffect(() => {
@@ -106,8 +114,15 @@ export default function SignupPage() {
       return;
     }
 
+    // Require Codeforces handle to be verified before form submission
     const cleanLeetcode = sanitizeHandle(leetcode);
-    const cleanCodeforces = sanitizeHandle(codeforces);
+    const rawCodeforces = cfVerified ? cfVerifiedHandle : sanitizeHandle(codeforces);
+    if (rawCodeforces && !cfVerified) {
+      setError('Please verify your Codeforces handle ownership before submitting.');
+      setIsLoading(false);
+      return;
+    }
+    const cleanCodeforces = rawCodeforces;
     const cleanCodechef = sanitizeHandle(codechef);
     const cleanGithub = sanitizeHandle(github);
     const cleanLinkedin = sanitizeHandle(linkedin);
@@ -448,19 +463,73 @@ export default function SignupPage() {
                     className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
                   />
                 </div>
-                <div>
-                  <label htmlFor="signup-codeforces" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                    Codeforces Handle
-                  </label>
-                  <input
-                    id="signup-codeforces"
-                    type="text"
-                    value={codeforces}
-                    onChange={(e) => setCodeforces(e.target.value)}
-                    placeholder="e.g. tourist"
-                    className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                  />
-                </div>
+                  {/* Codeforces - requires verification */}
+                  <div>
+                    <label htmlFor="signup-codeforces" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                      Codeforces Handle
+                    </label>
+                    {cfVerified ? (
+                      // Verified state: locked display + re-verify option
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <input
+                              type="text"
+                              readOnly
+                              value={cfVerifiedHandle}
+                              className="w-full px-4 py-2.5 pr-10 rounded-xl border border-emerald-400/60 bg-emerald-50/50 text-sm text-emerald-800 font-semibold cursor-default select-none"
+                            />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsCfVerifyModalOpen(true)}
+                            className="px-3 py-2.5 rounded-xl text-xs font-bold text-pine-teal bg-pine-teal/10 hover:bg-pine-teal/20 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5" /> Re-verify
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Ownership verified — handle locked in
+                        </p>
+                      </div>
+                    ) : (
+                      // Unverified state: input + verify button
+                      <div className="space-y-1.5">
+                        <div className="flex gap-2">
+                          <input
+                            id="signup-codeforces"
+                            type="text"
+                            value={codeforces}
+                            onChange={(e) => {
+                              setCodeforces(e.target.value);
+                              if (cfVerified) setCfVerified(false);
+                            }}
+                            placeholder="e.g. tourist"
+                            className="flex-1 px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
+                          />
+                          <button
+                            type="button"
+                            disabled={!codeforces.trim()}
+                            onClick={() => setIsCfVerifyModalOpen(true)}
+                            className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-tomato-jam bg-tomato-jam/10 hover:bg-tomato-jam/20 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap flex items-center gap-1.5"
+                          >
+                            <ShieldAlert className="w-3.5 h-3.5" />
+                            Verify
+                          </button>
+                        </div>
+                        {codeforces.trim() && (
+                          <p className="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            You must verify ownership before submitting
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 <div>
                   <label htmlFor="signup-codechef" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
                     CodeChef Handle
@@ -526,6 +595,19 @@ export default function SignupPage() {
           </div>
         </div>
       </div>
+
+      {/* Codeforces Ownership Verification Modal */}
+      <CodeforcesVerificationModal
+        isOpen={isCfVerifyModalOpen}
+        onClose={() => setIsCfVerifyModalOpen(false)}
+        initialHandle={codeforces.trim()}
+        onSuccess={(verifiedHandle) => {
+          setCfVerified(true);
+          setCfVerifiedHandle(verifiedHandle);
+          setCodeforces(verifiedHandle);
+          setIsCfVerifyModalOpen(false);
+        }}
+      />
     </div>
   );
 }
