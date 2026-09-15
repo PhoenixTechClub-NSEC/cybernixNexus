@@ -50,26 +50,42 @@ export async function POST(request: Request) {
       bio,
     } = body;
 
-    let student = await prisma.student.findUnique({
-      where: { userId },
-    });
+    let dbUser = userId
+      ? await prisma.user.findUnique({
+          where: { id: userId },
+        })
+      : null;
 
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    if (!dbUser && sessionUser.email) {
+      dbUser = await prisma.user.findUnique({
+        where: { email: sessionUser.email },
+      });
+    }
 
     if (!dbUser) {
       return NextResponse.json({ error: 'User account not found.' }, { status: 404 });
+    }
+
+    const effectiveUserId = dbUser.id;
+
+    let student = await prisma.student.findUnique({
+      where: { userId: effectiveUserId },
+    });
+
+    if (!student && sessionUser.email) {
+      student = await prisma.student.findFirst({
+        where: { user: { email: sessionUser.email } },
+      });
     }
 
     const parsedGradYear = graduationYear ? Number(graduationYear) : 2026;
     const validGradYear = isNaN(parsedGradYear) ? 2026 : parsedGradYear;
 
     if (!student) {
-      const fallbackRoll = rollNumber?.trim() || `NSEC-${userId.slice(-8).toUpperCase()}`;
+      const fallbackRoll = rollNumber?.trim() || `NSEC-${effectiveUserId.slice(-8).toUpperCase()}`;
       student = await prisma.student.create({
         data: {
-          userId,
+          userId: effectiveUserId,
           name: name?.trim() || dbUser.name || 'Student',
           rollNumber: fallbackRoll,
           department: department?.trim() || 'CSE',
@@ -116,10 +132,10 @@ export async function POST(request: Request) {
 
     const hasHandleChanges = Object.values(changedPlatforms).some(Boolean);
 
-    // Update user image URL or name if provided
+    // Update user image URL or name safely using updateMany
     if (avatar !== undefined || name) {
-      await prisma.user.update({
-        where: { id: userId },
+      await prisma.user.updateMany({
+        where: { id: effectiveUserId },
         data: {
           ...(avatar !== undefined ? { image: typeof avatar === 'string' && avatar.trim() ? avatar.trim() : null } : {}),
           ...(name ? { name: name.trim() } : {}),
