@@ -1,8 +1,48 @@
 {
   "crons": [
     {
+      "path": "/api/cron/sync-codechef?chunk=0",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-codechef?chunk=1",
+      "schedule": "5 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-codechef?chunk=2",
+      "schedule": "10 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-codechef?chunk=3",
+      "schedule": "15 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-codechef?chunk=4",
+      "schedule": "20 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-codechef?chunk=5",
+      "schedule": "25 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-codechef?chunk=6",
+      "schedule": "30 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-codechef?chunk=7",
+      "schedule": "35 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-codechef?chunk=8",
+      "schedule": "40 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-codechef?chunk=9",
+      "schedule": "45 2 * * *"
+    },
+    {
       "path": "/api/cron/sync",
-      "schedule": "0 0 * * 3"
+      "schedule": "0 3 * * *"
     }
   ]
 }

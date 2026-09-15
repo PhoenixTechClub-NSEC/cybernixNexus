@@ -171,8 +171,25 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
     const codechefSolved = ccRes.status === 'fulfilled'
       ? ccRes.value.solved
       : ((existingStats as any)?.codechefSolved ?? 0);
+    const codechefStars = ccRes.status === 'fulfilled'
+      ? ccRes.value.stars
+      : (existingStats?.codechefStars ?? null);
+    const codechefGlobalRank = ccRes.status === 'fulfilled'
+      ? ccRes.value.globalRank
+      : (existingStats?.codechefGlobalRank ?? null);
+    
+    let codechefFailCount = existingStats?.codechefFailCount ?? 0;
+    let codechefLastError: string | null = null;
+    
     if (ccRes.status === 'rejected') {
-      errors.codechef = ccRes.reason?.message || 'Failed to fetch CodeChef stats';
+      const error = ccRes.reason?.message || 'Failed to fetch CodeChef stats';
+      errors.codechef = error;
+      codechefFailCount = Math.min((codechefFailCount ?? 0) + 1, 10); // Cap at 10
+      codechefLastError = error;
+    } else if (ccRes.status === 'fulfilled') {
+      // Success - reset failure count
+      codechefFailCount = 0;
+      codechefLastError = null;
     }
 
     const totalScore = calculateTotalScore({
@@ -204,6 +221,10 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         codeforcesContribution,
         codechefRating,
         codechefSolved,
+        codechefStars,
+        codechefGlobalRank,
+        codechefFailCount,
+        codechefLastError,
         totalScore,
       },
       update: {
@@ -221,6 +242,10 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         codeforcesContribution,
         codechefRating,
         codechefSolved,
+        codechefStars,
+        codechefGlobalRank,
+        codechefFailCount,
+        codechefLastError,
         totalScore,
       },
     });

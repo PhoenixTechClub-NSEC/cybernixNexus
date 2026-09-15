@@ -977,6 +977,50 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Platform-wise Problems Solved */}
+          <div className="rounded-3xl bg-white border border-pine-teal/25 p-6 shadow-xs space-y-5 content-visibility-auto">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-onyx flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-tomato-jam" />
+                <span>Problems by Platform</span>
+              </h3>
+              <span className="text-xs font-semibold text-pine-teal">
+                {(CURRENT_USER.solvedByDifficulty?.total || 0).toLocaleString()} Total
+              </span>
+            </div>
+
+            <div className="space-y-3.5">
+              {normalizedPlatforms.length === 0 ? (
+                <div className="p-3 text-center text-xs font-bold text-onyx/50 bg-golden-sand/10 rounded-xl">
+                  No platforms linked yet
+                </div>
+              ) : (
+                normalizedPlatforms.map((plat) => {
+                  const totalSolved = normalizedPlatforms.reduce((sum, p) => sum + (p.solvedCount || 0), 0) || 1;
+                  const pct = Math.round(((plat.solvedCount || 0) / totalSolved) * 100);
+                  
+                  return (
+                    <div key={plat.id} className="flex items-center gap-3 text-xs">
+                      <span className="w-24 font-bold text-onyx truncate" style={{ color: plat.color }}>
+                        {plat.platform}
+                      </span>
+                      <div className="flex-1 bg-golden-sand/12 h-6.5 rounded-lg overflow-hidden relative flex items-center border border-pine-teal/20">
+                        <div
+                          className="h-full rounded-lg flex items-center justify-end pr-2.5 transition-all duration-500"
+                          style={{ width: `${Math.max(pct, 8)}%`, backgroundColor: plat.color }}
+                        >
+                          <span className="text-xs font-black text-white">
+                            {plat.solvedCount || 0}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
         </div>
 
         {/* RIGHT COLUMN: Question Distribution & Contest Rankings (3 Cols) */}

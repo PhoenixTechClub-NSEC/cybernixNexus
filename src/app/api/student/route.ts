@@ -93,7 +93,7 @@ export async function GET() {
     const badges = [];
     const stats = student.stats;
     const totalScore = stats?.totalScore || 0;
-    const totalSolved = (stats?.leetcodeSolved || 0) + (stats?.codeforcesSolved || 0);
+    const totalSolved = (stats?.leetcodeSolved || 0) + (stats?.codeforcesSolved || 0) + (stats?.codechefSolved || 0);
 
     badges.push({
       id: 'badge-spark',
