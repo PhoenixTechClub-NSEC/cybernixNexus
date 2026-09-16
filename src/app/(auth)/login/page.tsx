@@ -51,7 +51,7 @@ export default function LoginPage() {
       const result = await signIn('google', { callbackUrl, redirect: false });
 
       if (result?.error) {
-        setError('Google sign in failed. Please try again.');
+        setError('Unable to sign in with Google. Please try again.');
         setIsLoading(false);
         return;
       }
@@ -60,7 +60,7 @@ export default function LoginPage() {
         router.push(result.url);
       }
     } catch {
-      setError('Failed to initiate Google sign in. Please try again.');
+      setError('Connection lost. Please check your internet and try again.');
       setIsLoading(false);
     }
   };
@@ -116,7 +116,7 @@ export default function LoginPage() {
             <div className="p-2.5 rounded-2xl bg-golden-sand/15 border border-onyx/8 flex flex-col items-center gap-1">
               <Trophy className="w-4 h-4 text-tomato-jam" />
               <span className="text-[11px] font-black text-onyx">Rankings</span>
-              <span className="text-[9px] text-onyx/60 font-medium">Dept Battles</span>
+              <span className="text-[9px] text-onyx/60 font-medium">Leaderboards</span>
             </div>
             <div className="p-2.5 rounded-2xl bg-golden-sand/15 border border-onyx/8 flex flex-col items-center gap-1">
               <Award className="w-4 h-4 text-tomato-jam" />
@@ -170,7 +170,7 @@ export default function LoginPage() {
 
           <div className="pt-4 border-t border-onyx/10 flex items-center justify-center gap-1.5 text-xs text-onyx/70 font-semibold">
             <Sparkles className="w-3.5 h-3.5 text-tomato-jam" />
-            <span>Avahan Cup 2026 Inter-Department Battles Live</span>
+            <span>NSEC College 2026 Rankings Live</span>
           </div>
 
         </div>

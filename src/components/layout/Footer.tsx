@@ -183,7 +183,7 @@ export function Footer() {
                   onMouseLeave={handleLinkLeave}
                   className="inline-block hover:text-tomato-jam transition-colors will-change-transform"
                 >
-                  Rankings & Dept Battles
+                  Rankings & Leaderboards
                 </Link>
               </li>
               <li>

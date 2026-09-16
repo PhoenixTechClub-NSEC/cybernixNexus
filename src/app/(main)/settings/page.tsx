@@ -234,6 +234,7 @@ export default function SettingsPage() {
     }
 
     setIsSaving(true);
+    setToastMessage('⏳ Saving your profile...');
     try {
       const res = await fetch('/api/student/handles', {
         method: 'POST',
@@ -319,15 +320,19 @@ export default function SettingsPage() {
 
       await refreshUser();
 
-      setToastMessage(
-        data.hasHandleChanges
-          ? 'Platform handles updated & stats fetched successfully!'
-          : 'Profile and academic settings saved successfully!'
-      );
-      setTimeout(() => setToastMessage(null), 4000);
+      if (data.hasHandleChanges) {
+        setToastMessage('🔄 Syncing platforms...');
+        setTimeout(() => {
+          setToastMessage('✨ Profile saved & platforms synced successfully!');
+          setTimeout(() => setToastMessage(null), 4000);
+        }, 1500);
+      } else {
+        setToastMessage('✨ Profile saved successfully!');
+        setTimeout(() => setToastMessage(null), 4000);
+      }
     } catch (err: any) {
       console.error('[Save Error]:', err);
-      setToastMessage(`Save failed: ${err.message}`);
+      setToastMessage(`❌ Save failed: ${err.message}`);
       setTimeout(() => setToastMessage(null), 4000);
     } finally {
       setIsSaving(false);
@@ -347,8 +352,8 @@ export default function SettingsPage() {
       </div>
 
       {toastMessage && (
-        <div className="p-4 rounded-2xl bg-white border border-onyx/12 text-onyx font-bold text-sm shadow-md flex items-center gap-2.5">
-          <Sparkles className="w-4 h-4 text-tomato-jam" />
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-onyx text-white text-xs font-extrabold shadow-xl border border-tomato-jam/40 animate-in slide-in-from-bottom-3 duration-300">
+          <span className="text-lg">{toastMessage.includes('✨') ? '✨' : toastMessage.includes('❌') ? '❌' : '🎉'}</span>
           <span>{toastMessage}</span>
         </div>
       )}
@@ -356,7 +361,7 @@ export default function SettingsPage() {
       <form onSubmit={handleSave} className="space-y-8">
 
         {/* Profile Picture (PFP URL Only) & Personal Identity */}
-        <div className="rounded-3xl bg-white border border-onyx/12 p-6 sm:p-8 shadow-sm">
+        <div className="rounded-3xl bg-white border border-onyx/12 p-4 sm:p-6 md:p-8 shadow-sm">
           <h2 className="text-lg font-black text-onyx flex items-center gap-2 mb-6">
             <ImageIcon className="w-5 h-5 text-tomato-jam" />
             Profile Picture & Identity
@@ -391,7 +396,7 @@ export default function SettingsPage() {
                 <p className="text-xs text-onyx/60 mt-1">Provide a direct public image URL for your avatar.</p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">Display Name</label>
                   <input
@@ -418,13 +423,13 @@ export default function SettingsPage() {
         </div>
 
         {/* Academic Details Section (Prisma: Student.department, graduationYear, rollNumber) */}
-        <div className="rounded-3xl bg-white border border-onyx/12 p-6 sm:p-8 shadow-sm">
+        <div className="rounded-3xl bg-white border border-onyx/12 p-4 sm:p-6 md:p-8 shadow-sm">
           <h2 className="text-lg font-black text-onyx flex items-center gap-2 mb-6">
             <GraduationCap className="w-5 h-5 text-tomato-jam" />
             Academic & College Details
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             <div>
               <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">
                 College Roll Number
@@ -487,23 +492,13 @@ export default function SettingsPage() {
         </div>
 
         {/* Social Links & Platform Handles Section */}
-        <div className="rounded-3xl bg-white border border-onyx/12 p-6 sm:p-8 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-black text-onyx flex items-center gap-2">
-              <Code2 className="w-5 h-5 text-pine-teal" />
-              Social Profiles & Coding Handles
-            </h2>
-            <button
-              type="button"
-              onClick={() => setIsPlatformModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-golden-sand/20 text-tomato-jam text-xs font-bold hover:bg-golden-sand/30 transition-colors cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add platform
-            </button>
-          </div>
+        <div className="rounded-3xl bg-white border border-onyx/12 p-4 sm:p-6 md:p-8 shadow-sm">
+          <h2 className="text-lg font-black text-onyx flex items-center gap-2 mb-6">
+            <Code2 className="w-5 h-5 text-pine-teal" />
+            Social Profiles & Coding Handles
+          </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* GitHub */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-xs font-bold text-onyx uppercase tracking-wider">
@@ -628,7 +623,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Bio / Description Section */}
-        <div className="rounded-3xl bg-white border border-onyx/12 p-6 sm:p-8 shadow-sm">
+        <div className="rounded-3xl bg-white border border-onyx/12 p-4 sm:p-6 md:p-8 shadow-sm">
           <h2 className="text-lg font-black text-onyx flex items-center gap-2 mb-6">
             <Sparkles className="w-5 h-5 text-golden-sand" />
             About You
@@ -679,11 +674,11 @@ export default function SettingsPage() {
           aria-modal="true"
           aria-labelledby="connect-platform-title"
           onClick={() => setIsPlatformModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-xl p-4 sm:p-6 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-xl p-3 sm:p-4 md:p-6 animate-in fade-in duration-200"
         >
           <div
             onClick={(event) => event.stopPropagation()}
-            className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-[2rem] bg-white shadow-2xl p-6 sm:p-8 relative custom-scrollbar will-change-transform"
+            className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-3xl bg-white shadow-2xl p-6 sm:p-8 relative custom-scrollbar will-change-transform"
           >
             <button
               onClick={() => setIsPlatformModalOpen(false)}

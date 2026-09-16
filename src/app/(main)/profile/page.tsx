@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUser } from '@/components/providers/UserProvider';
 import { Heatmap } from '@/features/profile/components/Heatmap';
 import { StatsGrid } from '@/features/profile/components/StatsGrid';
@@ -11,13 +12,14 @@ import {
 } from 'lucide-react';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { user: CURRENT_USER } = useUser();
   const [activeTab, setActiveTab] = useState<'overview' | 'badges' | 'activities'>('overview');
 
   return (
     <div className="space-y-8 pb-12">
       {/* Student Profile Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-onyx text-white p-6 sm:p-8 shadow-md border border-white/10">
+      <div className="relative overflow-hidden rounded-3xl bg-onyx text-white p-4 sm:p-6 md:p-8 shadow-md border border-white/10">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           {/* User main info */}
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
@@ -25,7 +27,7 @@ export default function ProfilePage() {
               <img
                 src={CURRENT_USER.avatar}
                 alt={CURRENT_USER.name}
-                className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover ring-4 ring-tomato-jam/40 shadow-xl"
+                className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full object-cover ring-4 ring-tomato-jam/40 shadow-xl"
               />
               <div className="absolute -bottom-2 -right-1 bg-tomato-jam text-white p-1.5 rounded-full shadow-md" title="NSEC CSE Champion">
                 <Trophy className="w-4 h-4" />
@@ -79,6 +81,13 @@ export default function ProfilePage() {
                 #{CURRENT_USER.collegeRank}
               </p>
               <p className="text-[10px] text-golden-sand">Top 0.5%</p>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-center col-span-2 sm:col-span-1 hover:border-golden-sand/50 hover:bg-white/10 transition-all cursor-pointer" onClick={() => router.push('/profile/sync')}>
+              <p className="text-[10px] uppercase font-bold text-white/50">Platform Sync</p>
+              <p className="text-lg sm:text-xl font-black text-golden-sand">
+                3 Connected
+              </p>
+              <p className="text-[10px] text-white/40">CF • LC • CC</p>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-center col-span-2 sm:col-span-1">
               <p className="text-[10px] uppercase font-bold text-white/50">Dept Position</p>

@@ -90,11 +90,7 @@ export default function DashboardPage() {
   const { user: CURRENT_USER } = useUser();
   const dashboardRef = useRef<HTMLDivElement>(null);
   
-  const [previewLevel, setPreviewLevel] = useState<number | null>(null);
-  
-  const activeLevel = previewLevel !== null 
-    ? previewLevel 
-    : getLevelForTier(CURRENT_USER.tier);
+  const activeLevel = getLevelForTier(CURRENT_USER.tier);
     
   const currentIllusSrc = `/lvl-${activeLevel}.png`;
   const isBigLvl = activeLevel >= 3;
@@ -111,14 +107,14 @@ export default function DashboardPage() {
       : 'h-64 sm:h-80 lg:h-96'
   }`;
 
-  const mobileWrapperClasses = `absolute block sm:hidden z-20 pointer-events-none transition-all duration-500 ease-out ${
+  const mobileWrapperClasses = `absolute block sm:hidden z-20 pointer-events-none transition-all duration-500 ease-out overflow-hidden ${
     isBigLvl
-      ? '-right-4 -top-16'
-      : '-right-6 -top-12'
+      ? '-right-2 -top-12'
+      : '-right-4 -top-8'
   }`;
 
   const mobileImgClasses = `hero-illustration w-auto object-contain select-none drop-shadow-md origin-bottom will-change-transform transition-all duration-500 ease-out ${
-    isBigLvl ? 'h-64' : 'h-52'
+    isBigLvl ? 'h-48' : 'h-40'
   }`;
 
   // Buttery Smooth 60fps Staggered Bento & Hero Entrance
@@ -456,7 +452,7 @@ export default function DashboardPage() {
       {/* TOP HERO BENTO ROW matching Dribbble Reference: Hello Card with Outside-the-Box Illustration + 4 Stats Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 pt-6 sm:pt-10">
         {/* LEFT: Hello Card with Outside the Box Waving Illustration (8 Cols) */}
-        <div className="hello-card lg:col-span-8 relative rounded-3xl bg-white border border-pine-teal/25 p-6 sm:p-8 shadow-xs overflow-visible flex flex-col justify-between min-h-[280px] will-change-transform">
+        <div className="hello-card lg:col-span-8 relative rounded-3xl bg-white border border-pine-teal/25 p-4 sm:p-6 md:p-8 shadow-xs overflow-hidden sm:overflow-visible flex flex-col justify-between min-h-[280px] will-change-transform">
           {/* Top Greeting Section */}
           <div className="relative z-10 max-w-md sm:max-w-lg space-y-2">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
@@ -473,31 +469,14 @@ export default function DashboardPage() {
             <p className="text-xs sm:text-sm text-pine-teal font-medium">
               It&apos;s good to see you again.
             </p>
-            
-            {/* Temporary Mascot Preview Toggles */}
-            <div className="hidden sm:flex flex-wrap items-center gap-2 mt-4 pt-2 z-30 relative pointer-events-auto">
-              <span className="text-[10px] uppercase font-bold text-onyx/60 mr-1">Preview Mascot:</span>
-              {[1, 2, 3, 4, 5].map((lvl) => (
-                <button
-                  key={lvl}
-                  onClick={() => setPreviewLevel(lvl)}
-                  className={`text-[10px] font-bold px-2.5 py-1 rounded-md border transition-colors ${
-                    previewLevel === lvl
-                      ? 'bg-tomato-jam text-white border-tomato-jam shadow-sm'
-                      : 'bg-white text-onyx border-pine-teal/30 hover:bg-golden-sand/40 hover:border-pine-teal/50'
-                  }`}
-                >
-                  Lvl {lvl}
-                </button>
-              ))}
-              {previewLevel !== null && (
-                <button
-                  onClick={() => setPreviewLevel(null)}
-                  className="text-[10px] font-bold px-2.5 py-1 rounded-md bg-onyx text-white hover:bg-onyx/80 shadow-sm ml-1 transition-colors"
-                >
-                  Reset (Auto)
-                </button>
-              )}
+
+            {/* Locked Level Badge - Display in empty white space */}
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-tomato-jam/15 to-golden-sand/15 border-2 border-tomato-jam/30 max-w-fit">
+              <span className="text-2xl font-black text-tomato-jam">🔒</span>
+              <div>
+                <p className="text-[10px] font-bold text-tomato-jam uppercase tracking-wider">Current Level</p>
+                <p className="text-lg sm:text-2xl font-black text-tomato-jam">Lvl {activeLevel} • {CURRENT_USER.tier}</p>
+              </div>
             </div>
           </div>
 
@@ -680,6 +659,8 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
+
+
         </div>
       </div>
 

@@ -198,7 +198,7 @@ export function Podium({ users, onSelectUser }: PodiumProps) {
           Top 3 Spotlight • NSEC Champions
         </span>
         <h3 className="text-xl sm:text-2xl font-black text-white mt-2">
-          College CP Champions Podium
+          College CP Top Performers
         </h3>
         <p className="text-xs sm:text-sm text-white/70 max-w-lg mx-auto mt-1">
           Highlighting the #1, #2, and #3 top programmers in Netaji Subhash Engineering College across all departments.

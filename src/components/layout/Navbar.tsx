@@ -226,8 +226,8 @@ export function Navbar() {
         <span className="inline-flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-golden-sand shrink-0" />
           <span className="truncate max-w-[200px] sm:max-w-none">
-            <strong className="hidden sm:inline">NSEC Avahan League 2026: </strong>
-            <span className="hidden sm:inline">{topDept.name} currently leads Dept Battles with a </span>
+            <strong className="hidden sm:inline">NSEC College 2026: </strong>
+            <span className="hidden sm:inline">{topDept.name} currently leads with a </span>
             <span className="sm:hidden">{topDept.name} leads with </span>
             <span className="underline decoration-golden-sand">{topDept.multiplier.toFixed(1)}x Bonus</span>!
           </span>
@@ -300,6 +300,21 @@ export function Navbar() {
               );
             })}
           </nav>
+
+          {/* Mobile Streak & CP Score Pills (compact, visible only on sm-lg) */}
+          <div className="flex md:hidden items-center gap-2">
+            {/* Mobile Streak Pill */}
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-golden-sand/15 border border-onyx/12 text-onyx text-[10px] font-bold shadow-2xs">
+              <Flame className="w-3 h-3 fill-tomato-jam text-tomato-jam" />
+              <span>{CURRENT_USER.currentStreak}d</span>
+            </div>
+
+            {/* Mobile CP Score Pill */}
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-golden-sand/10 border border-onyx/12 text-onyx text-[10px] font-bold shadow-2xs">
+              <span>⭐</span>
+              <span>{(CURRENT_USER.cpScore / 1000).toFixed(1)}k</span>
+            </div>
+          </div>
 
           {/* Right section: Streak Pill, CP Score & User Avatar */}
           <div className="hidden lg:flex items-center gap-3">

@@ -34,7 +34,7 @@ export function StatsGrid({ user }: StatsGridProps) {
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-sm font-bold text-onyx uppercase tracking-wider flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-onyx/70" />
-              DSA Difficulty Split
+              DSA Difficulty Split*
             </h4>
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-golden-sand/15 text-onyx border border-golden-sand/30">
               Total: {total}
@@ -96,6 +96,10 @@ export function StatsGrid({ user }: StatsGridProps) {
             <span className="font-bold text-onyx">
               {(easy * 10 + medium * 30 + hard * 75).toLocaleString()} pts
             </span>
+          </div>
+
+          <div className="mt-2 pt-2 border-t border-onyx/12 text-[10px] text-onyx/60 italic">
+            *Difficulty split data is for LeetCode problems only
           </div>
         </div>
 

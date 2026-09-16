@@ -111,10 +111,9 @@ export async function GET(req: Request) {
       editorials,
     });
   } catch (error: unknown) {
-    const errorMsg = error instanceof Error ? error.message : 'Failed to fetch editorials';
     console.error('[GET /api/editorials Error]:', error);
     return NextResponse.json(
-      { success: false, error: errorMsg },
+      { success: false, message: 'Unable to load editorials. Please refresh and try again.' },
       { status: 500 }
     );
   }
@@ -124,14 +123,14 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, message: 'Please sign in to publish an editorial.' }, { status: 401 });
     }
 
     const sessionUser = session.user as { id?: string };
     const userId = sessionUser.id;
 
     if (!userId) {
-      return NextResponse.json({ success: false, error: 'Invalid session' }, { status: 401 });
+      return NextResponse.json({ success: false, message: 'Please sign in to publish an editorial.' }, { status: 401 });
     }
 
     let student = await prisma.student.findUnique({
@@ -166,7 +165,7 @@ export async function POST(req: Request) {
 
     if (!title?.trim() || !content?.trim()) {
       return NextResponse.json(
-        { success: false, error: 'Title and content are required' },
+        { success: false, message: 'Please provide a title and explanation for your editorial.' },
         { status: 400 }
       );
     }
@@ -194,15 +193,36 @@ export async function POST(req: Request) {
       },
     });
 
+    // Award 50 points for publishing an editorial
+    const EDITORIAL_POINTS = 50;
+    await prisma.studentStats.upsert({
+      where: { studentId: student.id },
+      create: {
+        studentId: student.id,
+        totalScore: EDITORIAL_POINTS,
+        codeforcesRating: 0,
+        codechefRating: 0,
+        leetcodeRating: 0,
+        codeforcesSolved: 0,
+        codechefSolved: 0,
+        leetcodeSolved: 0,
+      },
+      update: {
+        totalScore: {
+          increment: EDITORIAL_POINTS,
+        },
+      },
+    });
+
     return NextResponse.json({
       success: true,
       editorial: newEditorial,
+      message: 'Editorial published successfully! You earned 50 points.',
     });
   } catch (error: unknown) {
-    const errorMsg = error instanceof Error ? error.message : 'Failed to create editorial';
     console.error('[POST /api/editorials Error]:', error);
     return NextResponse.json(
-      { success: false, error: errorMsg },
+      { success: false, message: 'Unable to publish your editorial. Please try again.' },
       { status: 500 }
     );
   }

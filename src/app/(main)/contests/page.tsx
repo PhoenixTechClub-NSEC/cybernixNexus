@@ -39,16 +39,20 @@ export default function ContestsPage() {
     try {
       setIsLoading(true);
       const res = await fetch('/api/contests');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.contests)) {
-          setContests(data.contests);
-          const regMap: Record<string, boolean> = {};
-          data.contests.forEach((c: ContestItem) => {
-            if (c.isRegisteredByMe) regMap[c.id] = true;
-          });
-          setRegisteredMap(regMap);
-        }
+      
+      if (!res.ok) {
+        console.error('Failed to fetch contests:', res.status);
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success && Array.isArray(data.contests)) {
+        setContests(data.contests);
+        const regMap: Record<string, boolean> = {};
+        data.contests.forEach((c: ContestItem) => {
+          if (c.isRegisteredByMe) regMap[c.id] = true;
+        });
+        setRegisteredMap(regMap);
       }
     } catch (err) {
       console.error('Failed to fetch contests:', err);
@@ -68,15 +72,24 @@ export default function ContestsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contestId }),
       });
+
+      if (!res.ok) {
+        setToastMessage('Unable to register. Please try again.');
+        return;
+      }
+
       const data = await res.json();
       if (data.success) {
         setRegisteredMap((prev) => ({ ...prev, [contestId]: true }));
         setToastMessage(`Enrolled successfully in ${title}!`);
         setTimeout(() => setToastMessage(null), 4000);
         fetchContestsList();
+      } else {
+        setToastMessage('Unable to register. Please try again.');
       }
     } catch (err) {
       console.error('Registration failed:', err);
+      setToastMessage('Connection lost. Please check your internet and try again.');
     }
   };
 
@@ -123,7 +136,7 @@ export default function ContestsPage() {
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tomato-jam text-white text-xs font-black uppercase tracking-wider">
-                <span>{flagshipContest.isInternal ? '🏆 NSEC Championship' : `🔥 ${flagshipContest.platform} Major`}</span>
+                <span>{flagshipContest.isInternal ? '🏆 NSEC Major Contest' : `🔥 ${flagshipContest.platform} Major`}</span>
                 <span>•</span>
                 <span>{flagshipContest.badge || '2.0x Multiplier'}</span>
               </div>
@@ -168,7 +181,7 @@ export default function ContestsPage() {
                       : 'bg-tomato-jam text-white hover:scale-105 shadow-tomato-jam/30'
                   }`}
                 >
-                  {registeredMap[flagshipContest.id] ? 'Enrolled in Championship ✓' : 'Register for Match'}
+                  {registeredMap[flagshipContest.id] ? 'Enrolled in Contest ✓' : 'Register for Contest'}
                 </button>
               )}
             </div>

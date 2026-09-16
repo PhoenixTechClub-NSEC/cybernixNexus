@@ -155,12 +155,8 @@ export default function RankingsPage() {
       {/* Top Banner & Title */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-golden-sand/20 text-tomato-jam border border-onyx/12 text-xs font-extrabold uppercase tracking-wider mb-1.5">
-            <Trophy className="w-3.5 h-3.5 text-tomato-jam" />
-            NSEC College Championship 2026
-          </div>
           <h1 className="text-2xl sm:text-3xl font-black text-onyx tracking-tight">
-            Rankings, Battles &amp; Contests
+            Rankings & Contests
           </h1>
           <p className="text-xs sm:text-sm text-onyx/70 mt-0.5 max-w-2xl">
             Live student leaderboards, seasonal department multipliers, and active contest schedule matching the clean white Bento card aesthetic.
@@ -192,10 +188,10 @@ export default function RankingsPage() {
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-tomato-jam">
-                🏆 Championship Podium &amp; Multipliers
+                🏆 Top Performers &amp; Department Multipliers
               </span>
               <h2 className="text-lg sm:text-xl font-black text-onyx mt-0.5">
-                Top 3 Student Podium
+                Top 3 Students
               </h2>
             </div>
           </div>
@@ -284,10 +280,10 @@ export default function RankingsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-pine-teal">
-                  🌐 College Global Standings (Top 30)
+                  🌐 College Global Standings
                 </span>
                 <h2 className="text-xl font-black text-onyx mt-0.5">
-                  Top 30 Ranked Students
+                  Ranked Students
                 </h2>
                 <p className="text-xs text-onyx/70 mt-0.5">
                   Showing top 30 registered programmers across all departments ordered by indexed total score.
@@ -438,7 +434,7 @@ export default function RankingsPage() {
           aria-modal="true"
           aria-labelledby="student-detail-title"
           onClick={() => setSelectedUser(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-xl p-4 sm:p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-xl p-3 sm:p-4 md:p-6 animate-in fade-in duration-200"
         >
           <div
             onClick={(event) => event.stopPropagation()}

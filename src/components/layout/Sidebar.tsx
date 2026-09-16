@@ -174,7 +174,7 @@ export function Sidebar() {
     <>
       <aside
         ref={sidebarRef}
-        className="w-72 shrink-0 hidden lg:flex flex-col justify-between bg-dark-amethyst text-white py-8 pr-0 pl-4 h-screen sticky top-0 z-30 relative"
+        className="w-72 shrink-0 hidden md:flex flex-col justify-between bg-dark-amethyst text-white py-8 pr-0 pl-4 h-screen sticky top-0 z-30"
       >
         {/* The Dynamic Sliding Bubble */}
         <div
@@ -217,7 +217,7 @@ export function Sidebar() {
                 Cybernix <span className="text-golden-sand">Nexus</span>
               </span>
               <span className="text-[9px] font-bold uppercase tracking-wider text-golden-sand/60 block mt-0.5">
-                NSEC PHOENIX CLUB . cybernix
+                NSEC PHOENIX CLUB | cybernix
               </span>
             </div>
           </Link>

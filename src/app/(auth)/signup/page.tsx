@@ -116,9 +116,36 @@ export default function SignupPage() {
     }
 
     if (!rollNumber.trim()) {
-      setError('Please enter your college roll number.');
+      setError('Please provide your roll number.');
       setIsLoading(false);
       return;
+    }
+
+    // Validate roll number format (basic check)
+    if (rollNumber.trim().length < 5) {
+      setError('Roll number seems too short. Please check and try again.');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate username if provided
+    if (username.trim()) {
+      if (username.trim().length < 3) {
+        setError('Username must be at least 3 characters long.');
+        setIsLoading(false);
+        return;
+      }
+      if (username.trim().length > 20) {
+        setError('Username must not exceed 20 characters.');
+        setIsLoading(false);
+        return;
+      }
+      // Check for valid username characters
+      if (!/^[a-zA-Z0-9_-]+$/.test(username.trim())) {
+        setError('Username can only contain letters, numbers, underscores, and hyphens.');
+        setIsLoading(false);
+        return;
+      }
     }
 
     // Require Codeforces handle to be verified before form submission
@@ -159,7 +186,9 @@ export default function SignupPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to save student profile');
+        setError(data.message || 'Unable to save your profile. Please check your information and try again.');
+        setIsLoading(false);
+        return;
       }
 
       // Update avatar if customized
@@ -173,7 +202,7 @@ export default function SignupPage() {
       // Navigate to dashboard
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'An error occurred while setting up your CP profile.');
+      setError('Connection lost. Please check your internet and try again.');
       setIsLoading(false);
     }
   };
@@ -182,7 +211,7 @@ export default function SignupPage() {
     try {
       await signIn('google', { callbackUrl: '/signup' });
     } catch {
-      setError('Failed to initiate Google sign in.');
+      setError('Unable to sign in. Please try again.');
     }
   };
 
@@ -370,12 +399,11 @@ export default function SignupPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label htmlFor="signup-rollNumber" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                    College Roll Number *
+                    College Roll Number
                   </label>
                   <input
                     id="signup-rollNumber"
                     type="text"
-                    required
                     value={rollNumber}
                     onChange={(e) => setRollNumber(e.target.value)}
                     placeholder="e.g. 10800121001"

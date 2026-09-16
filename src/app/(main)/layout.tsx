@@ -19,6 +19,7 @@ export default function MainLayout({
   const router = useRouter();
   const { user: CURRENT_USER } = useUser();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   // Redirect unauthenticated users immediately
@@ -40,6 +41,11 @@ export default function MainLayout({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const handleMarkAllAsRead = () => {
+    setToastMessage('All notifications marked as read');
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   if (status === 'unauthenticated') {
     return (
@@ -96,7 +102,10 @@ export default function MainLayout({
                       </div>
                     </div>
                     <div className="p-2 border-t border-onyx/5 text-center bg-gray-50/50">
-                      <button className="text-[11px] font-bold text-tomato-jam hover:underline cursor-pointer">
+                      <button 
+                        onClick={handleMarkAllAsRead}
+                        className="text-[11px] font-bold text-tomato-jam hover:underline cursor-pointer"
+                      >
                         Mark all as read
                       </button>
                     </div>
@@ -120,6 +129,14 @@ export default function MainLayout({
           <main className="flex-1 w-full">{children}</main>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-onyx text-white text-xs font-extrabold shadow-xl border border-tomato-jam/40 animate-in slide-in-from-bottom-3 duration-300">
+          <span className="text-lg">✨</span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 }

@@ -8,7 +8,7 @@ import NextTopLoader from 'nextjs-toploader';
 export const metadata: Metadata = {
   title: 'Cybernix Nexus',
   description:
-    'Multi-platform competitive programming rating synchronization, inter-department battles, level unlocking mascot tiers, and editorial hub for NSEC.',
+    'Multi-platform competitive programming rating synchronization, rankings, level unlocking mascot tiers, and editorial hub for NSEC.',
   icons: {
     icon: '/crop_one.png',
   },

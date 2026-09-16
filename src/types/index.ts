@@ -111,6 +111,7 @@ export interface EditorialComment {
 
 export interface Editorial {
   id: string;
+  authorId: string;
   title: string;
   problemUrl: string;
   platform: PlatformName;
