@@ -16,6 +16,7 @@ export function calculateTotalScore(stats: {
   codeforcesRating: number | null;
   codeforcesSolved: number;
   codechefRating: number | null;
+  codechefSolved?: number;
   streakDays?: number;
 }): number {
   const easy = stats.leetcodeEasySolved ?? Math.round(Math.max(0, stats.leetcodeSolved) * 0.4);
@@ -29,8 +30,10 @@ export function calculateTotalScore(stats: {
   // Codeforces: Solved * 35 (reflecting higher difficulty) * 1.75 Weight
   const cfSolvedPoints = Math.max(0, stats.codeforcesSolved) * 35 * 1.75;
 
-  // CodeChef Rating bonus contribution if available
-  const ccPoints = stats.codechefRating ? Math.max(0, stats.codechefRating - 1000) * 0.5 * 1.25 : 0;
+  // CodeChef: Solved * 20 * 1.25 Weight + Rating bonus
+  const ccSolvedPoints = Math.max(0, stats.codechefSolved ?? 0) * 20 * 1.25;
+  const ccRatingPoints = stats.codechefRating ? Math.max(0, stats.codechefRating - 500) * 0.5 * 1.25 : 0;
+  const ccPoints = ccSolvedPoints + ccRatingPoints;
 
   // Streak Multiplier bonus: +0.01x per active streak day up to 1.60x (60 days)
   const streak = Math.max(0, stats.streakDays ?? 0);
@@ -201,6 +204,7 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       codeforcesRating,
       codeforcesSolved,
       codechefRating,
+      codechefSolved,
     });
 
     await prisma.studentStats.upsert({
@@ -223,8 +227,6 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         codechefSolved,
         codechefStars,
         codechefGlobalRank,
-        codechefFailCount,
-        codechefLastError,
         totalScore,
       },
       update: {
@@ -244,8 +246,6 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         codechefSolved,
         codechefStars,
         codechefGlobalRank,
-        codechefFailCount,
-        codechefLastError,
         totalScore,
       },
     });

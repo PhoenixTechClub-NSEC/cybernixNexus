@@ -134,14 +134,25 @@ export function StatsGrid({ user }: StatsGridProps) {
                     {platform.weight}x Wp
                   </span>
                 </div>
-                <div className="mt-2 text-xs">
+                <div className="mt-2 text-xs flex items-center justify-between">
                   <p className="text-onyx/70">Platform: <span className="font-semibold text-onyx">{platform.platform}</span></p>
+                  {platform.badge && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/60 border border-current/15 shrink-0">
+                      {platform.badge}
+                    </span>
+                  )}
                 </div>
                 <div className="mt-2 pt-2 border-t border-current/10 flex items-center justify-between">
                   <div>
                     <p className="text-[10px] uppercase font-bold opacity-75">Rating</p>
-                    <p className="text-base font-black">{platform.rating}</p>
+                    <p className="text-base font-black">{platform.rating > 0 ? platform.rating : '-'}</p>
                   </div>
+                  {platform.solvedCount > 0 && (
+                    <div className="text-right">
+                      <p className="text-[10px] uppercase font-bold opacity-75">Solved</p>
+                      <p className="text-base font-black">{platform.solvedCount}</p>
+                    </div>
+                  )}
                 </div>
               </a>
             ))}

@@ -109,11 +109,14 @@ export default function RankingsPage() {
     setIsSyncing(true);
     try {
       // Trigger live sync
-      await fetch('/api/cron/sync', { method: 'POST' }).catch(() => {});
+      const res = await fetch('/api/cron/sync', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error('Sync failed');
+      }
       await loadData();
       setToastMessage('Leaderboard standings synchronized with Codeforces, LeetCode & CodeChef!');
     } catch {
-      setToastMessage('Standings refreshed!');
+      setToastMessage('Sync failed. Please try again later.');
     } finally {
       setIsSyncing(false);
       setTimeout(() => setToastMessage(null), 4000);
@@ -435,11 +438,11 @@ export default function RankingsPage() {
           aria-modal="true"
           aria-labelledby="student-detail-title"
           onClick={() => setSelectedUser(null)}
-          className="fixed inset-0 z-50 flex h-dvh items-center justify-center overflow-hidden overscroll-none bg-black/80 backdrop-blur-xl p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-xl p-4 sm:p-6"
         >
           <div
             onClick={(event) => event.stopPropagation()}
-            className="w-full max-w-lg rounded-3xl bg-white border border-onyx/12 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            className="w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-3xl bg-white border border-onyx/12 shadow-2xl custom-scrollbar animate-in fade-in zoom-in-95 duration-200"
           >
             {/* Header */}
             <div className="bg-onyx p-6 text-white relative border-b border-tomato-jam/40">

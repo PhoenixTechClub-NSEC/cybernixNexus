@@ -50,15 +50,11 @@ export async function GET(req: Request) {
     });
 
     if (snapshots.length === 0 && (student.leetcode || student.codeforces)) {
-      try {
-        await syncStudentStats(student.id);
-        snapshots = await prisma.dailySnapshot.findMany({
-          where: { studentId: student.id },
-          orderBy: { date: 'asc' },
-        });
-      } catch (syncErr) {
+      // Trigger async sync without blocking the response
+      syncStudentStats(student.id).catch((syncErr) => {
         console.warn('[Activity Route] Auto-sync on empty snapshots warning:', syncErr);
-      }
+      });
+      // We will just return 0-filled data for now, letting the UI load instantly.
     }
 
     const totalSolved = (student.stats?.leetcodeSolved || 0) + (student.stats?.codeforcesSolved || 0);

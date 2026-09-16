@@ -390,7 +390,7 @@ export default function DashboardPage() {
       case 'LeetCode':
         return { color: '#f59e0b', url: 'https://leetcode.com', badge: 'Knight' };
       case 'CodeChef':
-        return { color: '#10b981', url: 'https://codechef.com', badge: '4★ Div 2' };
+        return { color: '#10b981', url: 'https://www.codechef.com', badge: 'Rated' };
       case 'GFG':
       case 'GeeksForGeeks':
         return { color: '#3b82f6', url: 'https://geeksforgeeks.org', badge: '5 Star' };
@@ -419,9 +419,10 @@ export default function DashboardPage() {
       solvedCount: p.solvedCount || 0,
       weight: p.weight || 1.0,
       badge,
-      percentage: p.percentage ?? (p.rating && p.rating > 0 ? Math.min(100, Math.round((p.rating / 2400) * 100)) : 0),
+      globalRank: p.globalRank || null,
+      percentage: p.percentage ?? (p.rating && p.rating > 0 ? Math.min(100, Math.round((p.rating / 2400) * 100)) : (p.solvedCount > 0 ? Math.min(100, Math.round((p.solvedCount / 50) * 100)) : 0)),
       color: p.color || meta.color,
-      url: p.profileUrl || p.url || (p.handle ? `${meta.url}/profile/${p.handle}` : meta.url),
+      url: p.profileUrl || p.url || (p.handle ? (platName === 'CodeChef' ? `https://www.codechef.com/users/${p.handle}` : `${meta.url}/profile/${p.handle}`) : meta.url),
       milestone: cfContribution != null
         ? `Contribution: ${cfContribution > 0 ? '+' : ''}${cfContribution} • Max rank: ${cfMaxRank || 'N/A'}`
         : (p.milestone || `Verified ${p.handle || 'user'} profile`),
@@ -1152,6 +1153,7 @@ export default function DashboardPage() {
               {(() => {
                 const ccPlat = CURRENT_USER.platforms?.find((p: any) => p.platform === 'CodeChef');
                 const ccRating = ccPlat?.rating || 0;
+                const ccRank = (ccPlat as any)?.globalRank;
                 return (
                   <div className="p-3.5 rounded-2xl bg-gradient-to-r from-golden-sand/10 to-transparent border border-pine-teal/15 hover:border-pine-teal/30 hover:shadow-sm hover:-translate-y-0.5 transition-all group relative overflow-hidden flex items-center justify-between">
                     <div className="absolute -right-2 -top-2 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
@@ -1163,9 +1165,13 @@ export default function DashboardPage() {
                       </div>
                       <div className="min-w-0">
                         <h5 className="font-extrabold text-onyx text-xs sm:text-sm truncate">CodeChef</h5>
-                        {ccRating > 0 && (
+                        {ccRating > 0 ? (
                           <p className="text-[10px] font-semibold text-pine-teal mt-0.5 truncate">
-                            Max Rating: <span className="text-onyx">{ccRating}</span>
+                            {ccRank ? `Global: #${Number(ccRank).toLocaleString()}` : `Rating: ${ccRating}`}
+                          </p>
+                        ) : (
+                          <p className="text-[10px] font-semibold text-pine-teal mt-0.5 truncate">
+                            Contest Rating
                           </p>
                         )}
                       </div>
@@ -1174,10 +1180,16 @@ export default function DashboardPage() {
                       <div className="text-xl sm:text-2xl font-black text-onyx group-hover:text-tomato-jam transition-colors leading-none">
                         {ccRating > 0 ? ccRating : '-'}
                       </div>
-                      {ccRating > 0 && (
-                        <div className="text-[9px] font-bold px-1.5 py-0.5 mt-1.5 rounded-md bg-tomato-jam/10 text-tomato-jam border border-tomato-jam/20 inline-block">
-                          Rating
+                      {ccPlat?.badge ? (
+                        <div className="text-[9px] font-bold px-1.5 py-0.5 mt-1.5 rounded-md bg-tomato-jam/10 text-tomato-jam border border-tomato-jam/20 inline-block uppercase max-w-[90px] truncate">
+                          {ccPlat.badge}
                         </div>
+                      ) : (
+                        ccRating > 0 && (
+                          <div className="text-[9px] font-bold px-1.5 py-0.5 mt-1.5 rounded-md bg-tomato-jam/10 text-tomato-jam border border-tomato-jam/20 inline-block">
+                            Rating
+                          </div>
+                        )
                       )}
                     </div>
                   </div>

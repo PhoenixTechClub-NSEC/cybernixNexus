@@ -37,6 +37,22 @@ interface UserContextType {
   logout: () => Promise<void>;
 }
 
+function getCodechefBadge(rating: number, stars?: string | null): string {
+  if (!rating || rating === 0) return 'Unrated';
+  let starStr = '1★';
+  let div = 'Div 4';
+  if (rating >= 2500) { starStr = '7★'; div = 'Div 1'; }
+  else if (rating >= 2200) { starStr = '6★'; div = 'Div 1'; }
+  else if (rating >= 2000) { starStr = '5★'; div = 'Div 1'; }
+  else if (rating >= 1800) { starStr = '4★'; div = 'Div 2'; }
+  else if (rating >= 1600) { starStr = '3★'; div = 'Div 2'; }
+  else if (rating >= 1400) { starStr = '2★'; div = 'Div 3'; }
+  else { starStr = '1★'; div = 'Div 4'; }
+
+  const starDisplay = stars ? (stars.includes('★') ? stars : `${stars}★`) : starStr;
+  return `${starDisplay} • ${div}`;
+}
+
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -48,7 +64,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const fetchStudentProfile = async () => {
     try {
       setIsLoadingProfile(true);
-      const res = await fetch('/api/student');
+      const res = await fetch('/api/student', { cache: 'no-store' });
       if (!res.ok) return;
       const data = await res.json();
       if (data.student) {
@@ -81,7 +97,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
         const gradYear = s.graduationYear || 2026;
         const currentYear = new Date().getFullYear();
-        const calculatedYear = Math.max(1, Math.min(4, 4 - (gradYear - currentYear)));
+        const calculatedYear = Math.max(1, Math.min(4, 5 - (gradYear - currentYear)));
         const yearString = `${calculatedYear === 1 ? '1st' : calculatedYear === 2 ? '2nd' : calculatedYear === 3 ? '3rd' : '4th'} Year`;
 
         const lcEasy = s.stats?.leetcodeEasySolved ?? Math.round(lcSolved * 0.4);
@@ -127,7 +143,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
             total: totalSolved,
           },
           platforms: [
-            { platform: 'LeetCode' as const, handle: s.leetcode || '', rating: s.stats?.leetcodeRating || 0, solvedCount: lcSolved, weight: 1.5 },
+            {
+              platform: 'LeetCode' as const,
+              handle: s.leetcode || '',
+              rating: s.stats?.leetcodeRating || 0,
+              solvedCount: lcSolved,
+              weight: 1.5,
+              profileUrl: s.leetcode ? `https://leetcode.com/u/${s.leetcode}` : undefined,
+            },
             {
               platform: 'Codeforces' as const,
               handle: s.codeforces || '',
@@ -140,8 +163,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
               ...(s.stats?.codeforcesAvatar ? { cfAvatar: s.stats.codeforcesAvatar } : {}),
               ...(s.stats?.codeforcesContribution != null ? { cfContribution: s.stats.codeforcesContribution } : {}),
             },
-
-            { platform: 'CodeChef' as const, handle: s.codechef || '', rating: s.stats?.codechefRating || 0, solvedCount: ccSolved, weight: 1.25 },
+            { 
+              platform: 'CodeChef' as const, 
+              handle: s.codechef || '', 
+              rating: s.stats?.codechefRating || 0, 
+              solvedCount: ccSolved, 
+              weight: 1.25,
+              profileUrl: s.codechef ? `https://www.codechef.com/users/${s.codechef}` : undefined,
+              globalRank: (s.stats as any)?.codechefGlobalRank || null,
+              badge: getCodechefBadge(s.stats?.codechefRating || 0, (s.stats as any)?.codechefStars),
+            },
           ],
           badges: s.badges || [],
           dsaTopics,
@@ -152,6 +183,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
         try {
           localStorage.setItem('cybernix_user_cache', JSON.stringify(newUserProfile));
         } catch (e) {}
+
+        if (s.profileComplete === false && window.location.pathname !== '/signup') {
+          window.location.href = '/signup';
+        }
       } else if (data.user?.image || data.user?.name || data.user?.email) {
         setUser((prev) => {
           const updated = {
@@ -163,8 +198,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
           try {
             localStorage.setItem('cybernix_user_cache', JSON.stringify(updated));
           } catch (e) {}
+          
+          if (window.location.pathname !== '/signup') {
+            window.location.href = '/signup';
+          }
+          
           return updated;
         });
+      } else {
+        if (window.location.pathname !== '/signup' && window.location.pathname !== '/login') {
+          window.location.href = '/signup';
+        }
       }
     } catch (err) {
       console.error('Failed to fetch student profile', err);
@@ -206,7 +250,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
     await signOut({ callbackUrl: '/login', redirect: true });
   };
 
-  if (!isHydrated || status === 'loading') {
+  const isAuthPage = typeof window !== 'undefined' && (window.location.pathname === '/signup' || window.location.pathname === '/login');
+
+  if (!isHydrated || status === 'loading' || (isLoadingProfile && user.id === '')) {
+    return <CapybaraLoader />;
+  }
+
+  // Strictly block rendering of the app (dashboard, etc.) if authenticated but profile is missing/incomplete.
+  if (status === 'authenticated' && user.id === '' && !isAuthPage) {
     return <CapybaraLoader />;
   }
 

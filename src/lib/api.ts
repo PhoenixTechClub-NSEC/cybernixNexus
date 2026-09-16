@@ -30,16 +30,25 @@ export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]>
         return data.students.map((s: any) => {
           const gradYear = s.graduationYear || 2026;
           const currentYear = new Date().getFullYear();
-          const calculatedYear = Math.max(1, Math.min(4, 4 - (gradYear - currentYear)));
+          const calculatedYear = Math.max(1, Math.min(4, 5 - (gradYear - currentYear)));
           const yearString = `${calculatedYear === 1 ? '1st' : calculatedYear === 2 ? '2nd' : calculatedYear === 3 ? '3rd' : '4th'} Year`;
           const totalScore = s.stats?.totalScore ?? 0;
           const lcSolved = s.stats?.leetcodeSolved ?? 0;
           const cfSolved = s.stats?.codeforcesSolved ?? 0;
-          const totalSolved = lcSolved + cfSolved;
+          const ccSolved = s.stats?.codechefSolved ?? 0;
+          const totalSolved = lcSolved + cfSolved + ccSolved;
           const lcEasy = s.stats?.leetcodeEasySolved ?? Math.round(lcSolved * 0.4);
           const lcMedium = s.stats?.leetcodeMediumSolved ?? Math.round(lcSolved * 0.5);
           const lcHard = s.stats?.leetcodeHardSolved ?? Math.round(lcSolved * 0.1);
           const nextTierScore = totalScore < 2000 ? 2000 : totalScore < 10000 ? 10000 : totalScore < 30000 ? 30000 : 55500;
+
+          const ccRating = s.stats?.codechefRating || 0;
+          const ccStars = s.stats?.codechefStars;
+          let ccBadge = 'Active';
+          if (ccRating >= 2000) ccBadge = `${ccStars || '5★'} Div 1`;
+          else if (ccRating >= 1600) ccBadge = `${ccStars || '3★'} Div 2`;
+          else if (ccRating >= 1400) ccBadge = `${ccStars || '2★'} Div 3`;
+          else if (ccRating > 0) ccBadge = `${ccStars || '1★'} Div 4`;
 
           return {
             id: s.id,
@@ -72,6 +81,7 @@ export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]>
                 rating: s.stats?.codeforcesRating || 0,
                 solvedCount: s.stats?.codeforcesSolved || 0,
                 weight: 1.75,
+                profileUrl: s.handles?.codeforces ? `https://codeforces.com/profile/${s.handles.codeforces}` : undefined,
               },
               {
                 platform: 'LeetCode',
@@ -79,13 +89,17 @@ export async function getLeaderboard(limit: number = 30): Promise<UserProfile[]>
                 rating: s.stats?.leetcodeRating || 0,
                 solvedCount: s.stats?.leetcodeSolved || 0,
                 weight: 1.5,
+                profileUrl: s.handles?.leetcode ? `https://leetcode.com/u/${s.handles.leetcode}` : undefined,
               },
               {
                 platform: 'CodeChef',
                 handle: s.handles?.codechef || 'N/A',
-                rating: s.stats?.codechefRating || 0,
-                solvedCount: 0,
+                rating: ccRating,
+                solvedCount: ccSolved,
                 weight: 1.25,
+                badge: ccBadge,
+                globalRank: s.stats?.codechefGlobalRank || null,
+                profileUrl: s.handles?.codechef ? `https://www.codechef.com/users/${s.handles.codechef}` : undefined,
               },
             ],
             badges: [],

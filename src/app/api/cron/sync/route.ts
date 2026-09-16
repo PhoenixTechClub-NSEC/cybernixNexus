@@ -57,3 +57,42 @@ export async function GET(req: Request) {
     );
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    const studentsWithHandles = await prisma.student.findMany({
+      where: {
+        OR: [
+          { leetcode: { not: null } },
+          { codeforces: { not: null } },
+          { codechef: { not: null } },
+        ],
+      },
+      select: { id: true, name: true },
+      take: 15,
+    });
+
+    const results = [];
+    for (const student of studentsWithHandles) {
+      try {
+        const stats = await syncStudentStats(student.id);
+        results.push({ studentId: student.id, name: student.name, success: true, score: stats.totalScore });
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : 'Sync error';
+        results.push({ studentId: student.id, name: student.name, success: false, error: errorMsg });
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      syncedCount: results.filter((r) => r.success).length,
+      details: results,
+    });
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Sync failed';
+    console.error('[POST /api/cron/sync Error]:', error);
+    return NextResponse.json({ success: false, error: errorMsg }, { status: 500 });
+  }
+}
+

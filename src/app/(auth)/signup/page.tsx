@@ -48,6 +48,7 @@ export default function SignupPage() {
   const [codechef, setCodechef] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [error, setError] = useState('');
 
   // Codeforces verification
@@ -63,6 +64,7 @@ export default function SignupPage() {
       if (u.email && !email) setEmail(u.email);
       if (u.image && !avatarUrl) setAvatarUrl(u.image);
 
+      setIsCheckingProfile(true);
       // Check if student profile is already registered in DB
       fetch('/api/student')
         .then((res) => res.json())
@@ -83,8 +85,13 @@ export default function SignupPage() {
             if (data.student.username) setUsername(data.student.username);
             if (data.student.bio) setBio(data.student.bio);
           }
+          setIsCheckingProfile(false);
         })
-        .catch(() => {});
+        .catch(() => {
+          setIsCheckingProfile(false);
+        });
+    } else if (status === 'unauthenticated') {
+      setIsCheckingProfile(false);
     }
   }, [status, session, router, name, email, avatarUrl]);
 
@@ -271,14 +278,21 @@ export default function SignupPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
         <div className="bg-white py-8 px-6 shadow-sm rounded-3xl border border-onyx/12 sm:px-10">
-          {error && (
-            <div className="mb-6 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in zoom-in-95 duration-150">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-              <span>{error}</span>
+          {isCheckingProfile ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <Loader2 className="w-10 h-10 animate-spin text-tomato-jam" />
+              <p className="text-sm font-semibold text-onyx/60">Checking profile status...</p>
             </div>
-          )}
+          ) : (
+            <>
+              {error && (
+                <div className="mb-6 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in zoom-in-95 duration-150">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                  <span>{error}</span>
+                </div>
+              )}
 
-          <form className="space-y-6" onSubmit={handleCompleteProfile}>
+              <form className="space-y-6" onSubmit={handleCompleteProfile}>
             {/* 1. Identity & PFP */}
             <div>
               <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
@@ -378,12 +392,22 @@ export default function SignupPage() {
                     onChange={(e) => setDepartment(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam"
                   >
-                    <option value="CSE">CSE (Computer Science)</option>
-                    <option value="IT">IT (Information Technology)</option>
-                    <option value="ECE">ECE (Electronics &amp; Comm.)</option>
-                    <option value="AI&DS">AI &amp; DS (AI &amp; Data Science)</option>
-                    <option value="EE">EE (Electrical Eng.)</option>
-                    <option value="ME">ME (Mechanical Eng.)</option>
+                    <option value="AEIE">Applied Electronics & Instrumentation Engineering</option>
+                    <option value="CE">Civil Engineering</option>
+                    <option value="CSBS">Computer Science & Business Systems (CSBS)</option>
+                    <option value="CSE">Computer Science & Engineering</option>
+                    <option value="CSE-AIML">Computer Science and Engineering (AIML)</option>
+                    <option value="CSE-CyberSecurity">Computer Science and Engineering (Cyber Security)</option>
+                    <option value="CSE-DataScience">Computer Science and Engineering (Data Science)</option>
+                    <option value="CSE-IoT">Computer Science and Engineering (IoT)</option>
+                    <option value="ECE">Electronics & Communication Engineering</option>
+                    <option value="EE">Electrical Engineering</option>
+                    <option value="IT">Information Technology</option>
+                    <option value="ME">Mechanical Engineering</option>
+                    <option value="BTech-ECE">B.Tech in Electrical & Computer Engineering</option>
+                    <option value="CSIT">Computer Science and Information Technology</option>
+                    <option value="MCA-BCA">Computer Application (MCA & BCA)</option>
+                    <option value="BCA">Bachelor of Computer Application (BCA)</option>
                   </select>
                 </div>
                 <div>
@@ -593,6 +617,8 @@ export default function SignupPage() {
             <Sparkles className="w-3.5 h-3.5 text-tomato-jam" />
             <span>You can update handles anytime in your Profile Settings</span>
           </div>
+            </>
+          )}
         </div>
       </div>
 

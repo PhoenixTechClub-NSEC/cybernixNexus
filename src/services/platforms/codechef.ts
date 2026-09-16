@@ -32,22 +32,28 @@ function parseCodechefHtml(html: string): CodechefParsingResult {
     '[data-testid="rating-number"]',
     '.cc_hth_rating',
     'span[class*="rating"]',
+    '.rating',
   ];
 
   for (const selector of ratingSelectors) {
-    const ratingText = $(selector).first().text().trim();
-    if (ratingText && /^\d+$/.test(ratingText)) {
-      const parsed = parseInt(ratingText, 10);
-      if (!isNaN(parsed) && parsed > 0) {
-        rating = parsed;
-        break;
+    const elems = $(selector);
+    for (let i = 0; i < elems.length; i++) {
+      const ratingText = $(elems[i]).text().trim();
+      const match = ratingText.match(/^(\d{3,4})/);
+      if (match && match[1]) {
+        const parsed = parseInt(match[1], 10);
+        if (!isNaN(parsed) && parsed >= 200) {
+          rating = parsed;
+          break;
+        }
       }
     }
+    if (rating !== null) break;
   }
 
   // If rating still not found, try extracting from page content
   if (!rating) {
-    const ratingMatch = html.match(/(?:rating[:\s"']*)?(\d{3,4})(?:\s|<|$)/i);
+    const ratingMatch = html.match(/(?:rating[:\s"']*)?(\d{3,4})\??(?:\s|<|$)/i);
     if (ratingMatch && ratingMatch[1]) {
       const parsed = parseInt(ratingMatch[1], 10);
       if (parsed >= 300 && parsed <= 9999) {

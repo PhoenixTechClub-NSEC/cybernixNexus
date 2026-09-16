@@ -24,6 +24,12 @@ export interface PlatformStat {
   solvedCount: number;
   weight: number;
   profileUrl?: string;
+  badge?: string;
+  globalRank?: string | number | null;
+  cfRank?: string;
+  cfMaxRank?: string;
+  cfAvatar?: string | null;
+  cfContribution?: number | null;
 }
 
 export interface DSATopicStat {

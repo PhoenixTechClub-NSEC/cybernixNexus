@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { syncStudentStats } from '@/services/platforms';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -87,6 +89,17 @@ export async function GET() {
       }
 
       return NextResponse.json({ student: null, user: dbUser }, { status: 200 });
+    }
+
+    // Auto-sync in background if student has platform handles configured but no stats or stale stats
+    const shouldAutoSync = Boolean(
+      (student.codechef && student.stats?.codechefRating == null && (student.stats?.codechefFailCount || 0) < 2) ||
+      (student.leetcode && student.stats?.leetcodeSolved === 0 && !student.stats?.leetcodeRating)
+    );
+    if (shouldAutoSync) {
+      syncStudentStats(student.id).catch((err) => {
+        console.warn(`[Auto-sync background] Student ${student.id} sync warning:`, err);
+      });
     }
 
     // Dynamically evaluate badges based on verified achievements
@@ -347,19 +360,16 @@ export async function POST(request: Request) {
       },
     });
 
-    // Automatically trigger stats sync asynchronously after profile save
-    let syncResults = null;
-    try {
-      syncResults = await syncStudentStats(student.id);
-    } catch (syncError: unknown) {
+    // Automatically trigger stats sync asynchronously after profile save without blocking the response
+    syncStudentStats(student.id).catch((syncError: unknown) => {
       const errorMsg = syncError instanceof Error ? syncError.message : 'Scraping warning';
       console.warn(`[Student Save] Platform sync warning for student ${student.id}:`, errorMsg);
-    }
+    });
 
     return NextResponse.json({
       message: 'Student profile saved successfully',
       student,
-      stats: syncResults,
+      stats: null,
     });
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : 'Internal server error';

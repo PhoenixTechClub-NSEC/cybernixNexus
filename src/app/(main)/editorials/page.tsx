@@ -550,11 +550,11 @@ export default function EditorialsPage() {
           aria-modal="true"
           aria-labelledby="editorial-view-title"
           onClick={() => setSelectedEditorial(null)}
-          className="fixed inset-0 z-50 flex h-dvh items-center justify-center overflow-hidden overscroll-none bg-black/80 backdrop-blur-xl p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-xl p-3 sm:p-4 md:p-6"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-3xl bg-white border border-onyx/12 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            className="w-full max-w-3xl max-h-[90dvh] flex flex-col rounded-3xl bg-white border border-onyx/12 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
           >
             {/* Modal Header */}
             <div className="bg-onyx p-6 text-white relative shrink-0 border-b border-tomato-jam/40">
@@ -726,11 +726,11 @@ export default function EditorialsPage() {
           aria-modal="true"
           aria-labelledby="publish-editorial-title"
           onClick={() => !isSubmitting && setIsPublishModalOpen(false)}
-          className="fixed inset-0 z-50 flex h-dvh items-center justify-center overflow-hidden overscroll-none p-3 sm:p-4 md:p-6 bg-onyx/85 backdrop-blur-xl animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-4 md:p-6 bg-onyx/85 backdrop-blur-xl animate-in fade-in duration-200"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-3xl h-full max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] flex flex-col rounded-3xl bg-white border border-onyx/12 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            className="w-full max-w-3xl h-full max-h-[90dvh] flex flex-col rounded-3xl bg-white border border-onyx/12 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
             data-lenis-prevent="true"
           >
             {/* 1. FIXED MODAL HEADER */}

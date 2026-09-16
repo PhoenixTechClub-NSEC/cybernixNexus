@@ -82,24 +82,10 @@ export async function POST(request: Request) {
     const validGradYear = isNaN(parsedGradYear) ? 2026 : parsedGradYear;
 
     if (!student) {
-      const fallbackRoll = rollNumber?.trim() || `NSEC-${effectiveUserId.slice(-8).toUpperCase()}`;
-      student = await prisma.student.create({
-        data: {
-          userId: effectiveUserId,
-          name: name?.trim() || dbUser.name || 'Student',
-          rollNumber: fallbackRoll,
-          department: department?.trim() || 'CSE',
-          graduationYear: validGradYear,
-          leetcode: typeof leetcode === 'string' && leetcode.trim() ? leetcode.trim() : null,
-          codeforces: typeof codeforces === 'string' && codeforces.trim() ? codeforces.trim() : null,
-          codechef: typeof codechef === 'string' && codechef.trim() ? codechef.trim() : null,
-          github: typeof github === 'string' && github.trim() ? github.trim() : null,
-          linkedin: typeof linkedin === 'string' && linkedin.trim() ? linkedin.trim() : null,
-          username: typeof username === 'string' && username.trim() ? username.trim() : null,
-          bio: typeof bio === 'string' && bio.trim() ? bio.trim() : null,
-          profileComplete: true,
-        },
-      });
+      return NextResponse.json(
+        { error: 'Student profile not complete. Please complete registration first.' },
+        { status: 400 }
+      );
     }
 
     // Check duplicate roll number if user is attempting to change it

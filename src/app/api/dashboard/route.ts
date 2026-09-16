@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -60,6 +62,9 @@ export async function GET(request: Request) {
           codeforcesMaxRating: student.stats?.codeforcesMaxRating ?? null,
           codeforcesSolved: student.stats?.codeforcesSolved ?? 0,
           codechefRating: student.stats?.codechefRating ?? null,
+          codechefSolved: student.stats?.codechefSolved ?? 0,
+          codechefStars: student.stats?.codechefStars ?? null,
+          codechefGlobalRank: student.stats?.codechefGlobalRank ?? null,
           totalScore: student.stats?.totalScore ?? 0,
           ranking: student.stats?.ranking ?? rank,
           departmentRanking: student.stats?.departmentRanking ?? null,
@@ -70,6 +75,23 @@ export async function GET(request: Request) {
         createdAt: student.createdAt,
         updatedAt: student.updatedAt,
       };
+    });
+
+    // Fetch all minimal stats to calculate accurate global & department metrics
+    const allStudentStats = await prisma.student.findMany({
+      select: {
+        department: true,
+        name: true,
+        user: { select: { image: true } },
+        stats: {
+          select: {
+            totalScore: true,
+            leetcodeSolved: true,
+            codeforcesSolved: true,
+            codechefSolved: true,
+          }
+        }
+      }
     });
 
     // Extract current authenticated user stats if logged in
@@ -110,6 +132,9 @@ export async function GET(request: Request) {
             codeforcesMaxRating: dbUser.stats?.codeforcesMaxRating ?? null,
             codeforcesSolved: dbUser.stats?.codeforcesSolved ?? 0,
             codechefRating: dbUser.stats?.codechefRating ?? null,
+            codechefSolved: dbUser.stats?.codechefSolved ?? 0,
+            codechefStars: dbUser.stats?.codechefStars ?? null,
+            codechefGlobalRank: dbUser.stats?.codechefGlobalRank ?? null,
             totalScore: dbUser.stats?.totalScore ?? 0,
             ranking: dbUser.stats?.ranking ?? 1,
             departmentRanking: dbUser.stats?.departmentRanking ?? null,
@@ -123,15 +148,15 @@ export async function GET(request: Request) {
       }
     }
 
-    // Compute platform & department summary metrics
-    const totalStudents = students.length;
-    const totalProblemsSolved = students.reduce(
-      (acc, s) => acc + s.stats.leetcodeSolved + (s.stats.codeforcesSolved || 0),
+    // Compute platform & department summary metrics based on ALL students, not just top 30
+    const totalStudents = allStudentStats.length;
+    const totalProblemsSolved = allStudentStats.reduce(
+      (acc, s) => acc + (s.stats?.leetcodeSolved || 0) + (s.stats?.codeforcesSolved || 0) + (s.stats?.codechefSolved || 0),
       0
     );
     const averageTotalScore = totalStudents
       ? Math.round(
-          students.reduce((acc, s) => acc + s.stats.totalScore, 0) /
+          allStudentStats.reduce((acc, s) => acc + (s.stats?.totalScore || 0), 0) /
             totalStudents
         )
       : 0;
@@ -142,25 +167,27 @@ export async function GET(request: Request) {
       { count: number; totalScore: number; totalSolved: number; topCoderName: string; topCoderScore: number; topCoderAvatar: string | null }
     > = {};
 
-    students.forEach((student) => {
+    allStudentStats.forEach((student) => {
       const dept = student.department || 'Unknown';
+      const studentTotalScore = student.stats?.totalScore || 0;
+      
       if (!deptMap[dept]) {
         deptMap[dept] = {
           count: 0,
           totalScore: 0,
           totalSolved: 0,
           topCoderName: student.name || 'NSEC Student',
-          topCoderScore: student.stats.totalScore,
-          topCoderAvatar: student.image,
+          topCoderScore: studentTotalScore,
+          topCoderAvatar: student.user?.image || null,
         };
-      } else if (student.stats.totalScore > deptMap[dept].topCoderScore) {
+      } else if (studentTotalScore > deptMap[dept].topCoderScore) {
         deptMap[dept].topCoderName = student.name || 'NSEC Student';
-        deptMap[dept].topCoderScore = student.stats.totalScore;
-        deptMap[dept].topCoderAvatar = student.image;
+        deptMap[dept].topCoderScore = studentTotalScore;
+        deptMap[dept].topCoderAvatar = student.user?.image || null;
       }
       deptMap[dept].count += 1;
-      deptMap[dept].totalScore += student.stats.totalScore;
-      deptMap[dept].totalSolved += student.stats.leetcodeSolved + (student.stats.codeforcesSolved || 0);
+      deptMap[dept].totalScore += studentTotalScore;
+      deptMap[dept].totalSolved += (student.stats?.leetcodeSolved || 0) + (student.stats?.codeforcesSolved || 0) + (student.stats?.codechefSolved || 0);
     });
 
     const totalRegisteredStudents = await prisma.student.count();
@@ -183,10 +210,10 @@ export async function GET(request: Request) {
       }));
 
     const tierDistribution = {
-      Phoenix: students.filter((s) => s.stats.totalScore > 30000).length,
-      Flame: students.filter((s) => s.stats.totalScore > 10000 && s.stats.totalScore <= 30000).length,
-      Ember: students.filter((s) => s.stats.totalScore > 2000 && s.stats.totalScore <= 10000).length,
-      Spark: students.filter((s) => s.stats.totalScore <= 2000).length,
+      Phoenix: allStudentStats.filter((s) => (s.stats?.totalScore || 0) > 30000).length,
+      Flame: allStudentStats.filter((s) => (s.stats?.totalScore || 0) > 10000 && (s.stats?.totalScore || 0) <= 30000).length,
+      Ember: allStudentStats.filter((s) => (s.stats?.totalScore || 0) > 2000 && (s.stats?.totalScore || 0) <= 10000).length,
+      Spark: allStudentStats.filter((s) => (s.stats?.totalScore || 0) <= 2000).length,
     };
 
     const topDepartment = departmentStats[0] || {

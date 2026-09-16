@@ -55,11 +55,17 @@ export default function CodeforcesVerificationModal({
       return;
     }
 
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow || 'unset';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   const handleCopyCode = async () => {
@@ -160,11 +166,11 @@ export default function CodeforcesVerificationModal({
       role="dialog"
       aria-modal="true"
       onClick={onClose}
-      className="fixed inset-0 z-50 flex h-dvh items-center justify-center overflow-hidden overscroll-none bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-md p-4 sm:p-6 animate-in fade-in duration-200"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg rounded-[2.5rem] bg-white border border-onyx/10 shadow-2xl p-6 sm:p-8 relative overflow-hidden"
+        className="w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-[2.5rem] bg-white border border-onyx/10 shadow-2xl p-6 sm:p-8 relative custom-scrollbar"
       >
         {/* Close Button */}
         <button

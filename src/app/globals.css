@@ -44,6 +44,7 @@
     color: #2C1F14;
     font-family: 'Google Sans', sans-serif;
     overflow-x: hidden;
+    scrollbar-gutter: stable;
     margin: 0;
     padding: 0;
   }

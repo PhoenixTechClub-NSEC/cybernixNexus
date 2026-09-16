@@ -261,27 +261,29 @@ export function Sidebar() {
 
 
           {/* TEAMS SECTION */}
-          <div className="sidebar-section pt-4 border-t border-white/10 pr-5">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-golden-sand/60 px-4 block mb-3">
-              Teams &amp; League
-            </span>
-            <div className="space-y-1">
-              <Link
-                href="/rankings"
-                onMouseEnter={handleDeptEnter}
-                onMouseLeave={handleDeptLeave}
-                className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-white bg-tomato-jam/20 border border-tomato-jam/30 cursor-pointer transition-colors hover:bg-tomato-jam/30"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-tomato-jam"></span>
-                  <span>{CURRENT_USER.department || 'CSE'} Dept</span>
-                </div>
-                <span className="dept-badge text-xs font-black text-golden-sand bg-onyx px-2 py-0.5 rounded-md border border-golden-sand/30 will-change-transform">
-                  #{CURRENT_USER.deptRank || 1}
-                </span>
-              </Link>
+          {CURRENT_USER.department && (
+            <div className="sidebar-section pt-4 border-t border-white/10 pr-5">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-golden-sand/60 px-4 block mb-3">
+                Teams &amp; League
+              </span>
+              <div className="space-y-1">
+                <Link
+                  href="/rankings"
+                  onMouseEnter={handleDeptEnter}
+                  onMouseLeave={handleDeptLeave}
+                  className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-white bg-tomato-jam/20 border border-tomato-jam/30 cursor-pointer transition-colors hover:bg-tomato-jam/30"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-tomato-jam"></span>
+                    <span>{CURRENT_USER.department} Dept</span>
+                  </div>
+                  <span className="dept-badge text-xs font-black text-golden-sand bg-onyx px-2 py-0.5 rounded-md border border-golden-sand/30 will-change-transform">
+                    #{CURRENT_USER.deptRank || 1}
+                  </span>
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Settings & Sign Out Bottom Items */}

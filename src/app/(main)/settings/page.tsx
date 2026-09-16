@@ -447,12 +447,22 @@ export default function SettingsPage() {
                 onChange={(e) => setDepartment(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm font-medium text-onyx focus:outline-none focus:ring-2 focus:ring-tomato-jam/50 transition-shadow"
               >
-                <option value="CSE">CSE (Computer Science)</option>
-                <option value="IT">IT (Information Technology)</option>
-                <option value="ECE">ECE (Electronics & Communication)</option>
-                <option value="AI&DS">AI & DS (Artificial Intelligence)</option>
-                <option value="EE">EE (Electrical Engineering)</option>
-                <option value="ME">ME (Mechanical Engineering)</option>
+                <option value="AEIE">Applied Electronics & Instrumentation Engineering</option>
+                <option value="CE">Civil Engineering</option>
+                <option value="CSBS">Computer Science & Business Systems (CSBS)</option>
+                <option value="CSE">Computer Science & Engineering</option>
+                <option value="CSE-AIML">Computer Science and Engineering (AIML)</option>
+                <option value="CSE-CyberSecurity">Computer Science and Engineering (Cyber Security)</option>
+                <option value="CSE-DataScience">Computer Science and Engineering (Data Science)</option>
+                <option value="CSE-IoT">Computer Science and Engineering (IoT)</option>
+                <option value="ECE">Electronics & Communication Engineering</option>
+                <option value="EE">Electrical Engineering</option>
+                <option value="IT">Information Technology</option>
+                <option value="ME">Mechanical Engineering</option>
+                <option value="BTech-ECE">B.Tech in Electrical & Computer Engineering</option>
+                <option value="CSIT">Computer Science and Information Technology</option>
+                <option value="MCA-BCA">Computer Application (MCA & BCA)</option>
+                <option value="BCA">Bachelor of Computer Application (BCA)</option>
               </select>
             </div>
 
@@ -669,11 +679,11 @@ export default function SettingsPage() {
           aria-modal="true"
           aria-labelledby="connect-platform-title"
           onClick={() => setIsPlatformModalOpen(false)}
-          className="fixed inset-0 z-50 flex h-dvh items-center justify-center overflow-hidden overscroll-none bg-black/80 backdrop-blur-xl p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-xl p-4 sm:p-6 animate-in fade-in duration-200"
         >
           <div
             onClick={(event) => event.stopPropagation()}
-            className="w-full max-w-md rounded-[2rem] bg-white shadow-2xl p-8 relative will-change-transform"
+            className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-[2rem] bg-white shadow-2xl p-6 sm:p-8 relative custom-scrollbar will-change-transform"
           >
             <button
               onClick={() => setIsPlatformModalOpen(false)}
