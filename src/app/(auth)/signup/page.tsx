@@ -115,19 +115,6 @@ export default function SignupPage() {
       return;
     }
 
-    if (!rollNumber.trim()) {
-      setError('Please provide your roll number.');
-      setIsLoading(false);
-      return;
-    }
-
-    // Validate roll number format (basic check)
-    if (rollNumber.trim().length < 5) {
-      setError('Roll number seems too short. Please check and try again.');
-      setIsLoading(false);
-      return;
-    }
-
     // Validate username if provided
     if (username.trim()) {
       if (username.trim().length < 3) {

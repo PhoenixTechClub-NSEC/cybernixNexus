@@ -68,7 +68,7 @@ export default function MainLayout({
         <Sidebar />
 
         {/* Main Workspace Area with Custom Scrollbar & Silky Smooth Scrolling */}
-        <div className="flex-1 min-w-0 px-4 sm:px-8 py-5 flex flex-col gap-5">
+        <div className="flex-1 min-w-0 px-4 sm:px-8 py-5 flex flex-col gap-5 md:ml-72">
           {/* Top Header Bar for Desktop/Tablet (No background, right actions only) */}
           <header className="hidden lg:flex items-center justify-end px-0 py-1 bg-transparent border-0 shadow-none shrink-0">
             <div className="flex items-center gap-3">

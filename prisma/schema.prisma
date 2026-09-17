@@ -69,7 +69,7 @@ model Student {
   name            String
   username        String?  @unique
   bio             String?  @db.Text
-  rollNumber      String   @unique
+  rollNumber      String?
   department      String
   graduationYear  Int
 

@@ -83,73 +83,81 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async session({ session, token }) {
-      if (token && session.user) {
-        (session.user as any).id = token.sub;
-        if (token.picture) {
-          session.user.image = token.picture as string;
-        }
-        if (token.sub) {
-          let dbUser = await prisma.user.findUnique({
-            where: { id: token.sub },
-            select: { id: true, image: true, student: { select: { profileComplete: true, id: true } } },
-          });
-
-          // Fallback: If token.sub didn't find a record, check by email
-          if (!dbUser && session.user.email) {
-            dbUser = await prisma.user.findUnique({
-              where: { email: session.user.email },
+      try {
+        if (token && session.user) {
+          (session.user as any).id = token.sub;
+          if (token.picture) {
+            session.user.image = token.picture as string;
+          }
+          if (token.sub) {
+            let dbUser = await prisma.user.findUnique({
+              where: { id: token.sub },
               select: { id: true, image: true, student: { select: { profileComplete: true, id: true } } },
             });
-            if (dbUser) {
-              (session.user as any).id = dbUser.id;
-            }
-          }
 
-          if (dbUser?.image) {
-            session.user.image = dbUser.image;
+            // Fallback: If token.sub didn't find a record, check by email
+            if (!dbUser && session.user.email) {
+              dbUser = await prisma.user.findUnique({
+                where: { email: session.user.email },
+                select: { id: true, image: true, student: { select: { profileComplete: true, id: true } } },
+              });
+              if (dbUser) {
+                (session.user as any).id = dbUser.id;
+              }
+            }
+
+            if (dbUser?.image) {
+              session.user.image = dbUser.image;
+            }
+            (session.user as any).studentId = dbUser?.student?.id || null;
+            (session.user as any).profileComplete = dbUser?.student?.profileComplete || false;
           }
-          (session.user as any).studentId = dbUser?.student?.id || null;
-          (session.user as any).profileComplete = dbUser?.student?.profileComplete || false;
         }
+      } catch (error) {
+        console.error('[NextAuth session callback error]:', error);
       }
       return session;
     },
     async jwt({ token, user, profile }) {
-      if (user) {
-        token.sub = user.id;
-        // Verify if user exists in DB with actual cuid to avoid provider ID mismatch
-        if (user.email) {
-          try {
-            const dbUser = await prisma.user.findUnique({
-              where: { email: user.email },
-              select: { id: true },
-            });
-            if (dbUser) {
-              token.sub = dbUser.id;
-            }
-          } catch (e) {
-            console.error('[NextAuth JWT] Error finding user by email:', e);
-          }
-        }
-        const googlePicture = user.image || (profile as any)?.picture;
-        if (googlePicture) {
-          token.picture = googlePicture;
-          try {
-            await prisma.user.updateMany({
-              where: { id: token.sub },
-              data: { image: googlePicture },
-            });
-          } catch {
-            if (user.email) {
-              try {
-                await prisma.user.updateMany({
-                  where: { email: user.email },
-                  data: { image: googlePicture },
-                });
-              } catch {}
+      try {
+        if (user) {
+          token.sub = user.id;
+          // Verify if user exists in DB with actual cuid to avoid provider ID mismatch
+          if (user.email) {
+            try {
+              const dbUser = await prisma.user.findUnique({
+                where: { email: user.email },
+                select: { id: true },
+              });
+              if (dbUser) {
+                token.sub = dbUser.id;
+              }
+            } catch (e) {
+              console.error('[NextAuth JWT] Error finding user by email:', e);
             }
           }
+          const googlePicture = user.image || (profile as any)?.picture;
+          if (googlePicture) {
+            token.picture = googlePicture;
+            try {
+              await prisma.user.updateMany({
+                where: { id: token.sub },
+                data: { image: googlePicture },
+              });
+            } catch {
+              if (user.email) {
+                try {
+                  await prisma.user.updateMany({
+                    where: { email: user.email },
+                    data: { image: googlePicture },
+                  });
+                } catch {}
+              }
+            }
+          }
         }
+      } catch (error) {
+        console.error('[NextAuth JWT callback error]:', error);
       }
       return token;
     },

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { syncStudentStats } from '@/services/platforms';
+import { syncStudentStats } from '@/services/platforms/sync';
 
 export const dynamic = 'force-dynamic';
 
@@ -269,26 +269,28 @@ export async function POST(request: Request) {
       bio,
     } = body;
 
-    if (!name || !rollNumber || !department || !graduationYear) {
+    if (!name || !department || !graduationYear) {
       return NextResponse.json(
         { message: 'Please fill in all required fields.' },
         { status: 400 }
       );
     }
 
-    // Check for duplicate roll number (excluding current user)
-    const existingRollNumber = await prisma.student.findFirst({
-      where: {
-        rollNumber: rollNumber.trim(),
-        userId: { not: userId },
-      },
-    });
+    // Check for duplicate roll number (excluding current user) - only if provided
+    if (rollNumber && rollNumber.trim()) {
+      const existingRollNumber = await prisma.student.findFirst({
+        where: {
+          rollNumber: rollNumber.trim(),
+          userId: { not: userId },
+        },
+      });
 
-    if (existingRollNumber) {
-      return NextResponse.json(
-        { message: 'This roll number is already in use. Please check and try again.' },
-        { status: 400 }
-      );
+      if (existingRollNumber) {
+        return NextResponse.json(
+          { message: 'This roll number is already in use. Please check and try again.' },
+          { status: 400 }
+        );
+      }
     }
 
     // Check for duplicate username (excluding current user)
@@ -386,7 +388,7 @@ export async function POST(request: Request) {
       create: {
         userId: effectiveUserId,
         name: name.trim(),
-        rollNumber: rollNumber.trim(),
+        rollNumber: rollNumber && rollNumber.trim() ? rollNumber.trim() : null,
         department: department.trim(),
         graduationYear: validGradYear,
         leetcode: typeof leetcode === 'string' && leetcode.trim() ? leetcode.trim() : null,
@@ -400,7 +402,7 @@ export async function POST(request: Request) {
       },
       update: {
         name: name.trim(),
-        rollNumber: rollNumber.trim(),
+        rollNumber: rollNumber && rollNumber.trim() ? rollNumber.trim() : null,
         department: department.trim(),
         graduationYear: validGradYear,
         leetcode: typeof leetcode === 'string' && leetcode.trim() ? leetcode.trim() : null,
@@ -426,8 +428,9 @@ export async function POST(request: Request) {
     });
   } catch (error: unknown) {
     console.error('[POST /api/student Error]:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unable to save your profile. Please try again.';
     return NextResponse.json(
-      { message: 'Unable to save your profile. Please try again.' },
+      { message: errorMessage },
       { status: 500 }
     );
   }

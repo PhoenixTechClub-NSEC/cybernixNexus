@@ -174,7 +174,7 @@ export function Sidebar() {
     <>
       <aside
         ref={sidebarRef}
-        className="w-72 shrink-0 hidden md:flex flex-col justify-between bg-dark-amethyst text-white py-8 pr-0 pl-4 h-screen sticky top-0 z-30"
+        className="w-72 shrink-0 hidden md:flex flex-col justify-between bg-dark-amethyst text-white py-8 pr-0 pl-4 h-screen fixed left-0 top-0 z-30"
       >
         {/* The Dynamic Sliding Bubble */}
         <div

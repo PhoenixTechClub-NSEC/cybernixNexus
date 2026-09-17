@@ -90,7 +90,7 @@ export async function POST(request: Request) {
 
     // Check duplicate roll number if user is attempting to change it
     if (rollNumber && rollNumber.trim() !== student.rollNumber) {
-      const existing = await prisma.student.findUnique({
+      const existing = await prisma.student.findFirst({
         where: { rollNumber: rollNumber.trim() },
       });
       if (existing && existing.id !== student.id) {
