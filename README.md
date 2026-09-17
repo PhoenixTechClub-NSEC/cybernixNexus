@@ -30,6 +30,7 @@ The PostgreSQL database (managed via Prisma) comprises the following core models
 - **`ContestRegistration`**: Student contest registrations.
 - **`SyncJob`**: Non-blocking platform scraping audit log.
 
+done
 ---
 
 ## 🚀 Getting Started
