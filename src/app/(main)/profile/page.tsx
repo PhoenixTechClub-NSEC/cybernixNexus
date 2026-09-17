@@ -85,9 +85,11 @@ export default function ProfilePage() {
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-center col-span-2 sm:col-span-1 hover:border-golden-sand/50 hover:bg-white/10 transition-all cursor-pointer" onClick={() => router.push('/profile/sync')}>
               <p className="text-[10px] uppercase font-bold text-white/50">Platform Sync</p>
               <p className="text-lg sm:text-xl font-black text-golden-sand">
-                3 Connected
+                {CURRENT_USER.platforms?.filter((p: any) => p.handle && p.handle !== 'N/A').length || 0} Connected
               </p>
-              <p className="text-[10px] text-white/40">CF • LC • CC</p>
+              <p className="text-[10px] text-white/40">
+                {CURRENT_USER.platforms?.filter((p: any) => p.handle && p.handle !== 'N/A').map((p: any) => p.platform.substring(0, 2).toUpperCase()).join(' • ') || 'No Platforms'}
+              </p>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-center col-span-2 sm:col-span-1">
               <p className="text-[10px] uppercase font-bold text-white/50">Dept Position</p>

@@ -183,7 +183,7 @@ export default function UserDetailPage() {
 
           {/* Synced Platforms */}
           <div className="rounded-3xl bg-white border border-onyx/12 p-6 sm:p-8 shadow-sm">
-            <h2 className="text-lg font-black text-onyx mb-4">Synced Platforms</h2>
+            <h2 className="text-lg font-black text-onyx mb-4">Synced Platforms ({user.platforms.length})</h2>
             {user.platforms.length === 0 ? (
               <p className="text-sm text-onyx/60 text-center py-8">No platforms connected</p>
             ) : (
