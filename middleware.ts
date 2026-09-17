@@ -1,29 +1,33 @@
-import { withAuth } from 'next-auth/middleware';
-import { NextRequest } from 'next/server';
+import { getToken } from 'next-auth/jwt';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export default withAuth(
-  function middleware(req) {
-    const token = (req as any).nextauth?.token;
-    const pathname = req.nextUrl.pathname;
+export async function middleware(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const pathname = req.nextUrl.pathname;
 
-    // If user is authenticated but profile incomplete, redirect to signup
-    if (token && !token.profileComplete && !pathname.startsWith('/signup') && !pathname.startsWith('/login') && !pathname.startsWith('/api')) {
-      return Response.redirect(new URL('/signup', req.url));
-    }
-
-    // If user is on auth page but already authenticated with complete profile, redirect to dashboard
-    if (token && token.profileComplete && (pathname === '/login' || pathname === '/signup')) {
-      return Response.redirect(new URL('/dashboard', req.url));
-    }
-
-    return null;
-  },
-  {
-    pages: {
-      signIn: '/login',
-    },
+  // Allow public paths
+  if (pathname.startsWith('/api/auth') || pathname.startsWith('/_next')) {
+    return NextResponse.next();
   }
-);
+
+  // If not authenticated and trying to access protected routes
+  if (!token && !pathname.startsWith('/login') && !pathname.startsWith('/signup') && !pathname.startsWith('/')) {
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
+
+  // If authenticated but profile incomplete, redirect to signup (unless already on auth pages)
+  if (token && !token.profileComplete && !pathname.startsWith('/signup') && !pathname.startsWith('/login') && !pathname.startsWith('/api')) {
+    return NextResponse.redirect(new URL('/signup', req.url));
+  }
+
+  // If authenticated with complete profile but on auth page, redirect to dashboard
+  if (token && token.profileComplete && (pathname === '/login' || pathname === '/signup')) {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
