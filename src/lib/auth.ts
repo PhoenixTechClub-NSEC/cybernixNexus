@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60, // Update token every 24 hours
+    updateAge: 15 * 60, // Update token every 15 minutes to catch profile changes faster
   },
   jwt: {
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -67,6 +67,40 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async signIn({ user, account, profile }) {
+      // Auto-link Google account if user with same email already exists
+      if (user?.email && account?.provider === 'google') {
+        try {
+          // Check if user exists
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            include: { accounts: true },
+          });
+
+          // If user exists but no Google account, create one (auto-link)
+          if (existingUser && !existingUser.accounts.some(a => a.provider === 'google')) {
+            try {
+              await prisma.account.create({
+                data: {
+                  userId: existingUser.id,
+                  type: 'oauth',
+                  provider: 'google',
+                  providerAccountId: account.providerAccountId,
+                  access_token: account.access_token || null,
+                  token_type: account.token_type || null,
+                  scope: account.scope || null,
+                },
+              });
+              console.log(`[NextAuth] Auto-linked Google account for user ${user.email}`);
+            } catch (err) {
+              console.error('[NextAuth signIn] Failed to auto-link Google account:', err);
+            }
+          }
+        } catch (err) {
+          console.error('[NextAuth signIn] Account check error:', err);
+        }
+      }
+
+      // Update profile picture
       if (user?.email) {
         const googlePicture = user.image || (profile as any)?.picture;
         if (googlePicture) {
@@ -127,10 +161,11 @@ export const authOptions: NextAuthOptions = {
             try {
               const dbUser = await prisma.user.findUnique({
                 where: { email: user.email },
-                select: { id: true },
+                select: { id: true, student: { select: { profileComplete: true } } },
               });
               if (dbUser) {
                 token.sub = dbUser.id;
+                token.profileComplete = dbUser.student?.profileComplete || false;
               }
             } catch (e) {
               console.error('[NextAuth JWT] Error finding user by email:', e);
@@ -154,6 +189,19 @@ export const authOptions: NextAuthOptions = {
                 } catch {}
               }
             }
+          }
+        } else if (token.sub) {
+          // Refresh profileComplete status on subsequent token updates
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { id: token.sub },
+              select: { student: { select: { profileComplete: true } } },
+            });
+            if (dbUser) {
+              token.profileComplete = dbUser.student?.profileComplete || false;
+            }
+          } catch (e) {
+            console.error('[NextAuth JWT Refresh] Error:', e);
           }
         }
       } catch (error) {

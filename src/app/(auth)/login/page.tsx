@@ -24,24 +24,10 @@ export default function LoginPage() {
   // Automatically route authenticated users
   useEffect(() => {
     if (status === 'authenticated') {
-      const isComplete = (session?.user as any)?.profileComplete;
-      if (isComplete) {
-        router.replace('/dashboard');
-      } else {
-        // Double check student endpoint
-        fetch('/api/student')
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.student && data.student.profileComplete) {
-              router.replace('/dashboard');
-            } else {
-              router.replace('/signup');
-            }
-          })
-          .catch(() => router.replace('/signup'));
-      }
+      // Middleware will handle routing based on profileComplete flag
+      // Just let the page render - middleware will redirect server-side if needed
     }
-  }, [status, session, router]);
+  }, [status]);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);

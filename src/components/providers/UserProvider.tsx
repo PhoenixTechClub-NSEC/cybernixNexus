@@ -184,9 +184,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           localStorage.setItem('cybernix_user_cache', JSON.stringify(newUserProfile));
         } catch (e) {}
 
-        if (s.profileComplete === false && window.location.pathname !== '/signup') {
-          window.location.href = '/signup';
-        }
+        // Middleware now handles redirects server-side, no client-side redirects needed here
       } else if (data.user?.image || data.user?.name || data.user?.email) {
         setUser((prev) => {
           const updated = {
@@ -199,16 +197,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
             localStorage.setItem('cybernix_user_cache', JSON.stringify(updated));
           } catch (e) {}
           
-          if (window.location.pathname !== '/signup') {
-            window.location.href = '/signup';
-          }
-          
+          // Middleware handles redirects server-side
           return updated;
         });
       } else {
-        if (window.location.pathname !== '/signup' && window.location.pathname !== '/login') {
-          window.location.href = '/signup';
-        }
+        // Middleware handles redirects server-side
       }
     } catch (err) {
       console.error('Failed to fetch student profile', err);
