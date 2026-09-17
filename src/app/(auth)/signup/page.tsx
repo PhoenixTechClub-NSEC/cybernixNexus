@@ -93,7 +93,7 @@ export default function SignupPage() {
     } else if (status === 'unauthenticated') {
       setIsCheckingProfile(false);
     }
-  }, [status, session, router, name, email, avatarUrl]);
+  }, [status, session, router]);
 
   // Sanitizer helper for handles (strips URLs and @ prefixes)
   const sanitizeHandle = (input: string) => {
