@@ -222,13 +222,12 @@ export function Navbar() {
       className="sticky top-0 z-50 w-full border-b border-onyx/12 bg-white/90 backdrop-blur-md shadow-2xs"
     >
       {/* Top Banner for NSEC Inter-Department Competition */}
-      <div className="navbar-banner bg-gradient-to-r from-tomato-jam via-onyx to-pine-teal text-white text-xs py-1.5 px-2 sm:px-4 text-center font-medium">
+      <div className="navbar-banner hidden sm:block bg-gradient-to-r from-tomato-jam via-onyx to-pine-teal text-white text-xs py-1.5 px-2 sm:px-4 text-center font-medium">
         <span className="inline-flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-golden-sand shrink-0" />
           <span className="truncate max-w-[200px] sm:max-w-none">
             <strong className="hidden sm:inline">NSEC College 2026: </strong>
             <span className="hidden sm:inline">{topDept.name} currently leads with a </span>
-            <span className="sm:hidden">{topDept.name} leads with </span>
             <span className="underline decoration-golden-sand">{topDept.multiplier.toFixed(1)}x Bonus</span>!
           </span>
           <Link
@@ -236,39 +235,38 @@ export function Navbar() {
             className="inline-flex items-center gap-0.5 ml-1 sm:ml-2 font-bold hover:underline text-golden-sand shrink-0"
           >
             <span className="hidden sm:inline">View Rankings</span>
-            <span className="sm:hidden">Rankings</span>
             <ChevronRight className="w-3 h-3" />
           </Link>
         </span>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
           <Link
             href="/dashboard"
-            className="navbar-logo flex items-center gap-3 cursor-pointer"
+            className="navbar-logo flex items-center gap-2 sm:gap-3 cursor-pointer min-w-0"
           >
-            <div className="flex items-center justify-center w-10 h-10 shrink-0">
+            <div className="flex items-center justify-center w-9 sm:w-10 h-9 sm:h-10 shrink-0">
               <img
                 src="/pheonix_mod1.png"
                 alt="Phoenix Logo"
-                className="w-10 h-10 object-contain drop-shadow-sm scale-[3]"
+                className="w-9 sm:w-10 h-9 sm:h-10 object-contain drop-shadow-sm scale-[3]"
                 width="40"
                 height="40"
                 fetchPriority="high"
               />
             </div>
-            <div className="pr-3">
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-xl tracking-tight text-onyx">
+            <div className="pr-2 sm:pr-3 min-w-0">
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <span className="font-extrabold text-base sm:text-xl tracking-tight text-onyx whitespace-nowrap">
                   Cybernix <span className="text-tomato-jam">Nexus</span>
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-golden-sand/20 text-onyx px-1.5 py-0.5 rounded border border-onyx/12">
+                <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider bg-golden-sand/20 text-onyx px-1 sm:px-1.5 py-0.5 rounded border border-onyx/12 shrink-0">
                   NSEC
                 </span>
               </div>
-              <p className="text-[9px] text-onyx/70 font-bold uppercase tracking-wider -mt-0.5">
+              <p className="text-[8px] sm:text-[9px] text-onyx/70 font-bold uppercase tracking-wider -mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                 NSEC PHOENIX CLUB . cybernix
               </p>
             </div>
@@ -302,21 +300,30 @@ export function Navbar() {
           </nav>
 
           {/* Mobile Streak & CP Score Pills (compact, visible only on sm-lg) */}
-          <div className="flex md:hidden items-center gap-2">
+          <div className="flex md:hidden items-center gap-1.5 sm:gap-2">
             {/* Mobile Streak Pill */}
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-golden-sand/15 border border-onyx/12 text-onyx text-[10px] font-bold shadow-2xs">
+            <div className="flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded-full bg-golden-sand/15 border border-onyx/12 text-onyx text-[9px] sm:text-[10px] font-bold shadow-2xs shrink-0">
               <Flame className="w-3 h-3 fill-tomato-jam text-tomato-jam" />
-              <span>{CURRENT_USER.currentStreak}d</span>
+              <span className="whitespace-nowrap">{CURRENT_USER.currentStreak}d</span>
             </div>
 
             {/* Mobile CP Score Pill */}
-            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-golden-sand/10 border border-onyx/12 text-onyx text-[10px] font-bold shadow-2xs">
+            <div className="flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded-lg bg-golden-sand/10 border border-onyx/12 text-onyx text-[9px] sm:text-[10px] font-bold shadow-2xs shrink-0">
               <span>⭐</span>
-              <span>{(CURRENT_USER.cpScore / 1000).toFixed(1)}k</span>
+              <span className="whitespace-nowrap">{(CURRENT_USER.cpScore / 1000).toFixed(1)}k</span>
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg text-onyx/70 hover:bg-golden-sand/12 cursor-pointer transition-colors"
+              title="Menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
 
-          {/* Right section: Streak Pill, CP Score & User Avatar */}
+          {/* Right section: Streak Pill, CP Score & User Avatar - Desktop only */}
           <div className="hidden lg:flex items-center gap-3">
             {/* Daily Streak Counter Pill */}
             <div
@@ -411,24 +418,6 @@ export function Navbar() {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Mobile hamburger button */}
-          <div className="flex md:hidden items-center gap-2">
-            <Link
-              href="/profile"
-              className="flex items-center gap-1 px-2 py-1 rounded-full bg-golden-sand/15 border border-onyx/12 text-onyx text-xs font-bold"
-            >
-              <Flame className="w-3.5 h-3.5 fill-tomato-jam text-tomato-jam" />
-              <span>{CURRENT_USER.currentStreak}d</span>
-            </Link>
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-onyx hover:bg-golden-sand/15 focus:outline-none"
-              aria-label="Toggle Menu"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
           </div>
         </div>
       </div>
