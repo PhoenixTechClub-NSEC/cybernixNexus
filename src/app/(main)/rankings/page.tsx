@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { getLeaderboard } from '@/lib/api';
 import { Podium } from '@/features/leaderboard/components/Podium';
 import { LeaderboardTable } from '@/features/leaderboard/components/LeaderboardTable';
@@ -11,7 +12,6 @@ import { useUser } from '@/components/providers/UserProvider';
 import { LevelBadge } from '@/features/gamification/components/LevelBadge';
 import {
   Trophy,
-  X,
   RefreshCw,
   CheckCircle2,
 } from 'lucide-react';
@@ -19,7 +19,7 @@ import CapybaraLoader from '@/components/ui/CapybaraLoader';
 
 export default function RankingsPage() {
   const { user: CURRENT_USER } = useUser();
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const router = useRouter();
   const [visualTab] = useState<'podium' | 'battles'>('podium');
   const [selectedDeptYear, setSelectedDeptYear] = useState<string>('ALL');
   const [isSyncing, setIsSyncing] = useState(false);
@@ -33,23 +33,6 @@ export default function RankingsPage() {
     averageScore: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-
-  React.useEffect(() => {
-    if (!selectedUser) return;
-
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setSelectedUser(null);
-    };
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = 'unset';
-      document.documentElement.style.overflow = 'unset';
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [selectedUser]);
 
   const loadData = async () => {
     try {
@@ -121,6 +104,10 @@ export default function RankingsPage() {
       setIsSyncing(false);
       setTimeout(() => setToastMessage(null), 4000);
     }
+  };
+
+  const handleViewProfile = (user: UserProfile) => {
+    router.push(`/rankings/${user.id}`);
   };
 
   // Filter user's department students dynamically from database records
@@ -198,7 +185,7 @@ export default function RankingsPage() {
 
           {/* TOP 3 PODIUM VISUAL */}
           <div className="relative z-10 py-2">
-            <Podium users={displayLeaderboardUsers} onSelectUser={setSelectedUser} />
+            <Podium users={displayLeaderboardUsers} onSelectUser={handleViewProfile} />
           </div>
 
           {/* TAB 2: DEPARTMENT BATTLE BUBBLES VISUALIZER */}
@@ -298,7 +285,7 @@ export default function RankingsPage() {
           {/* LeaderboardTable rendering ALL departments */}
           <LeaderboardTable
             users={displayLeaderboardUsers}
-            onSelectUser={setSelectedUser}
+            onSelectUser={handleViewProfile}
             defaultDepartment="ALL"
           />
 
@@ -358,7 +345,7 @@ export default function RankingsPage() {
                   return (
                     <div
                       key={user.id}
-                      onClick={() => setSelectedUser(user)}
+                      onClick={() => handleViewProfile(user)}
                       className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                         isCurrentUser
                           ? 'bg-golden-sand/20 border-2 border-tomato-jam/60 shadow-2xs'
@@ -423,125 +410,8 @@ export default function RankingsPage() {
               <span className="text-tomato-jam">#{userDeptStat.rank} in College 🏆</span>
             </div>
           </div>
-
         </div>
       </div>
-
-      {/* STUDENT DETAIL MODAL */}
-      {selectedUser && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="student-detail-title"
-          onClick={() => setSelectedUser(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-xl p-3 sm:p-4 md:p-6 animate-in fade-in duration-200"
-        >
-          <div
-            onClick={(event) => event.stopPropagation()}
-            className="w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-3xl bg-white border border-onyx/12 shadow-2xl custom-scrollbar animate-in fade-in zoom-in-95 duration-200"
-          >
-            {/* Header */}
-            <div className="bg-onyx p-6 text-white relative border-b border-tomato-jam/40">
-              <button
-                onClick={() => setSelectedUser(null)}
-                className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <div className="flex items-center gap-4">
-                <img
-                  src={selectedUser.avatar}
-                  alt={selectedUser.name}
-                  className="w-16 h-16 rounded-full object-cover ring-4 ring-tomato-jam/40"
-                  loading="lazy"
-                />
-                <div>
-                  <h3 id="student-detail-title" className="text-xl font-black">{selectedUser.name}</h3>
-                  <p className="text-xs text-golden-sand">
-                    {selectedUser.department} • {selectedUser.year} • Rank #{selectedUser.collegeRank}
-                  </p>
-                  <div className="mt-1">
-                    <LevelBadge level={selectedUser.level} tier={selectedUser.tier} size="sm" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-3 gap-3 text-center bg-golden-sand/15 p-3 rounded-xl border border-onyx/12">
-                <div>
-                  <p className="text-xs text-onyx/70">CP Score</p>
-                  <p className="text-lg font-black text-tomato-jam">
-                    {selectedUser.cpScore.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-onyx/70">Total Solved</p>
-                  <p className="text-lg font-black text-onyx">
-                    {selectedUser.solvedByDifficulty.total}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-onyx/70">Streak</p>
-                  <p className="text-lg font-black text-tomato-jam">
-                    🔥 {selectedUser.currentStreak}d
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-onyx/70 mb-2">
-                  Synced Platforms
-                </h4>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {selectedUser.platforms.map((p) => (
-                    <div
-                      key={p.platform}
-                      className="p-2.5 rounded-lg bg-golden-sand/15 border border-onyx/12 flex justify-between"
-                    >
-                      <div>
-                        <p className="font-bold text-onyx">{p.platform}</p>
-                        <p className="text-[10px] text-onyx/70">@{p.handle}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-extrabold text-tomato-jam">{p.rating}</p>
-                        <p className="text-[10px] text-onyx/70">{p.solvedCount} solved</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-onyx/70 mb-2">
-                  Unlocked Badges ({selectedUser.badges.length})
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedUser.badges.map((b) => (
-                    <span
-                      key={b.id}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-golden-sand/20 text-onyx border border-onyx/12 text-xs font-bold"
-                    >
-                      <span>{b.icon}</span>
-                      <span>{b.title}</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-end">
-                <button
-                  onClick={() => setSelectedUser(null)}
-                  className="px-5 py-2 rounded-xl bg-onyx text-white font-bold text-xs hover:bg-[#3A2719] transition-colors cursor-pointer"
-                >
-                  Close Detail View
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* TOAST NOTIFICATION */}
       {toastMessage && (
