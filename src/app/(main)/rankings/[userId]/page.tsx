@@ -214,31 +214,6 @@ export default function UserDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* Badges Card - FIXED ON RIGHT */}
-      <div className="rounded-3xl bg-white border border-onyx/12 p-6 shadow-sm fixed right-4 lg:right-8 top-28 w-72 lg:w-80 max-h-96 overflow-y-auto custom-scrollbar z-40">
-        <h2 className="text-lg font-black text-onyx mb-4">
-          Unlocked Badges ({user.badges.length})
-        </h2>
-        {user.badges.length === 0 ? (
-          <p className="text-sm text-onyx/60 text-center py-8">No badges unlocked yet</p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {user.badges.map((badge) => (
-              <div
-                key={badge.id}
-                title={badge.title}
-                className="p-3 rounded-2xl bg-golden-sand/20 border border-onyx/12 flex flex-col items-center gap-2 text-center hover:shadow-md transition-shadow"
-              >
-                <span className="text-3xl">{badge.icon}</span>
-                <span className="text-[10px] font-bold text-onyx leading-tight">
-                  {badge.title}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

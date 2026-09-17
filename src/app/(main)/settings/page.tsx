@@ -432,12 +432,13 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             <div>
               <label className="block text-xs font-bold text-onyx uppercase tracking-wider mb-2">
-                College Roll Number
+                College Roll Number <span className="text-tomato-jam">*</span>
               </label>
               <input
                 type="text"
                 value={rollNumber}
                 onChange={(e) => setRollNumber(e.target.value)}
+                required
                 placeholder="e.g. 10800121001"
                 className="w-full px-4 py-3 rounded-xl bg-[#FFF1D6] border border-onyx/10 text-sm font-medium text-onyx focus:outline-none focus:ring-2 focus:ring-tomato-jam/50 transition-shadow placeholder:text-onyx/40"
               />

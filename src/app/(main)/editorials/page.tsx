@@ -632,7 +632,7 @@ export default function EditorialsPage() {
                       <span className="text-xs text-onyx/70">{editorial.publishedAt}</span>
                     </div>
 
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-tomato-jam group-hover:underline">
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-tomato-jam group-hover:underline mr-[2px]">
                       Read Complete Tutorial <ChevronRight className="w-4 h-4" />
                     </span>
                   </div>
