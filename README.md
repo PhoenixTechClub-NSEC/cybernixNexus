@@ -13,6 +13,7 @@ flashing lights
 * **Scraper & Sync Engine:** Custom asynchronous platform fetchers (`leetcode.ts`, `codeforces.ts`, `gfg.ts`, `codechef.ts`)
 * **Package Manager:** pnpm
 ---
+mani ir moddhe ekta bepar ache
 
 ## 🗄️ Database Schema & Models
 
