@@ -1,7 +1,6 @@
 # Cybernix Nexus — NSEC Inter-Department Algorithmic Coding Platform
 
 Cybernix Nexus is a production-grade competitive programming hub for Netaji Subhash Engineering College (NSEC). It automatically synchronizes coding statistics across **Codeforces**, **LeetCode**, **GeeksforGeeks**, and **CodeChef**, computes seasonal department multipliers, tracks daily solve velocity, hosts peer editorials, provides a hybrid contest schedule, and renders live college-wide leaderboards.
-
 ---
  
 ## 🏗️ Tech Stack & Architecture
