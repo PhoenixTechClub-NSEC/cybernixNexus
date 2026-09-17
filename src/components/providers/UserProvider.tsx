@@ -60,6 +60,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile>(INITIAL_EMPTY_USER);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [lastRedirectCheckTime, setLastRedirectCheckTime] = useState(0);
 
   const fetchStudentProfile = async () => {
     try {
@@ -184,7 +185,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
           localStorage.setItem('cybernix_user_cache', JSON.stringify(newUserProfile));
         } catch (e) {}
 
-        // Middleware now handles redirects server-side, no client-side redirects needed here
+        // Only redirect if profile is incomplete AND not already on auth pages AND debounce 3 seconds between redirect attempts
+        const now = Date.now();
+        if (s.profileComplete === false && now - lastRedirectCheckTime > 3000 && window.location.pathname !== '/signup' && window.location.pathname !== '/login') {
+          setLastRedirectCheckTime(now);
+          window.location.href = '/signup';
+        }
       } else if (data.user?.image || data.user?.name || data.user?.email) {
         setUser((prev) => {
           const updated = {
@@ -197,11 +203,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
             localStorage.setItem('cybernix_user_cache', JSON.stringify(updated));
           } catch (e) {}
           
-          // Middleware handles redirects server-side
+          // User exists but no profile - redirect to signup with debounce
+          const now = Date.now();
+          if (now - lastRedirectCheckTime > 3000 && window.location.pathname !== '/signup' && window.location.pathname !== '/login') {
+            setLastRedirectCheckTime(now);
+            window.location.href = '/signup';
+          }
+          
           return updated;
         });
       } else {
-        // Middleware handles redirects server-side
+        // Not authenticated and no profile - let login page handle routing
       }
     } catch (err) {
       console.error('Failed to fetch student profile', err);

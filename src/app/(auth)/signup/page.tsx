@@ -69,8 +69,11 @@ export default function SignupPage() {
       fetch('/api/student')
         .then((res) => res.json())
         .then((data) => {
-          // Only pre-fill existing fields if student record exists (but middleware handles redirect to dashboard)
-          if (data.student) {
+          if (data.student && data.student.profileComplete) {
+            // Profile is complete, redirect to dashboard
+            router.replace('/dashboard');
+          } else if (data.student) {
+            // Pre-fill existing student fields if partially filled
             if (data.student.name) setName(data.student.name);
             if (data.student.rollNumber) setRollNumber(data.student.rollNumber);
             if (data.student.department) setDepartment(data.student.department);
