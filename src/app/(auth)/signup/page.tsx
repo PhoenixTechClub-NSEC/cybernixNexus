@@ -310,329 +310,330 @@ export default function SignupPage() {
               )}
 
               <form className="space-y-6" onSubmit={handleCompleteProfile}>
-            {/* 1. Identity & PFP */}
-            <div>
-              <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
-                <User className="w-4 h-4 text-tomato-jam" />
-                <h3 className="text-sm font-bold text-onyx">1. Personal Details &amp; Profile Picture</h3>
-              </div>
+                {/* 1. Identity & PFP */}
+                <div>
+                  <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
+                    <User className="w-4 h-4 text-tomato-jam" />
+                    <h3 className="text-sm font-bold text-onyx">1. Personal Details &amp; Profile Picture</h3>
+                  </div>
 
-              <div className="flex flex-col sm:flex-row items-center gap-6 mb-5">
-                <div className="shrink-0">
-                  <img
-                    src={avatarUrl.trim() || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-                    alt="PFP Preview"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
-                    }}
-                    className="w-16 h-16 rounded-full object-cover ring-4 ring-golden-sand/30 shadow-md"
-                  />
-                </div>
-                <div className="flex-1 w-full space-y-1">
-                  <label htmlFor="signup-avatar" className="block text-xs font-bold uppercase tracking-wider text-onyx/70">
-                    Profile Picture URL (PFP)
-                  </label>
-                  <div className="relative">
+                  <div className="flex flex-col sm:flex-row items-center gap-6 mb-5">
+                    <div className="shrink-0">
+                      <img
+                        src={avatarUrl.trim() || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
+                        alt="PFP Preview"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+                        }}
+                        className="w-16 h-16 rounded-full object-cover ring-4 ring-golden-sand/30 shadow-md"
+                      />
+                    </div>
+                    <div className="flex-1 w-full space-y-1">
+                      <label htmlFor="signup-avatar" className="block text-xs font-bold uppercase tracking-wider text-onyx/70">
+                        Profile Picture URL (PFP)
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="signup-avatar"
+                          type="url"
+                          value={avatarUrl}
+                          onChange={(e) => setAvatarUrl(e.target.value)}
+                          placeholder="https://example.com/your-photo.jpg (Pre-filled from Google)"
+                          className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
+                        />
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-onyx/30">
+                          <ImageIcon className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="signup-full-name" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                      Full Name *
+                    </label>
                     <input
-                      id="signup-avatar"
-                      type="url"
-                      value={avatarUrl}
-                      onChange={(e) => setAvatarUrl(e.target.value)}
-                      placeholder="https://example.com/your-photo.jpg (Pre-filled from Google)"
+                      id="signup-full-name"
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. Satyaki Paul"
                       className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
                     />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-onyx/30">
-                      <ImageIcon className="w-4 h-4" />
+                  </div>
+
+                  <div>
+                    <label htmlFor="signup-username" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                      Username
+                    </label>
+                    <input
+                      id="signup-username"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="e.g. your_username"
+                      className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
+                    />
+                  </div>
+                </div>
+
+                {/* 2. Academic Info (Student model) */}
+                <div>
+                  <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
+                    <GraduationCap className="w-4 h-4 text-tomato-jam" />
+                    <h3 className="text-sm font-bold text-onyx">2. College Information</h3>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label htmlFor="signup-rollNumber" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                        College Roll Number
+                      </label>
+                      <input
+                        id="signup-rollNumber"
+                        type="text"
+                        value={rollNumber}
+                        onChange={(e) => setRollNumber(e.target.value)}
+                        placeholder="e.g. 10800121001"
+                        className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="signup-department" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                        Department *
+                      </label>
+                      <select
+                        id="signup-department"
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam"
+                      >
+                        <option value="AEIE">Applied Electronics & Instrumentation Engineering</option>
+                        <option value="CE">Civil Engineering</option>
+                        <option value="CSBS">Computer Science & Business Systems (CSBS)</option>
+                        <option value="CSE">Computer Science & Engineering</option>
+                        <option value="CSE-AIML">Computer Science and Engineering (AIML)</option>
+                        <option value="CSE-AIDS">Computer Science and Engineering (AIDS)</option>
+                        <option value="CSE-CyberSecurity">Computer Science and Engineering (Cyber Security)</option>
+                        <option value="CSE-DataScience">Computer Science and Engineering (Data Science)</option>
+                        <option value="CSE-IoT">Computer Science and Engineering (IoT)</option>
+                        <option value="ECE">Electronics & Communication Engineering</option>
+                        <option value="EE">Electrical Engineering</option>
+                        <option value="IT">Information Technology</option>
+                        <option value="ME">Mechanical Engineering</option>
+                        <option value="BTech-ECE">B.Tech in Electrical & Computer Engineering</option>
+                        <option value="CSIT">Computer Science and Information Technology</option>
+                        <option value="MCA-BCA">Computer Application (MCA & BCA)</option>
+                        <option value="BCA">Bachelor of Computer Application (BCA)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="signup-graduationYear" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                        Graduation Year *
+                      </label>
+                      <select
+                        id="signup-graduationYear"
+                        value={graduationYear}
+                        onChange={(e) => setGraduationYear(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam"
+                      >
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                        <option value="2029">2029</option>
+                        <option value="2030">2030</option>
+                      </select>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <label htmlFor="signup-full-name" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                  Full Name *
-                </label>
-                <input
-                  id="signup-full-name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Satyaki Paul"
-                  className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="signup-username" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                  Username
-                </label>
-                <input
-                  id="signup-username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. your_username"
-                  className="modern-input w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                />
-              </div>
-            </div>
-
-            {/* 2. Academic Info (Student model) */}
-            <div>
-              <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
-                <GraduationCap className="w-4 h-4 text-tomato-jam" />
-                <h3 className="text-sm font-bold text-onyx">2. College Information</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* 3. Social & Developer Profiles (github, linkedin) */}
                 <div>
-                  <label htmlFor="signup-rollNumber" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                    College Roll Number
-                  </label>
-                  <input
-                    id="signup-rollNumber"
-                    type="text"
-                    value={rollNumber}
-                    onChange={(e) => setRollNumber(e.target.value)}
-                    placeholder="e.g. 10800121001"
-                    className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="signup-department" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                    Department *
-                  </label>
-                  <select
-                    id="signup-department"
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam"
-                  >
-                    <option value="AEIE">Applied Electronics & Instrumentation Engineering</option>
-                    <option value="CE">Civil Engineering</option>
-                    <option value="CSBS">Computer Science & Business Systems (CSBS)</option>
-                    <option value="CSE">Computer Science & Engineering</option>
-                    <option value="CSE-AIML">Computer Science and Engineering (AIML)</option>
-                    <option value="CSE-CyberSecurity">Computer Science and Engineering (Cyber Security)</option>
-                    <option value="CSE-DataScience">Computer Science and Engineering (Data Science)</option>
-                    <option value="CSE-IoT">Computer Science and Engineering (IoT)</option>
-                    <option value="ECE">Electronics & Communication Engineering</option>
-                    <option value="EE">Electrical Engineering</option>
-                    <option value="IT">Information Technology</option>
-                    <option value="ME">Mechanical Engineering</option>
-                    <option value="BTech-ECE">B.Tech in Electrical & Computer Engineering</option>
-                    <option value="CSIT">Computer Science and Information Technology</option>
-                    <option value="MCA-BCA">Computer Application (MCA & BCA)</option>
-                    <option value="BCA">Bachelor of Computer Application (BCA)</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="signup-graduationYear" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                    Graduation Year *
-                  </label>
-                  <select
-                    id="signup-graduationYear"
-                    value={graduationYear}
-                    onChange={(e) => setGraduationYear(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam"
-                  >
-                    <option value="2025">2025</option>
-                    <option value="2026">2026</option>
-                    <option value="2027">2027</option>
-                    <option value="2028">2028</option>
-                    <option value="2029">2029</option>
-                    <option value="2030">2030</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* 3. Social & Developer Profiles (github, linkedin) */}
-            <div>
-              <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
-                <Globe className="w-4 h-4 text-tomato-jam" />
-                <h3 className="text-sm font-bold text-onyx">3. Developer &amp; Social Profiles</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="signup-github" className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                    <Globe className="w-3.5 h-3.5 text-onyx" /> GitHub Username
-                  </label>
-                  <input
-                    id="signup-github"
-                    type="text"
-                    value={github}
-                    onChange={(e) => setGithub(e.target.value)}
-                    placeholder="e.g. octocat"
-                    className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="signup-linkedin" className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                    <Briefcase className="w-3.5 h-3.5 text-[#0A66C2]" /> LinkedIn Username
-                  </label>
-                  <input
-                    id="signup-linkedin"
-                    type="text"
-                    value={linkedin}
-                    onChange={(e) => setLinkedin(e.target.value)}
-                    placeholder="e.g. your-profile-id"
-                    className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Platform Handles (leetcode, codeforces, codechef) */}
-            <div>
-              <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
-                <Code2 className="w-4 h-4 text-tomato-jam" />
-                <h3 className="text-sm font-bold text-onyx">4. Coding Handles (Auto-Synced)</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="signup-leetcode" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                    LeetCode Username
-                  </label>
-                  <input
-                    id="signup-leetcode"
-                    type="text"
-                    value={leetcode}
-                    onChange={(e) => setLeetcode(e.target.value)}
-                    placeholder="e.g. neal_wu"
-                    className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                  />
-                </div>
-                  {/* Codeforces - requires verification */}
-                  <div>
-                    <label htmlFor="signup-codeforces" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                      Codeforces Handle
-                    </label>
-                    {cfVerified ? (
-                      // Verified state: locked display + re-verify option
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <div className="relative flex-1">
-                            <input
-                              type="text"
-                              readOnly
-                              value={cfVerifiedHandle}
-                              className="w-full px-4 py-2.5 pr-10 rounded-xl border border-emerald-400/60 bg-emerald-50/50 text-sm text-emerald-800 font-semibold cursor-default select-none"
-                            />
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setIsCfVerifyModalOpen(true)}
-                            className="px-3 py-2.5 rounded-xl text-xs font-bold text-pine-teal bg-pine-teal/10 hover:bg-pine-teal/20 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1"
-                          >
-                            <ShieldCheck className="w-3.5 h-3.5" /> Re-verify
-                          </button>
-                        </div>
-                        <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Ownership verified — handle locked in
-                        </p>
-                      </div>
-                    ) : (
-                      // Unverified state: input + verify button
-                      <div className="space-y-1.5">
-                        <div className="flex gap-2">
-                          <input
-                            id="signup-codeforces"
-                            type="text"
-                            value={codeforces}
-                            onChange={(e) => {
-                              setCodeforces(e.target.value);
-                              if (cfVerified) setCfVerified(false);
-                            }}
-                            placeholder="e.g. tourist"
-                            className="flex-1 px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                          />
-                          <button
-                            type="button"
-                            disabled={!codeforces.trim()}
-                            onClick={() => setIsCfVerifyModalOpen(true)}
-                            className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-tomato-jam bg-tomato-jam/10 hover:bg-tomato-jam/20 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap flex items-center gap-1.5"
-                          >
-                            <ShieldAlert className="w-3.5 h-3.5" />
-                            Verify
-                          </button>
-                        </div>
-                        {codeforces.trim() && (
-                          <p className="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
-                            <AlertCircle className="w-3.5 h-3.5" />
-                            You must verify ownership before submitting
-                          </p>
-                        )}
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
+                    <Globe className="w-4 h-4 text-tomato-jam" />
+                    <h3 className="text-sm font-bold text-onyx">3. Developer &amp; Social Profiles</h3>
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="signup-github" className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                        <Globe className="w-3.5 h-3.5 text-onyx" /> GitHub Username
+                      </label>
+                      <input
+                        id="signup-github"
+                        type="text"
+                        value={github}
+                        onChange={(e) => setGithub(e.target.value)}
+                        placeholder="e.g. octocat"
+                        className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="signup-linkedin" className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                        <Briefcase className="w-3.5 h-3.5 text-[#0A66C2]" /> LinkedIn Username
+                      </label>
+                      <input
+                        id="signup-linkedin"
+                        type="text"
+                        value={linkedin}
+                        onChange={(e) => setLinkedin(e.target.value)}
+                        placeholder="e.g. your-profile-id"
+                        className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Platform Handles (leetcode, codeforces, codechef) */}
                 <div>
-                  <label htmlFor="signup-codechef" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                    CodeChef Handle
-                  </label>
-                  <input
-                    id="signup-codechef"
-                    type="text"
-                    value={codechef}
-                    onChange={(e) => setCodechef(e.target.value)}
-                    placeholder="e.g. chef_student"
-                    className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
-                  />
+                  <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
+                    <Code2 className="w-4 h-4 text-tomato-jam" />
+                    <h3 className="text-sm font-bold text-onyx">4. Coding Handles (Auto-Synced)</h3>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="signup-leetcode" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                        LeetCode Username
+                      </label>
+                      <input
+                        id="signup-leetcode"
+                        type="text"
+                        value={leetcode}
+                        onChange={(e) => setLeetcode(e.target.value)}
+                        placeholder="e.g. neal_wu"
+                        className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
+                      />
+                    </div>
+                    {/* Codeforces - requires verification */}
+                    <div>
+                      <label htmlFor="signup-codeforces" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                        Codeforces Handle
+                      </label>
+                      {cfVerified ? (
+                        // Verified state: locked display + re-verify option
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                              <input
+                                type="text"
+                                readOnly
+                                value={cfVerifiedHandle}
+                                className="w-full px-4 py-2.5 pr-10 rounded-xl border border-emerald-400/60 bg-emerald-50/50 text-sm text-emerald-800 font-semibold cursor-default select-none"
+                              />
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setIsCfVerifyModalOpen(true)}
+                              className="px-3 py-2.5 rounded-xl text-xs font-bold text-pine-teal bg-pine-teal/10 hover:bg-pine-teal/20 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1"
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5" /> Re-verify
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Ownership verified — handle locked in
+                          </p>
+                        </div>
+                      ) : (
+                        // Unverified state: input + verify button
+                        <div className="space-y-1.5">
+                          <div className="flex gap-2">
+                            <input
+                              id="signup-codeforces"
+                              type="text"
+                              value={codeforces}
+                              onChange={(e) => {
+                                setCodeforces(e.target.value);
+                                if (cfVerified) setCfVerified(false);
+                              }}
+                              placeholder="e.g. tourist"
+                              className="flex-1 px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
+                            />
+                            <button
+                              type="button"
+                              disabled={!codeforces.trim()}
+                              onClick={() => setIsCfVerifyModalOpen(true)}
+                              className="px-3.5 py-2.5 rounded-xl text-xs font-bold text-tomato-jam bg-tomato-jam/10 hover:bg-tomato-jam/20 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap flex items-center gap-1.5"
+                            >
+                              <ShieldAlert className="w-3.5 h-3.5" />
+                              Verify
+                            </button>
+                          </div>
+                          {codeforces.trim() && (
+                            <p className="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
+                              <AlertCircle className="w-3.5 h-3.5" />
+                              You must verify ownership before submitting
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label htmlFor="signup-codechef" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                        CodeChef Handle
+                      </label>
+                      <input
+                        id="signup-codechef"
+                        type="text"
+                        value={codechef}
+                        onChange={(e) => setCodechef(e.target.value)}
+                        placeholder="e.g. chef_student"
+                        className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam placeholder:text-onyx/30"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            {/* 5. About You (Bio) */}
-            <div>
-              <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
-                <Sparkles className="w-4 h-4 text-golden-sand" />
-                <h3 className="text-sm font-bold text-onyx">5. About You</h3>
-              </div>
-              <div>
-                <label htmlFor="signup-bio" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
-                  Short Bio / Description
-                </label>
-                <textarea
-                  id="signup-bio"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam resize-none placeholder:text-onyx/30"
-                  placeholder="Tell us about your competitive programming goals and interests..."
-                />
-                <div className="flex justify-end mt-1">
-                  <span className="text-[10px] font-bold text-onyx/50">{bio.length} / 160 chars</span>
+                {/* 5. About You (Bio) */}
+                <div>
+                  <div className="flex items-center gap-2 border-b border-onyx/10 pb-2 mb-4">
+                    <Sparkles className="w-4 h-4 text-golden-sand" />
+                    <h3 className="text-sm font-bold text-onyx">5. About You</h3>
+                  </div>
+                  <div>
+                    <label htmlFor="signup-bio" className="block text-xs font-bold uppercase tracking-wider text-onyx/70 mb-1">
+                      Short Bio / Description
+                    </label>
+                    <textarea
+                      id="signup-bio"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      rows={3}
+                      className="w-full px-4 py-2.5 rounded-xl border border-onyx/12 bg-golden-sand/8 text-sm text-onyx focus:outline-none focus:border-tomato-jam focus:ring-1 focus:ring-tomato-jam resize-none placeholder:text-onyx/30"
+                      placeholder="Tell us about your competitive programming goals and interests..."
+                    />
+                    <div className="flex justify-end mt-1">
+                      <span className="text-[10px] font-bold text-onyx/50">{bio.length} / 160 chars</span>
+                    </div>
+                  </div>
                 </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-4 px-4 rounded-xl bg-tomato-jam hover:bg-[#E8890C] disabled:opacity-60 text-white font-extrabold text-sm shadow-md shadow-tomato-jam/20 transition-all cursor-pointer flex items-center justify-center gap-2 mt-4"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Saving Profile &amp; Syncing Stats...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-5 h-5" />
+                      <span>Complete Profile &amp; Go to Dashboard</span>
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-8 text-center text-xs text-onyx/60 border-t border-onyx/10 pt-6 flex items-center justify-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-tomato-jam" />
+                <span>You can update handles anytime in your Profile Settings</span>
               </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-4 px-4 rounded-xl bg-tomato-jam hover:bg-[#E8890C] disabled:opacity-60 text-white font-extrabold text-sm shadow-md shadow-tomato-jam/20 transition-all cursor-pointer flex items-center justify-center gap-2 mt-4"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Saving Profile &amp; Syncing Stats...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span>Complete Profile &amp; Go to Dashboard</span>
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-8 text-center text-xs text-onyx/60 border-t border-onyx/10 pt-6 flex items-center justify-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-tomato-jam" />
-            <span>You can update handles anytime in your Profile Settings</span>
-          </div>
             </>
           )}
         </div>
