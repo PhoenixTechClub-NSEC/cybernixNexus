@@ -457,6 +457,7 @@ export default function SettingsPage() {
                 <option value="CSBS">Computer Science & Business Systems (CSBS)</option>
                 <option value="CSE">Computer Science & Engineering</option>
                 <option value="CSE-AIML">Computer Science and Engineering (AIML)</option>
+                <option value="CSE-AIDS">Computer Science and Engineering (AIDS)</option>
                 <option value="CSE-CyberSecurity">Computer Science and Engineering (Cyber Security)</option>
                 <option value="CSE-DataScience">Computer Science and Engineering (Data Science)</option>
                 <option value="CSE-IoT">Computer Science and Engineering (IoT)</option>
@@ -468,6 +469,7 @@ export default function SettingsPage() {
                 <option value="CSIT">Computer Science and Information Technology</option>
                 <option value="MCA-BCA">Computer Application (MCA & BCA)</option>
                 <option value="BCA">Bachelor of Computer Application (BCA)</option>
+                <option value="BME">Bio Medical Engineering (BME)</option>
               </select>
             </div>
 
