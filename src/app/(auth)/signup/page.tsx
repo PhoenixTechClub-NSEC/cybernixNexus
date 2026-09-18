@@ -425,6 +425,8 @@ export default function SignupPage() {
                         <option value="CSIT">Computer Science and Information Technology</option>
                         <option value="MCA-BCA">Computer Application (MCA & BCA)</option>
                         <option value="BCA">Bachelor of Computer Application (BCA)</option>
+                        <option value="BME">Bio Medical Engineering (BME)</option>
+
                       </select>
                     </div>
                     <div>
