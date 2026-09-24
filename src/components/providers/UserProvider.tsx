@@ -63,10 +63,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [lastRedirectCheckTime, setLastRedirectCheckTime] = useState(0);
 
   const fetchStudentProfile = async () => {
-    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/maintenance')) {
-      setIsLoadingProfile(false);
-      return;
-    }
     try {
       setIsLoadingProfile(true);
       const res = await fetch('/api/student', { cache: 'no-store' });
@@ -191,7 +187,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
         // Only redirect if profile is incomplete AND not already on auth pages AND debounce 3 seconds between redirect attempts
         const now = Date.now();
-        if (s.profileComplete === false && now - lastRedirectCheckTime > 3000 && window.location.pathname !== '/signup' && window.location.pathname !== '/login' && !window.location.pathname.startsWith('/maintenance')) {
+        if (s.profileComplete === false && now - lastRedirectCheckTime > 3000 && window.location.pathname !== '/signup' && window.location.pathname !== '/login') {
           setLastRedirectCheckTime(now);
           window.location.href = '/signup';
         }
@@ -209,7 +205,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           
           // User exists but no profile - redirect to signup with debounce
           const now = Date.now();
-          if (now - lastRedirectCheckTime > 3000 && window.location.pathname !== '/signup' && window.location.pathname !== '/login' && !window.location.pathname.startsWith('/maintenance')) {
+          if (now - lastRedirectCheckTime > 3000 && window.location.pathname !== '/signup' && window.location.pathname !== '/login') {
             setLastRedirectCheckTime(now);
             window.location.href = '/signup';
           }

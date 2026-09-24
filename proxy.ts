@@ -1,55 +1,54 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 export async function proxy(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    const { pathname } = req.nextUrl;
 
-  // Allow maintenance page
-  if (pathname === "/maintenance" || pathname.startsWith("/maintenance/")) {
-    return NextResponse.next();
-  }
+    const protectedRoutes = [
+        "/dashboard",
+        "/profile",
+        "/settings",
+        "/contests",
+        "/editorials",
+        "/rankings",
+        "/signup",
+    ];
 
-  // Allow static Next.js assets, favicons, fonts, and public media files
-  if (
-    pathname.startsWith("/_next") ||
-    pathname === "/favicon.ico" ||
-    /\.(?:png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|css|js)$/.test(pathname)
-  ) {
-    return NextResponse.next();
-  }
+    const isProtectedRoute = protectedRoutes.some(
+        (route) => pathname === route || pathname.startsWith(`${route}/`)
+    );
 
-  // For API endpoints, return a 503 Service Unavailable maintenance response
-  if (pathname.startsWith("/api/")) {
-    // If request accepts HTML (e.g. user opening /api/xxx in browser), redirect to /maintenance
-    const acceptHeader = req.headers.get("accept") || "";
-    if (acceptHeader.includes("text/html")) {
-      return NextResponse.redirect(new URL("/maintenance", req.url));
+    if (isProtectedRoute && !token) {
+        const loginUrl = new URL("/login", req.url);
+        loginUrl.searchParams.set("callbackUrl", pathname);
+        return NextResponse.redirect(loginUrl);
     }
 
-    return NextResponse.json(
-      {
-        status: "maintenance",
-        message: "Cybernix Nexus is currently undergoing scheduled maintenance.",
-        expectedReturn: "2026-09-25T00:00:00+05:30",
-        remainingHours: 48,
-      },
-      { status: 503 }
-    );
-  }
+    if (pathname === "/login" && token) {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
 
-  // Redirect all other requests to /maintenance
-  const maintenanceUrl = new URL("/maintenance", req.url);
-  return NextResponse.redirect(maintenanceUrl);
+    return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
+    matcher: [
+        "/dashboard",
+        "/dashboard/:path*",
+        "/profile",
+        "/profile/:path*",
+        "/settings",
+        "/settings/:path*",
+        "/contests",
+        "/contests/:path*",
+        "/editorials",
+        "/editorials/:path*",
+        "/rankings",
+        "/rankings/:path*",
+        "/signup",
+        "/signup/:path*",
+        "/login",
+    ],
 };

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "generate:openapi": "tsx scripts/generate-openapi.ts",
-    "db:backup": "tsx scripts/backup-db.ts"
+    "db:backup": "tsx scripts/backup-db.ts",
+    "db:feed": "tsx scripts/restore-db.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
