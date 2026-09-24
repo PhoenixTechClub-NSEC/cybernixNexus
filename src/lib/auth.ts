@@ -2,6 +2,7 @@ import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import prisma from '@/lib/prisma';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import { syncStudentStats } from '@/services/platforms/sync';
 
 export const authOptions: NextAuthOptions = {
@@ -35,32 +36,32 @@ export const authOptions: NextAuthOptions = {
   events: {
     async signIn({ user }) {
       try {
-        let studentId: string | null = null;
+        let student = null;
         if (user?.id) {
-          const student = await prisma.student.findUnique({
+          student = await prisma.student.findUnique({
             where: { userId: user.id },
             select: { id: true, leetcode: true, codeforces: true, codechef: true },
           });
-          // Only sync if the student has at least one platform handle configured
-          const hasHandles = !!(student?.leetcode || student?.codeforces || student?.codechef);
-          studentId = (student && hasHandles) ? student.id : null;
-        } else if (user?.email) {
-          const student = await prisma.student.findFirst({
+        }
+        if (!student && user?.email) {
+          student = await prisma.student.findFirst({
             where: { user: { email: user.email } },
             select: { id: true, leetcode: true, codeforces: true, codechef: true },
           });
-          const hasHandles = !!(student?.leetcode || student?.codeforces || student?.codechef);
-          studentId = (student && hasHandles) ? student.id : null;
         }
 
-        if (studentId) {
-          // Trigger non-blocking stats sync upon login
-          syncStudentStats(studentId).catch((err) => {
-            console.error(`[NextAuth signIn Event] Sync error for student ${studentId}:`, err);
-          });
+        const hasHandles = !!(student?.leetcode || student?.codeforces || student?.codechef);
+        if (student && hasHandles) {
+          console.log(`[NextAuth signIn] Fetching account data from external APIs for student ${student.id}...`);
+          await syncStudentStats(student.id);
+          try {
+            revalidateTag('dashboard', 'seconds');
+            revalidatePath('/dashboard');
+          } catch {}
+          console.log(`[NextAuth signIn] Finished updating account data for student ${student.id}`);
         }
       } catch (err) {
-        console.error('[NextAuth signIn Event] Error checking student for login sync:', err);
+        console.error('[NextAuth signIn] Error updating user platform data upon login:', err);
       }
     },
   },

@@ -92,7 +92,7 @@ export default function RankingsPage() {
     setIsSyncing(true);
     try {
       // Trigger live sync
-      const res = await fetch('/api/cron/sync', { method: 'POST' });
+      const res = await fetch('/api/student/sync', { method: 'POST' });
       if (!res.ok) {
         throw new Error('Sync failed');
       }
