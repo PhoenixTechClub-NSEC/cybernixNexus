@@ -12,7 +12,7 @@ Cybernix Nexus is a production-grade competitive programming hub for Netaji Subh
 * **Scraper & Sync Engine:** Custom asynchronous platform fetchers (`leetcode.ts`, `codeforces.ts`, `gfg.ts`, `codechef.ts`)
 * **Package Manager:** pnpm
 ---
-mani ir moddhe ekta bepar ache
+mani ir moddhe ekta bepar ache. for real
 
 ## 🗄️ Database Schema & Models
 
