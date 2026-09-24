@@ -3,22 +3,28 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
+    // Find only the student ID for the current user, or fall back to top student by score
     const sessionUser = session?.user as { id?: string } | undefined;
     const userId = sessionUser?.id;
 
-    // Find student for current logged in user or fallback to top student
-    let student = userId
-      ? await prisma.student.findUnique({ where: { userId } })
-      : null;
-
-    if (!student) {
-      student = await prisma.student.findFirst({
-        orderBy: { stats: { totalScore: 'desc' } },
-      });
-    }
+    const student = userId
+      ? await prisma.student.findUnique({
+          where: { userId },
+          select: { id: true },
+        })
+        ?? await prisma.student.findFirst({
+            orderBy: { stats: { totalScore: 'desc' } },
+            select: { id: true },
+          })
+      : await prisma.student.findFirst({
+          orderBy: { stats: { totalScore: 'desc' } },
+          select: { id: true },
+        });
 
     if (!student) {
       return NextResponse.json({

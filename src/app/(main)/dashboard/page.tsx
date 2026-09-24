@@ -286,14 +286,20 @@ export default function DashboardPage() {
   const [velocityData, setVelocityData] = useState(WEEKLY_VELOCITY_DATA);
 
   React.useEffect(() => {
-    fetch('/api/dashboard/velocity')
+    const controller = new AbortController();
+    fetch('/api/dashboard/velocity', { signal: controller.signal })
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.velocity) {
           setVelocityData(json.velocity);
         }
       })
-      .catch((err) => console.error('Velocity fetch error:', err));
+      .catch((err) => {
+        if (err?.name !== 'AbortError') {
+          console.error('Velocity fetch error:', err);
+        }
+      });
+    return () => controller.abort();
   }, []);
 
   // Fetch real contest rating history from Codeforces if user has handle

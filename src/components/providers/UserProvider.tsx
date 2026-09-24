@@ -61,11 +61,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [lastRedirectCheckTime, setLastRedirectCheckTime] = useState(0);
+  const fetchInProgress = React.useRef(false);
+  const abortControllerRef = React.useRef<AbortController | null>(null);
 
   const fetchStudentProfile = async () => {
+    // Prevent concurrent duplicate fetches (e.g. React StrictMode double-invocation)
+    if (fetchInProgress.current) return;
+    fetchInProgress.current = true;
+
+    // Cancel any in-flight request from a previous render
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    const { signal } = controller;
+
     try {
       setIsLoadingProfile(true);
-      const res = await fetch('/api/student', { cache: 'no-store' });
+      const res = await fetch('/api/student', { cache: 'no-store', signal });
       if (!res.ok) return;
       const data = await res.json();
       if (data.student) {
@@ -80,11 +92,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const level = Math.max(1, Math.min(100, Math.floor(totalScore / 500)));
         const tier = (totalScore > 30000 ? 'Phoenix' : totalScore > 10000 ? 'Flame' : totalScore > 2000 ? 'Ember' : 'Spark') as TierName;
 
+        // Fetch activity data in parallel after we have the student ID
         let currentStreak = totalSolved > 0 ? 1 : 0;
         let maxStreak = totalSolved > 0 ? 1 : 0;
 
         try {
-          const actRes = await fetch(`/api/student/activity?studentId=${s.id}`);
+          const actRes = await fetch(`/api/student/activity?studentId=${s.id}`, { signal });
           if (actRes.ok) {
             const actData = await actRes.json();
             if (actData.success) {
@@ -216,9 +229,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
         // Not authenticated and no profile - let login page handle routing
       }
     } catch (err) {
-      console.error('Failed to fetch student profile', err);
+      if ((err as Error)?.name !== 'AbortError') {
+        console.error('Failed to fetch student profile', err);
+      }
     } finally {
       setIsLoadingProfile(false);
+      fetchInProgress.current = false;
     }
   };
 
@@ -234,6 +250,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (status !== 'loading') {
       fetchStudentProfile();
     }
+
+    return () => {
+      // Cancel in-flight requests on unmount / status change
+      abortControllerRef.current?.abort();
+      fetchInProgress.current = false;
+    };
   }, [status]);
 
   const updateUser = (updates: Partial<UserProfile>) => {

@@ -55,7 +55,7 @@ export const authOptions: NextAuthOptions = {
           console.log(`[NextAuth signIn] Fetching account data from external APIs for student ${student.id}...`);
           await syncStudentStats(student.id);
           try {
-            revalidateTag('dashboard', 'seconds');
+            revalidateTag('dashboard', { expire: 0 });
             revalidatePath('/dashboard');
           } catch {}
           console.log(`[NextAuth signIn] Finished updating account data for student ${student.id}`);
@@ -120,32 +120,27 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       try {
         if (token && session.user) {
+          // Read identity from JWT — zero DB reads on hot path
           (session.user as any).id = token.sub;
           if (token.picture) {
             session.user.image = token.picture as string;
           }
-          if (token.sub) {
-            let dbUser = await prisma.user.findUnique({
-              where: { id: token.sub },
+          // profileComplete and studentId are stored in the JWT by the jwt callback
+          (session.user as any).profileComplete = token.profileComplete ?? false;
+          (session.user as any).studentId = token.studentId ?? null;
+
+          // Only hit the DB when token.sub is absent (e.g. legacy session without it)
+          if (!token.sub && session.user.email) {
+            const dbUser = await prisma.user.findUnique({
+              where: { email: session.user.email },
               select: { id: true, image: true, student: { select: { profileComplete: true, id: true } } },
             });
-
-            // Fallback: If token.sub didn't find a record, check by email
-            if (!dbUser && session.user.email) {
-              dbUser = await prisma.user.findUnique({
-                where: { email: session.user.email },
-                select: { id: true, image: true, student: { select: { profileComplete: true, id: true } } },
-              });
-              if (dbUser) {
-                (session.user as any).id = dbUser.id;
-              }
+            if (dbUser) {
+              (session.user as any).id = dbUser.id;
+              (session.user as any).studentId = dbUser.student?.id ?? null;
+              (session.user as any).profileComplete = dbUser.student?.profileComplete ?? false;
+              if (dbUser.image) session.user.image = dbUser.image;
             }
-
-            if (dbUser?.image) {
-              session.user.image = dbUser.image;
-            }
-            (session.user as any).studentId = dbUser?.student?.id || null;
-            (session.user as any).profileComplete = dbUser?.student?.profileComplete || false;
           }
         }
       } catch (error) {
@@ -153,58 +148,59 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async jwt({ token, user, profile }) {
+    async jwt({ token, user, profile, trigger }) {
       try {
         if (user) {
+          // First login: resolve the canonical DB user ID and store profile state in token
           token.sub = user.id;
-          // Verify if user exists in DB with actual cuid to avoid provider ID mismatch
+          const googlePicture = user.image || (profile as any)?.picture;
+          if (googlePicture) token.picture = googlePicture;
+
           if (user.email) {
             try {
               const dbUser = await prisma.user.findUnique({
                 where: { email: user.email },
-                select: { id: true, student: { select: { profileComplete: true } } },
+                select: {
+                  id: true,
+                  image: true,
+                  student: { select: { id: true, profileComplete: true } },
+                },
               });
               if (dbUser) {
                 token.sub = dbUser.id;
-                token.profileComplete = dbUser.student?.profileComplete || false;
+                token.profileComplete = dbUser.student?.profileComplete ?? false;
+                token.studentId = dbUser.student?.id ?? null;
+                if (dbUser.image) token.picture = dbUser.image;
+                // Persist Google picture to DB on first login
+                if (googlePicture && googlePicture !== dbUser.image) {
+                  await prisma.user.updateMany({
+                    where: { id: dbUser.id },
+                    data: { image: googlePicture },
+                  });
+                }
               }
             } catch (e) {
               console.error('[NextAuth JWT] Error finding user by email:', e);
             }
           }
-          const googlePicture = user.image || (profile as any)?.picture;
-          if (googlePicture) {
-            token.picture = googlePicture;
-            try {
-              await prisma.user.updateMany({
-                where: { id: token.sub },
-                data: { image: googlePicture },
-              });
-            } catch {
-              if (user.email) {
-                try {
-                  await prisma.user.updateMany({
-                    where: { email: user.email },
-                    data: { image: googlePicture },
-                  });
-                } catch {}
-              }
-            }
-          }
-        } else if (token.sub) {
-          // Refresh profileComplete status on subsequent token updates
+        } else if (trigger === 'update' && token.sub) {
+          // Explicit session update (e.g. after profile completion) — refresh claims from DB
           try {
             const dbUser = await prisma.user.findUnique({
               where: { id: token.sub },
-              select: { student: { select: { profileComplete: true } } },
+              select: { image: true, student: { select: { id: true, profileComplete: true } } },
             });
             if (dbUser) {
-              token.profileComplete = dbUser.student?.profileComplete || false;
+              token.profileComplete = dbUser.student?.profileComplete ?? false;
+              token.studentId = dbUser.student?.id ?? null;
+              if (dbUser.image) token.picture = dbUser.image;
             }
           } catch (e) {
             console.error('[NextAuth JWT Refresh] Error:', e);
           }
         }
+        // On all other invocations (regular session reads), the token is returned as-is
+        // with zero DB queries.
       } catch (error) {
         console.error('[NextAuth JWT callback error]:', error);
       }
