@@ -91,17 +91,6 @@ export async function GET() {
       return NextResponse.json({ student: null, user: dbUser }, { status: 200 });
     }
 
-    // Auto-sync in background if student has platform handles configured but no stats or stale stats
-    const shouldAutoSync = Boolean(
-      (student.codechef && student.stats?.codechefRating == null && (student.stats?.codechefFailCount || 0) < 2) ||
-      (student.leetcode && student.stats?.leetcodeSolved === 0 && !student.stats?.leetcodeRating)
-    );
-    if (shouldAutoSync) {
-      syncStudentStats(student.id).catch((err) => {
-        console.warn(`[Auto-sync background] Student ${student.id} sync warning:`, err);
-      });
-    }
-
     // Dynamically evaluate badges based on verified achievements
     const badges = [];
     const stats = student.stats;

@@ -81,17 +81,29 @@ export async function recalculateRankings(): Promise<void> {
     });
   });
 
-  await Promise.all(
-    allStats.map((stat) =>
-      prisma.studentStats.update({
-        where: { id: stat.id },
-        data: {
-          ranking: overallRankMap.get(stat.id) || 1,
-          departmentRanking: deptRankMap.get(stat.id) || 1,
-        },
-      })
-    )
-  );
+  // Filter for only records that have changed rankings to avoid wasteful writes
+  const updatesToApply = allStats.filter((stat) => {
+    const newRank = overallRankMap.get(stat.id) || 1;
+    const newDeptRank = deptRankMap.get(stat.id) || 1;
+    return stat.ranking !== newRank || stat.departmentRanking !== newDeptRank;
+  });
+
+  // Batch updates in chunks of 5 to protect Supabase Postgres connection pool
+  const BATCH_SIZE = 5;
+  for (let i = 0; i < updatesToApply.length; i += BATCH_SIZE) {
+    const batch = updatesToApply.slice(i, i + BATCH_SIZE);
+    await Promise.all(
+      batch.map((stat) =>
+        prisma.studentStats.update({
+          where: { id: stat.id },
+          data: {
+            ranking: overallRankMap.get(stat.id) || 1,
+            departmentRanking: deptRankMap.get(stat.id) || 1,
+          },
+        })
+      )
+    );
+  }
 }
 
 export async function syncStudentStats(studentId: string): Promise<PlatformStatsResult> {
@@ -227,6 +239,8 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         codechefSolved,
         codechefStars,
         codechefGlobalRank,
+        codechefFailCount,
+        codechefLastError,
         totalScore,
       },
       update: {
@@ -246,6 +260,8 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
         codechefSolved,
         codechefStars,
         codechefGlobalRank,
+        codechefFailCount,
+        codechefLastError,
         totalScore,
       },
     });
@@ -277,40 +293,46 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       }
     }
 
-    // Upsert historical DailySnapshots
-    const upsertPromises = Array.from(dailyMap.entries()).map(([dateStr, counts]) => {
-      const snapDate = new Date(`${dateStr}T00:00:00.000Z`);
-      const dayScore = counts.lc * 10 + counts.cf * 15;
-      return prisma.dailySnapshot.upsert({
-        where: {
-          studentId_date: {
-            studentId: student.id,
-            date: snapDate,
-          },
-        },
-        create: {
-          studentId: student.id,
-          date: snapDate,
-          leetcodeSolved: counts.lc,
-          codeforcesSolved: counts.cf,
-          codechefRating: 0,
-          codechefSolved: 0,
-          totalScore: dayScore,
-        },
-        update: {
-          leetcodeSolved: counts.lc,
-          codeforcesSolved: counts.cf,
-          totalScore: dayScore,
-        },
-      });
-    });
+    // Upsert historical DailySnapshots in chunks of 10 to avoid exhausting Supabase Postgres connection pool
+    const entries = Array.from(dailyMap.entries());
+    const SNAPSHOT_CHUNK_SIZE = 10;
+    for (let i = 0; i < entries.length; i += SNAPSHOT_CHUNK_SIZE) {
+      const chunk = entries.slice(i, i + SNAPSHOT_CHUNK_SIZE);
+      await Promise.all(
+        chunk.map(([dateStr, counts]) => {
+          const [year, month, day] = dateStr.split('-').map(Number);
+          const snapDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+          const dayScore = counts.lc * 10 + counts.cf * 15;
+          return prisma.dailySnapshot.upsert({
+            where: {
+              studentId_date: {
+                studentId: student.id,
+                date: snapDate,
+              },
+            },
+            create: {
+              studentId: student.id,
+              date: snapDate,
+              leetcodeSolved: counts.lc,
+              codeforcesSolved: counts.cf,
+              codechefRating: 0,
+              codechefSolved: 0,
+              totalScore: dayScore,
+            },
+            update: {
+              leetcodeSolved: counts.lc,
+              codeforcesSolved: counts.cf,
+              totalScore: dayScore,
+            },
+          });
+        })
+      );
+    }
 
-    await Promise.all(upsertPromises);
-
-    // Create or update today's DailySnapshot
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split('T')[0];
+    // Create or update today's DailySnapshot in normalized UTC
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+    const todayStr = now.toISOString().split('T')[0];
     const todayActivity = dailyMap.get(todayStr) || { lc: 0, cf: 0 };
 
     await prisma.dailySnapshot.upsert({

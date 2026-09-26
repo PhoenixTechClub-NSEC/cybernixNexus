@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { syncStudentStats } from '@/services/platforms';
 
 export async function GET(req: Request) {
   try {
@@ -44,18 +43,11 @@ export async function GET(req: Request) {
     }
 
     // Check if student has snapshots; if not and platform handles exist, trigger dynamic sync
-    let snapshots = await prisma.dailySnapshot.findMany({
+    const snapshots = await prisma.dailySnapshot.findMany({
       where: { studentId: student.id },
       orderBy: { date: 'asc' },
     });
 
-    if (snapshots.length === 0 && (student.leetcode || student.codeforces)) {
-      // Trigger async sync without blocking the response
-      syncStudentStats(student.id).catch((syncErr) => {
-        console.warn('[Activity Route] Auto-sync on empty snapshots warning:', syncErr);
-      });
-      // We will just return 0-filled data for now, letting the UI load instantly.
-    }
 
     const totalSolved = (student.stats?.leetcodeSolved || 0) + (student.stats?.codeforcesSolved || 0);
 
