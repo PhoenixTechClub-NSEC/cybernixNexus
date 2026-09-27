@@ -308,3 +308,5 @@ A copy of the license is available in the [LICENSE](/LICENSE) file.
 - **Phoenix: The Official Tech Club of NSEC** - Ideation, architecture, design, and stewardship.
 - **Netaji Subhash Engineering College (NSEC)** - Student community, faculty guidance, and department support.
 - **Competitive Programming Platforms** - LeetCode, Codeforces, CodeChef, and GeeksforGeeks for providing problem archives and coder rankings.
+
+ohh yess
