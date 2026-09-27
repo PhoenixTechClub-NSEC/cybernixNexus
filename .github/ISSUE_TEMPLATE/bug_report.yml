@@ -1,0 +1,65 @@
+name: Bug Report
+description: File a bug report or report unexpected behavior in Cybernix Nexus
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue in Cybernix Nexus!
+        Please verify whether a similar bug report has already been submitted before opening a new one.
+        If this is a security vulnerability, please refer to our Security Policy (SECURITY.md) instead of creating a public issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the problem is.
+      placeholder: Describe what happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions to reproduce the behavior.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or Logs
+      description: If applicable, add screenshots, network payloads, or terminal logs to help explain the problem.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Operating System / Browser
+      description: What environment are you running Cybernix Nexus on?
+      options:
+        - Linux / Chrome
+        - Linux / Firefox
+        - macOS / Chrome
+        - macOS / Safari
+        - Windows / Chrome
+        - Windows / Edge
+        - Other (Specify in description)
+    validations:
+      required: true

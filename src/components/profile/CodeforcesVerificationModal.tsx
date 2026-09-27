@@ -36,6 +36,44 @@ export default function CodeforcesVerificationModal({
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<{ expected: string; found: string } | null>(null);
 
+  const handleGenerateCode = async (targetHandle?: string) => {
+    const handleToUse = (targetHandle || handle).trim();
+    if (!handleToUse) {
+      setError('Please provide a Codeforces handle.');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    setErrorDetails(null);
+
+    try {
+      const res = await fetch('/api/student/codeforces/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generate',
+          handle: handleToUse,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to generate verification code.');
+      }
+
+      setVerificationCode(data.verificationCode);
+      setHandle(data.handle);
+      setStep('verify');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error generating code';
+      setError(msg);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   useEffect(() => {
     if (initialHandle) {
       setHandle(initialHandle);
@@ -76,44 +114,6 @@ export default function CodeforcesVerificationModal({
       setTimeout(() => setCopied(false), 2500);
     } catch {
       // Fallback
-    }
-  };
-
-  const handleGenerateCode = async (targetHandle?: string) => {
-    const handleToUse = (targetHandle || handle).trim();
-    if (!handleToUse) {
-      setError('Please provide a Codeforces handle.');
-      return;
-    }
-
-    setIsGenerating(true);
-    setError(null);
-    setErrorDetails(null);
-
-    try {
-      const res = await fetch('/api/student/codeforces/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'generate',
-          handle: handleToUse,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to generate verification code.');
-      }
-
-      setVerificationCode(data.verificationCode);
-      setHandle(data.handle);
-      setStep('verify');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error generating code';
-      setError(msg);
-    } finally {
-      setIsGenerating(false);
     }
   };
 

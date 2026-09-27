@@ -40,16 +40,23 @@ next-env.d.ts
 *.db
 *.sqlite
 *.sqlite3
-/backup/
+backup/
+*.csv
 
 # =========================================
-# 5. VERCEL & DEPLOYMENT
+# 5. SCRAPING SCRATCH & TEMPORARY ARTIFACTS
+# =========================================
+scratch/
+*_real.html
+
+# =========================================
+# 6. VERCEL & DEPLOYMENT
 # =========================================
 .vercel/
 .now/
 
 # =========================================
-# 6. AI AGENTS, SKILLS, & IDE CONFIGS
+# 7. AI AGENTS, SKILLS, & IDE CONFIGS
 # =========================================
 # Cursor IDE
 .cursor/
@@ -79,7 +86,7 @@ CLAUDE.local.md
 *.swo
 
 # =========================================
-# 7. OS FILES & LOGS
+# 8. OS FILES & LOGS
 # =========================================
 .DS_Store
 .DS_Store?
@@ -94,15 +101,16 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # =========================================
-# 8. TESTING & COVERAGE
+# 9. TESTING & COVERAGE
 # =========================================
 /coverage/
 /.nyc_output/
 test-results/
 
 # =========================================
-# 9. OTHER
+# 10. ALTERNATIVE LOCKFILES
 # =========================================
-pnpm-lock.yaml
+# Cybernix Nexus standardizes on pnpm. Do not commit npm or yarn lockfiles.
 package-lock.json
+yarn.lock
 yarn-lock.yaml

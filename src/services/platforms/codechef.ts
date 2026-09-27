@@ -88,7 +88,7 @@ function parseCodechefHtml(html: string): CodechefParsingResult {
 
   // Parse solved count - multiple strategies
   // Strategy 1: Regex match on "Fully Solved (N)"
-  let fullySolvedMatch = html.match(/Fully Solved\s*\((\d+)\)/i);
+  const fullySolvedMatch = html.match(/Fully Solved\s*\((\d+)\)/i);
   if (fullySolvedMatch && fullySolvedMatch[1]) {
     solved = parseInt(fullySolvedMatch[1], 10);
   }

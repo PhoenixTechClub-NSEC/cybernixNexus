@@ -733,7 +733,7 @@ export default function SettingsPage() {
                 <div className="p-4 rounded-2xl bg-tomato-jam/8 border border-tomato-jam/20 text-xs text-onyx/80 font-medium flex items-start gap-2.5">
                   <ShieldCheck className="w-4 h-4 shrink-0 text-tomato-jam mt-0.5" />
                   <span>
-                    Codeforces accounts require <strong>ownership verification</strong>. Clicking continue will open the verification flow where you'll set your Codeforces First Name to a generated code.
+                    Codeforces accounts require <strong>ownership verification</strong>. Clicking continue will open the verification flow where you&apos;ll set your Codeforces First Name to a generated code.
                   </span>
                 </div>
               )}

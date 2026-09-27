@@ -424,7 +424,7 @@ export default function EditorialsPage() {
                 <BookOpen className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-onyx">You haven't published any editorials yet</h3>
+                <h3 className="text-lg font-black text-onyx">You haven&apos;t published any editorials yet</h3>
                 <p className="text-sm text-onyx/70 mt-1">
                   Share your problem-solving insights with the NSEC community today.
                 </p>

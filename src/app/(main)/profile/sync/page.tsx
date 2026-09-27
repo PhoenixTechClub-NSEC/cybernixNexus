@@ -49,7 +49,7 @@ export default function PlatformSyncPage() {
               Page Not <span className="text-golden-sand">Found</span>
             </h1>
             <p className="text-base text-onyx/70 max-w-lg">
-              The page you're looking for might have been moved, deleted, or never existed. But don't worry, our phoenix always finds a way back.
+              The page you&apos;re looking for might have been moved, deleted, or never existed. But don&apos;t worry, our phoenix always finds a way back.
             </p>
           </div>
 

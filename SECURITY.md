@@ -1,33 +1,57 @@
-# Cybernix Nexus — Security Policy & Guidelines
+# Security Policy
 
-## 1. Reporting Security Issues
-If you discover a security vulnerability in Cybernix Nexus, please report it confidentially to the Cybernix Development Team. Please do not create public GitHub issues for security vulnerabilities.
+## Reporting Security Issues
 
----
+Phoenix: The Official Tech Club of NSEC takes the security of Cybernix Nexus seriously. If you discover or suspect a security vulnerability, please do NOT create a public GitHub issue, pull request, or discussion.
 
-## 2. Authentication & Authorization
+Instead, please report it via one of the following confidential channels:
 
-- **NextAuth Session Checks**: All protected API endpoints (`/api/student`, `/api/dashboard/velocity`) require valid session authentication checked via `getServerSession(authOptions)`.
-- **Password Security**: User passwords are encrypted using `bcryptjs` with a cost factor of 10 (`bcrypt.hash(password, 10)`). Plaintext passwords are never stored or logged.
-- **Cron Endpoint Security**: The automated platform synchronization endpoint `/api/cron/sync` requires a bearer token match against `process.env.CRON_SECRET`. Unauthorized requests return a `401 Unauthorized` response.
+* **Primary Email:** mail.phoenixnsec@gmail.com
+* **GitHub Advisory:** Open a draft Security Advisory via the repository's [Security tab](https://github.com/PhoenixTechClub-NSEC/cybernixNexus/security/advisories)
 
----
+### What to Include in Your Report
 
-## 3. Database Security & SQL Injection Prevention
+To help us triage and resolve the issue quickly, please provide:
+* Description of the vulnerability and its potential impact
+* Clear step-by-step reproduction steps or proof-of-concept (PoC)
+* Affected endpoints, files, or components
+* Any proposed mitigations or remediation steps (if known)
 
-- **Prisma Parameterization**: All queries use Prisma ORM's parameterized query builder, completely eliminating raw SQL concatenation and SQL injection vulnerabilities.
-- **Data Validation & Sanitization**: Email addresses are sanitized with `.toLowerCase().trim()` before querying or storing. Input strings are trimmed to prevent leading/trailing whitespace exploits.
+### Response SLA
 
----
-
-## 4. API Rate Limiting & External Platform Safety
-
-- **Timeout Control**: External HTTP calls to LeetCode, Codeforces, GeeksforGeeks, and CodeChef use `AbortController` signals with strict timeouts (8–12 seconds) to prevent server thread blocking.
-- **Error Handling**: External platform scraping failures are isolated in `Promise.allSettled` and recorded per-platform in `SyncJob.error` without causing application crashes.
+* **Acknowledgment:** Within 48 hours of receipt
+* **Assessment & Triage:** Within 5 business days
+* **Resolution & Disclosure:** We will coordinate a remediation timeline and patch release prior to public disclosure.
 
 ---
 
-## 5. Environment Secrets Management
+## Supported Versions
 
-- **Secrets Isolation**: Environment variables (`DATABASE_URL`, `NEXTAUTH_SECRET`, `CRON_SECRET`, `GOOGLE_CLIENT_SECRET`) must be stored exclusively in `.env` or secure secret management systems (e.g. Vercel Secrets).
-- **Git Protection**: `.env` files are ignored in `.gitignore` to prevent secret leakage in public repositories.
+Only the current `main` branch deployed to production receives active security updates and patches.
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 2.x     | Yes                |
+| 1.x     | No (Legacy/Archive) |
+| < 1.0   | No                 |
+
+---
+
+## Security Practices in Cybernix Nexus
+
+### 1. Authentication & Session Security
+* All protected endpoints (`/api/student`, `/api/dashboard/velocity`, etc.) require authenticated sessions verified via `getServerSession(authOptions)` with NextAuth.
+* Passwords are encrypted using `bcryptjs` with a work factor of 10 (`bcrypt.hash(password, 10)`). Plaintext passwords are never stored, logged, or returned in API responses.
+* OAuth tokens exchanged via Google are stored securely in the PostgreSQL `Account` table with appropriate scope restrictions.
+
+### 2. Database Protection & SQL Injection Prevention
+* Database communication uses Prisma ORM. Prisma executes parameterized queries for all operations, preventing SQL injection vulnerabilities.
+* User inputs and handle strings are trimmed and sanitized before persisting to the database.
+
+### 3. Rate Limiting & Platform Scraper Safety
+* External HTTP requests to competitive programming platforms (LeetCode, Codeforces, CodeChef, GeeksforGeeks) utilize strict `AbortController` timeout signals (8 to 12 seconds) to avoid thread blocking.
+* Requests handle rate limits and transient connection issues gracefully using `Promise.allSettled` without exposing internal error stack traces to clients.
+
+### 4. Environment Secrets & Access Control
+* Environment configuration is loaded via environment variables (`DATABASE_URL`, `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`).
+* Secret keys and database credentials must never be committed to source control. Production deployments should use encrypted secret managers (such as Vercel Environment Variables or Supabase Vault).
