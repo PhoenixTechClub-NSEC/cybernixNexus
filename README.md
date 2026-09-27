@@ -1,5 +1,7 @@
 # Cybernix Nexus
 
+![Cybernix Nexus Banner](./public/banner.jpg)
+
 An inter-department algorithmic coding and competitive programming platform for Netaji Subhash Engineering College (NSEC).
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_3.0-E5484D.svg?style=flat-square&labelColor=111111)](https://www.gnu.org/licenses/agpl-3.0)
