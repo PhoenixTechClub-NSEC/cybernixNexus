@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
-interface ExternalContest {
+export interface ContestFeedItem {
   id: string;
   title: string;
   platform: string;
@@ -16,6 +16,11 @@ interface ExternalContest {
   badge: string;
   ratedFor: string;
   isRegisteredByMe: boolean;
+  maxParticipants?: number;
+  venue?: string;
+  prize?: string;
+  hostedInternal?: boolean;
+  displayRegisteredUsers?: boolean;
 }
 
 export async function GET(req: Request) {
@@ -86,6 +91,11 @@ export async function GET(req: Request) {
       description: string | null;
       badge: string | null;
       ratedFor: string | null;
+      venue?: string | null;
+      prize?: string | null;
+      maxParticipants?: number | null;
+      hostedInternal?: boolean;
+      displayRegisteredUsers?: boolean;
       registrations: Array<{ studentId: string }>;
     }> = [];
 
@@ -104,14 +114,14 @@ export async function GET(req: Request) {
     }
 
     // 2. Fetch live upcoming external contests (Codeforces, LeetCode, CodeChef) in parallel
-    let liveExternalContests: ExternalContest[] = [];
+    let liveExternalContests: ContestFeedItem[] = [];
     if (!isInternal) {
-      const fetchPromises: Promise<ExternalContest[]>[] = [];
+      const fetchPromises: Promise<ContestFeedItem[]>[] = [];
 
       // Codeforces
       if (!platform || platform === 'ALL' || platform === 'Codeforces') {
         fetchPromises.push(
-          (async (): Promise<ExternalContest[]> => {
+          (async (): Promise<ContestFeedItem[]> => {
             const cfRes = await fetch('https://codeforces.com/api/contest.list?gym=false', {
               signal: AbortSignal.timeout(8000),
               next: { revalidate: 3600 },
@@ -158,7 +168,7 @@ export async function GET(req: Request) {
       // LeetCode
       if (!platform || platform === 'ALL' || platform === 'LeetCode') {
         fetchPromises.push(
-          (async (): Promise<ExternalContest[]> => {
+          (async (): Promise<ContestFeedItem[]> => {
             const lcRes = await fetch('https://leetcode.com/graphql', {
               method: 'POST',
               headers: {
@@ -211,7 +221,7 @@ export async function GET(req: Request) {
       // CodeChef
       if (!platform || platform === 'ALL' || platform === 'CodeChef') {
         fetchPromises.push(
-          (async (): Promise<ExternalContest[]> => {
+          (async (): Promise<ContestFeedItem[]> => {
             const ccRes = await fetch(
               'https://www.codechef.com/api/list/contests/all?sort_by=START&sorting_order=asc&offset=0&mode=all',
               {
@@ -292,23 +302,38 @@ export async function GET(req: Request) {
       }
     }
 
-    const formattedDbContests = dbContests.map((c) => ({
-      id: c.id,
-      title: c.title,
-      platform: c.platform,
-      startTime: c.startTime.toISOString(),
-      duration: c.duration,
-      registeredCount: c.registeredCount + c.registrations.length,
-      isInternal: c.isInternal,
-      url: c.url || '#',
-      description: c.description || '',
-      badge: c.badge || (c.isInternal ? 'Championship 🏆' : 'Rated Match'),
-      ratedFor: c.ratedFor || 'All Users',
-      isRegisteredByMe: currentStudentId ? c.registrations.some((r) => r.studentId === currentStudentId) : false,
-    }));
+    const nowMs = Date.now();
+    const formattedDbContests = dbContests.map((c) => {
+      const isReg = currentStudentId ? c.registrations.some((r) => r.studentId === currentStudentId) : false;
+      const unlockTimeMs = new Date(c.startTime).getTime() - 60 * 60 * 1000;
+      const isUnlocked = nowMs >= unlockTimeMs;
+      const safeUrl = c.isInternal
+        ? (isReg && isUnlocked ? c.url || `/contests/${c.id}` : `/contests/${c.id}`)
+        : (c.url || '#');
+
+      return {
+        id: c.id,
+        title: c.title,
+        platform: c.platform,
+        startTime: c.startTime.toISOString(),
+        duration: c.duration,
+        registeredCount: Math.max(c.registeredCount, c.registrations.length),
+        maxParticipants: c.maxParticipants ?? 50,
+        venue: c.venue || 'APC Hall',
+        prize: c.prize || 'TBD',
+        hostedInternal: c.hostedInternal ?? false,
+        displayRegisteredUsers: c.displayRegisteredUsers ?? true,
+        isInternal: c.isInternal,
+        url: safeUrl,
+        description: c.description || '',
+        badge: c.badge || (c.isInternal ? 'Flagship Match' : 'Rated Match'),
+        ratedFor: c.ratedFor || 'All Users',
+        isRegisteredByMe: isReg,
+      };
+    });
 
     // Merge database contests + live external contests
-    const allContests = [...formattedDbContests];
+    const allContests: ContestFeedItem[] = [...formattedDbContests];
     for (const ext of liveExternalContests) {
       if (!allContests.some((d) => d.title.toLowerCase().includes(ext.title.toLowerCase()) || d.id === ext.id)) {
         allContests.push(ext);

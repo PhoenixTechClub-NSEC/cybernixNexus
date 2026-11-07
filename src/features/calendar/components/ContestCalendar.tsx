@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import {
   ChevronLeft,
   ChevronRight,
@@ -177,24 +178,24 @@ export function ContestCalendar() {
         </div>
       )}
       {/* Calendar Month & Navigation Controls */}
-      <div className="flex items-center justify-between pb-3 border-b border-onyx/10">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-golden-sand/25 text-tomato-jam flex items-center justify-center font-black shadow-2xs">
-            <CalendarDays className="w-5 h-5" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-onyx/10">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-golden-sand/25 text-tomato-jam flex items-center justify-center font-black shadow-2xs shrink-0">
+            <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <div>
-            <h3 className="text-lg font-black text-onyx leading-tight">
+          <div className="min-w-0">
+            <h3 className="text-base sm:text-lg font-black text-onyx leading-tight truncate">
               {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </h3>
-            <p className="text-xs text-onyx/60 font-medium">Official Contest Schedule &amp; Training</p>
+            <p className="text-[11px] sm:text-xs text-onyx/60 font-medium truncate">Official Contest Schedule &amp; Training</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
           <button
             type="button"
             onClick={handlePrevMonth}
-            className="p-2 rounded-xl border border-onyx/12 hover:bg-onyx/5 text-onyx/80 transition-colors cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl border border-onyx/12 hover:bg-onyx/5 text-onyx/80 transition-colors cursor-pointer"
             title="Previous Month"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -202,14 +203,14 @@ export function ContestCalendar() {
           <button
             type="button"
             onClick={handleToday}
-            className="px-3 py-1.5 rounded-xl bg-golden-sand/25 text-onyx text-xs font-extrabold border border-onyx/15 hover:bg-golden-sand/40 transition-all cursor-pointer shadow-2xs"
+            className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-golden-sand/25 text-onyx text-[11px] sm:text-xs font-extrabold border border-onyx/15 hover:bg-golden-sand/40 transition-all cursor-pointer shadow-2xs"
           >
             Today
           </button>
           <button
             type="button"
             onClick={handleNextMonth}
-            className="p-2 rounded-xl border border-onyx/12 hover:bg-onyx/5 text-onyx/80 transition-colors cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl border border-onyx/12 hover:bg-onyx/5 text-onyx/80 transition-colors cursor-pointer"
             title="Next Month"
           >
             <ChevronRight className="w-4 h-4" />
@@ -218,11 +219,11 @@ export function ContestCalendar() {
       </div>
 
       {/* Weekday Names Header (Sun - Sat) */}
-      <div className="grid grid-cols-7 gap-1 text-center">
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1 text-center">
         {weekdays.map((day) => (
           <div
             key={day}
-            className="text-[11px] font-black text-onyx/50 uppercase tracking-wider py-1"
+            className="text-[10px] sm:text-[11px] font-black text-onyx/50 uppercase tracking-wider py-1"
           >
             {day}
           </div>
@@ -230,10 +231,10 @@ export function ContestCalendar() {
       </div>
 
       {/* Dynamic Date Grid (Supports ANY month & leap years correctly) */}
-      <div className="grid grid-cols-7 gap-1.5 text-center">
+      <div className="grid grid-cols-7 gap-1 sm:gap-1.5 text-center">
         {calendarDays.map((dateObj, idx) => {
           if (!dateObj) {
-            return <div key={`empty-${idx}`} className="h-10 w-full rounded-xl bg-transparent" />;
+            return <div key={`empty-${idx}`} className="h-8 sm:h-10 w-full rounded-lg sm:rounded-xl bg-transparent" />;
           }
 
           const dateKey = formatDateKey(dateObj);
@@ -246,7 +247,7 @@ export function ContestCalendar() {
               key={dateKey}
               type="button"
               onClick={() => setSelectedDate(dateObj)}
-              className={`h-10 w-full rounded-xl text-xs font-bold transition-all relative flex flex-col items-center justify-center cursor-pointer ${isSelected
+              className={`h-8 sm:h-10 w-full rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all relative flex flex-col items-center justify-center cursor-pointer ${isSelected
                   ? 'bg-onyx text-white shadow-sm ring-2 ring-golden-sand scale-105 font-black z-10'
                   : hasContest
                     ? 'bg-tomato-jam text-white shadow-2xs hover:scale-105 font-black'
@@ -257,7 +258,7 @@ export function ContestCalendar() {
             >
               <span>{dateObj.getDate()}</span>
               {hasContest && (
-                <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-golden-sand"></span>
+                <span className="absolute bottom-0.5 sm:bottom-1 w-1.5 h-1.5 rounded-full bg-golden-sand"></span>
               )}
             </button>
           );
@@ -317,12 +318,20 @@ export function ContestCalendar() {
                     </div>
                   </div>
 
-                  {ev.url.startsWith('http') ? (
+                  {ev.url.startsWith('/contests/') ? (
+                    <Link
+                      href={ev.url}
+                      className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl bg-tomato-jam text-white text-xs font-bold hover:bg-red-700 transition-colors shrink-0 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs text-center"
+                    >
+                      <span>{isRegistered ? 'View Pass' : 'Register'}</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Link>
+                  ) : ev.url.startsWith('http') ? (
                     <a
                       href={ev.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-3.5 py-1.5 rounded-xl bg-tomato-jam text-white text-xs font-bold hover:bg-red-700 transition-colors shrink-0 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                      className="w-full sm:w-auto px-3.5 py-1.5 rounded-xl bg-tomato-jam text-white text-xs font-bold hover:bg-red-700 transition-colors shrink-0 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs text-center"
                     >
                       <span>Open Link</span>
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -332,7 +341,7 @@ export function ContestCalendar() {
                       type="button"
                       disabled={isRegistered}
                       onClick={() => handleRegister(ev.id, ev.url)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors shrink-0 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs ${isRegistered
+                      className={`w-full sm:w-auto px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors shrink-0 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs text-center ${isRegistered
                           ? 'bg-emerald-600 text-white cursor-default'
                           : 'bg-tomato-jam text-white hover:bg-red-700'
                         }`}

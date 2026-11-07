@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { ContestCalendar } from '@/features/calendar/components/ContestCalendar';
 import {
   Calendar,
@@ -132,50 +133,60 @@ export default function ContestsPage() {
 
       {/* Flagship Championship Highlight */}
       {flagshipContest && (
-        <div className="relative overflow-hidden rounded-3xl bg-onyx text-white p-6 sm:p-8 shadow-md border border-white/10">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-onyx text-white p-4 sm:p-6 md:p-8 shadow-md border border-white/10">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tomato-jam text-white text-xs font-black uppercase tracking-wider">
-                <span>{flagshipContest.isInternal ? '🏆 NSEC Major Contest' : `🔥 ${flagshipContest.platform} Major`}</span>
+            <div className="space-y-3 min-w-0">
+              <div className="inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-full bg-tomato-jam text-white text-[11px] sm:text-xs font-black uppercase tracking-wider max-w-full">
+                <span>{flagshipContest.isInternal ? 'NSEC Major Contest' : `${flagshipContest.platform} Major`}</span>
                 <span>•</span>
                 <span>{flagshipContest.badge || '2.0x Multiplier'}</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-white">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white break-words">
                 {flagshipContest.title}
               </h2>
               <p className="text-xs sm:text-sm text-white/70 max-w-xl">
                 {flagshipContest.description || 'Solve algorithmic challenges curated by senior mentors. Scores count directly toward individual standings and inter-department trophies.'}
               </p>
-              <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-golden-sand pt-1">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs font-bold text-golden-sand pt-1">
                 <span className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-tomato-jam" />
-                  {new Date(flagshipContest.startTime).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} ({flagshipContest.duration})
+                  <Clock className="w-3.5 h-3.5 text-tomato-jam shrink-0" />
+                  <span>
+                    {new Date(flagshipContest.startTime).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} ({flagshipContest.duration})
+                  </span>
                 </span>
-                <span>•</span>
+                <span className="hidden sm:inline">•</span>
                 <span className="flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-golden-sand" />
-                  {flagshipContest.registeredCount || 0} Registered Coders
+                  <Users className="w-3.5 h-3.5 text-golden-sand shrink-0" />
+                  <span>{flagshipContest.registeredCount || 0} Registered Coders</span>
                 </span>
               </div>
             </div>
 
-            <div className="shrink-0">
-              {flagshipContest.url && flagshipContest.url.startsWith('http') ? (
+            <div className="shrink-0 flex items-center gap-3 w-full md:w-auto">
+              {flagshipContest.isInternal ? (
+                <Link
+                  href={`/contests/${flagshipContest.id}`}
+                  className="w-full md:w-auto px-6 sm:px-8 py-3.5 rounded-2xl font-black text-sm shadow-lg transition-transform cursor-pointer inline-flex items-center justify-center gap-2 bg-tomato-jam text-white hover:scale-105 shadow-tomato-jam/30 text-center"
+                >
+                  <span>{registeredMap[flagshipContest.id] ? 'View Pass & Arena' : 'Register & Details'}</span>
+                  <ExternalLink className="w-4 h-4 shrink-0" />
+                </Link>
+              ) : flagshipContest.url && flagshipContest.url.startsWith('http') ? (
                 <a
                   href={flagshipContest.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-8 py-3.5 rounded-2xl font-black text-sm shadow-lg transition-transform cursor-pointer inline-flex items-center gap-2 bg-tomato-jam text-white hover:scale-105 shadow-tomato-jam/30"
+                  className="w-full md:w-auto px-6 sm:px-8 py-3.5 rounded-2xl font-black text-sm shadow-lg transition-transform cursor-pointer inline-flex items-center justify-center gap-2 bg-tomato-jam text-white hover:scale-105 shadow-tomato-jam/30 text-center"
                 >
                   <span>Open Contest Arena</span>
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="w-4 h-4 shrink-0" />
                 </a>
               ) : (
                 <button
                   type="button"
                   disabled={registeredMap[flagshipContest.id]}
                   onClick={() => handleRegisterContest(flagshipContest.id, flagshipContest.title)}
-                  className={`px-8 py-3.5 rounded-2xl font-black text-sm shadow-lg transition-transform cursor-pointer ${
+                  className={`w-full md:w-auto px-6 sm:px-8 py-3.5 rounded-2xl font-black text-sm shadow-lg transition-transform cursor-pointer text-center ${
                     registeredMap[flagshipContest.id]
                       ? 'bg-emerald-600 text-white cursor-default'
                       : 'bg-tomato-jam text-white hover:scale-105 shadow-tomato-jam/30'
@@ -190,8 +201,8 @@ export default function ContestsPage() {
       )}
 
       {/* Main Grid: Multi-Platform Calendar on Left, List on Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-7 bg-white rounded-3xl p-6 border border-onyx/12 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+        <div className="lg:col-span-7 bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-6 border border-onyx/12 shadow-sm">
           <ContestCalendar />
         </div>
 
@@ -245,7 +256,18 @@ export default function ContestsPage() {
                         {c.registeredCount || 0} registered
                       </span>
 
-                      {c.url && c.url.startsWith('http') ? (
+                      {c.isInternal ? (
+                        <Link
+                          href={`/contests/${c.id}`}
+                          className={`px-3 py-1 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
+                            isReg
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-tomato-jam text-white hover:bg-[#E8890C]'
+                          }`}
+                        >
+                          {isReg ? 'View Pass ✓' : 'Register'}
+                        </Link>
+                      ) : c.url && c.url.startsWith('http') ? (
                         <a
                           href={c.url}
                           target="_blank"
