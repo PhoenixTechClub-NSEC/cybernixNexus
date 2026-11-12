@@ -95,6 +95,7 @@ export async function GET(req: Request) {
       prize?: string | null;
       maxParticipants?: number | null;
       hostedInternal?: boolean;
+      isLinkPublished?: boolean;
       displayRegisteredUsers?: boolean;
       registrations: Array<{ studentId: string }>;
     }> = [];
@@ -302,13 +303,10 @@ export async function GET(req: Request) {
       }
     }
 
-    const nowMs = Date.now();
     const formattedDbContests = dbContests.map((c) => {
       const isReg = currentStudentId ? c.registrations.some((r) => r.studentId === currentStudentId) : false;
-      const unlockTimeMs = new Date(c.startTime).getTime() - 60 * 60 * 1000;
-      const isUnlocked = nowMs >= unlockTimeMs;
       const safeUrl = c.isInternal
-        ? (isReg && isUnlocked ? c.url || `/contests/${c.id}` : `/contests/${c.id}`)
+        ? `/contests/${c.id}`
         : (c.url || '#');
 
       return {
@@ -319,7 +317,7 @@ export async function GET(req: Request) {
         duration: c.duration,
         registeredCount: Math.max(c.registeredCount, c.registrations.length),
         maxParticipants: c.maxParticipants ?? 50,
-        venue: c.venue || 'APC Hall',
+        venue: c.venue || 'TBD',
         prize: c.prize || 'TBD',
         hostedInternal: c.hostedInternal ?? false,
         displayRegisteredUsers: c.displayRegisteredUsers ?? true,

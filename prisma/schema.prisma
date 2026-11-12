@@ -243,6 +243,7 @@ model Contest {
   displayRegisteredUsers Boolean            @default(true)
   prize               String?
   hostedInternal      Boolean               @default(false)
+  isLinkPublished     Boolean               @default(false)
   registrationDeadline DateTime?
   ContestInfringement ContestInfringement[]
   registrations       ContestRegistration[]

@@ -101,12 +101,12 @@ export async function GET(
     const linkUnlockTime = new Date(startTime.getTime() - 60 * 60 * 1000); // 1 hour before
     const contestEndTime = new Date(startTime.getTime() + parseDurationMs(contest.duration));
 
-    const isLinkUnlocked = now >= linkUnlockTime;
     const isEventStarted = now >= startTime;
     const isContestEnded = now >= contestEndTime;
+    const isLinkUnlocked = Boolean(contest.url) && contest.isLinkPublished && !isContestEnded;
 
-    // Secure the external link: strictly provide it only to registered students within the 1-hour window before contest end
-    const canViewArenaLink = Boolean(currentUserRegistration) && isLinkUnlocked && !isContestEnded;
+    // Secure the external link: strictly provide it only to registered students when published by admins and before contest end
+    const canViewArenaLink = Boolean(currentUserRegistration) && isLinkUnlocked;
     const authorizedUrl = canViewArenaLink ? contest.url : null;
 
     // Filter public registration data strictly to non-sensitive fields
@@ -135,12 +135,13 @@ export async function GET(
         hostedInternal: contest.hostedInternal,
         url: authorizedUrl,
         linkUnlockTime: linkUnlockTime.toISOString(),
+        isLinkPublished: contest.isLinkPublished,
         isLinkUnlocked,
         isEventStarted,
         isContestEnded,
         description: contest.description,
         badge: contest.badge,
-        venue: contest.venue || 'APC Hall',
+        venue: contest.venue || 'TBD',
         prize: contest.prize || 'TBD',
         registrationDeadline: contest.registrationDeadline,
         isRegistrationClosed: Boolean(contest.registrationDeadline && now > new Date(contest.registrationDeadline)),

@@ -64,6 +64,7 @@ export async function listContests() {
     Venue: c.venue || 'N/A',
     Capacity: `${c._count.registrations}/${c.maxParticipants ?? 50}`,
     HostedInternal: c.hostedInternal ? 'Yes (Nexus)' : 'No (External)',
+    LinkStatus: c.isLinkPublished && c.url ? 'Published' : c.url ? 'Hidden (Set)' : 'Not Set',
     RegDeadline: formatDeadlineStatus(c.registrationDeadline),
     Status: c.status,
   }));
@@ -106,7 +107,8 @@ export async function viewContest(contestId: string) {
   console.log(`Registration Deadline: ${contest.registrationDeadline ? `${contest.registrationDeadline.toISOString()} (${new Date(contest.registrationDeadline).toLocaleString()})` : 'None (Unlimited)'}`);
   console.log(`Registration Status:   ${formatDeadlineStatus(contest.registrationDeadline)}`);
   console.log(`Hosted Internal:       ${contest.hostedInternal ? 'Yes' : 'No (External Platform)'}`);
-  console.log(`External Arena URL:    ${contest.url || 'None'}`);
+  console.log(`External Arena URL:    ${contest.url || 'Not Set Yet'}`);
+  console.log(`Link Publicly Visible: ${contest.isLinkPublished ? 'YES (Registered Users Only)' : 'NO (Hidden)'}`);
   console.log(`Display Users:         ${contest.displayRegisteredUsers ? 'Enabled' : 'Disabled'}`);
   console.log(`Contest Status:        ${contest.status}`);
 
@@ -158,6 +160,54 @@ export async function updateRegistrationDeadline(contestId: string, deadline: Da
   return updated;
 }
 
+export async function setContestLink(contestId: string, url: string | null, publish?: boolean) {
+  const contest = await prisma.contest.findUnique({
+    where: { id: contestId },
+    select: { id: true, title: true },
+  });
+  if (!contest) {
+    console.error(`Contest not found with ID: ${contestId}`);
+    return null;
+  }
+
+  const updated = await prisma.contest.update({
+    where: { id: contestId },
+    data: {
+      url,
+      ...(typeof publish === 'boolean' ? { isLinkPublished: publish } : {}),
+    },
+  });
+
+  console.log(`\nArena link updated for '${updated.title}'!`);
+  console.log(`URL:       ${updated.url || 'Not Set'}`);
+  console.log(`Published: ${updated.isLinkPublished ? 'YES (Visible to registered users)' : 'NO (Hidden)'}`);
+  return updated;
+}
+
+export async function setLinkPublished(contestId: string, isLinkPublished: boolean) {
+  const contest = await prisma.contest.findUnique({
+    where: { id: contestId },
+    select: { id: true, title: true, url: true },
+  });
+  if (!contest) {
+    console.error(`Contest not found with ID: ${contestId}`);
+    return null;
+  }
+
+  if (isLinkPublished && !contest.url) {
+    console.error(`Cannot publish link for '${contest.title}': URL is not set yet. Use 'set-link' first.`);
+    return null;
+  }
+
+  const updated = await prisma.contest.update({
+    where: { id: contestId },
+    data: { isLinkPublished },
+  });
+
+  console.log(`\nLink visibility updated for '${updated.title}': ${updated.isLinkPublished ? 'PUBLISHED (Registered users only)' : 'HIDDEN'}`);
+  return updated;
+}
+
 export async function createContest(data: {
   title: string;
   platform?: string;
@@ -168,7 +218,8 @@ export async function createContest(data: {
   prize?: string;
   isInternal?: boolean;
   hostedInternal?: boolean;
-  url?: string;
+  url?: string | null;
+  isLinkPublished?: boolean;
   displayRegisteredUsers?: boolean;
   registrationDeadline?: Date | null;
   badge?: string;
@@ -181,11 +232,12 @@ export async function createContest(data: {
       startTime: data.startTime,
       duration: data.duration || '3 hours',
       maxParticipants: data.maxParticipants ?? 50,
-      venue: data.venue || 'APC Hall',
+      venue: data.venue || 'CSE Project Lab, NSEC',
       prize: data.prize || 'TBD',
       isInternal: data.isInternal ?? true,
       hostedInternal: data.hostedInternal ?? false,
-      url: data.url || 'https://www.hackerrank.com/demo-contest-1793994250',
+      url: data.url ?? null,
+      isLinkPublished: data.isLinkPublished ?? false,
       displayRegisteredUsers: data.displayRegisteredUsers ?? true,
       registrationDeadline: data.registrationDeadline ?? new Date(data.startTime.getTime() - 24 * 60 * 60 * 1000),
       badge: data.badge || 'Flagship Internal Contest',
@@ -630,19 +682,50 @@ async function main() {
       await exportRegistrations(id, format);
       break;
     }
+    case 'set-link': {
+      const id = args[1];
+      const url = args[2] || null;
+      if (!id || !url) {
+        console.error('Usage: npm run event:admin -- set-link <contestId> <url> [--publish]');
+        process.exit(1);
+      }
+      const publish = args.includes('--publish');
+      await setContestLink(id, url, publish);
+      break;
+    }
+    case 'publish-link': {
+      const id = args[1];
+      if (!id) {
+        console.error('Usage: npm run event:admin -- publish-link <contestId>');
+        process.exit(1);
+      }
+      await setLinkPublished(id, true);
+      break;
+    }
+    case 'unpublish-link': {
+      const id = args[1];
+      if (!id) {
+        console.error('Usage: npm run event:admin -- unpublish-link <contestId>');
+        process.exit(1);
+      }
+      await setLinkPublished(id, false);
+      break;
+    }
     case 'create': {
       const getArg = (name: string, fallback: string) => {
         const found = args.find((a) => a.startsWith(`--${name}=`));
-        return found ? found.split('=')[1] : fallback;
+        return found ? found.slice(name.length + 3) : fallback;
       };
 
-      const title = getArg('title', 'Dimaag-e-Maqsad');
-      const venue = getArg('venue', 'APC Hall');
+      const title = getArg('title', 'Sytax Sangram');
+      const venue = getArg('venue', 'CSE Project Lab, NSEC');
       const maxParticipants = parseInt(getArg('max', '50'), 10);
       const prize = getArg('prize', 'TBD');
-      const dateStr = getArg('date', '2026-11-27T10:00:00.000Z');
+      const dateStr = getArg('date', '2026-11-27T08:30:00.000Z');
       const duration = getArg('duration', '3 hours');
-      const url = getArg('url', 'https://www.hackerrank.com/demo-contest-1793994250');
+      const urlRaw = getArg('url', '');
+      const url = urlRaw ? urlRaw : null;
+      const isLinkPublished = args.includes('--publish-link');
       const deadlineStr = getArg('deadline', '');
       const hostedInternal = args.includes('--hosted-internal');
       const displayUsers = !args.includes('--hide-users');
@@ -660,6 +743,7 @@ async function main() {
         startTime,
         duration,
         url,
+        isLinkPublished,
         hostedInternal,
         displayRegisteredUsers: displayUsers,
         registrationDeadline,
@@ -672,11 +756,14 @@ async function main() {
       console.log('  npm run event:admin -- list');
       console.log('  npm run event:admin -- view <contestId>');
       console.log('  npm run event:admin -- seed');
+      console.log('  npm run event:admin -- set-link <contestId> <url> [--publish]');
+      console.log('  npm run event:admin -- publish-link <contestId>');
+      console.log('  npm run event:admin -- unpublish-link <contestId>');
       console.log('  npm run event:admin -- reopen <contestId> [--hours=X | --days=X | --deadline=...]');
       console.log('  npm run event:admin -- close <contestId>');
       console.log('  npm run event:admin -- export <contestId> [--format=csv|json|all]');
       console.log('  npm run event:admin -- delete <contestId>');
-      console.log('  npm run event:admin -- create [--title=...] [--venue=...] [--max=50] [--prize=...] [--date=...] [--deadline=...]');
+      console.log('  npm run event:admin -- create [--title=...] [--venue=...] [--max=50] [--prize=...] [--date=...] [--deadline=...] [--url=...]');
       process.exit(1);
     }
   }

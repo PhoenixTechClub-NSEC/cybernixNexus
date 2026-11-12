@@ -274,7 +274,7 @@ export default function ContestDetailPage({
   const spotsLeft = contest.spotsLeft;
   const fillPercentage = Math.min(100, Math.round(((spotsTotal - spotsLeft) / spotsTotal) * 100));
 
-  const isLinkUnlocked = Boolean(contest.isLinkUnlocked || linkCountdown.isCompleted);
+  const isLinkUnlocked = Boolean(contest.isLinkUnlocked);
   const isEventStarted = Boolean(contest.isEventStarted || startCountdown.isCompleted);
   const isContestEnded = Boolean(contest.isContestEnded);
 
@@ -304,7 +304,7 @@ export default function ContestDetailPage({
             </span>
             {!contest.hostedInternal && (
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-golden-sand/20 text-golden-sand text-xs font-bold">
-                External Arena: HackerRank
+                External Arena
               </span>
             )}
           </div>
@@ -343,7 +343,7 @@ export default function ContestDetailPage({
                 <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 Venue
               </span>
-              <p className="text-xs sm:text-sm font-black text-white truncate">{contest.venue || 'APC Hall'}</p>
+              <p className="text-xs sm:text-sm font-black text-white truncate">{contest.venue || 'TBD'}</p>
             </div>
 
             <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white/5 border border-white/10 space-y-1 min-w-0">
@@ -577,12 +577,12 @@ export default function ContestDetailPage({
                 </div>
                 <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-onyx/8 min-w-0">
                   <span className="text-onyx/50 font-bold block text-[11px]">Venue Check-in</span>
-                  <span className="font-black text-onyx text-xs sm:text-sm break-words">{contest.venue || 'APC Hall'}</span>
+                  <span className="font-black text-onyx text-xs sm:text-sm break-words">{contest.venue || 'TBD'}</span>
                 </div>
               </div>
 
               <p className="text-[11px] text-onyx/60 italic pt-1">
-                Important: Keep this Participant ID ready. It will be required for physical verification at {contest.venue || 'APC Hall'}.
+                Important: Keep this Participant ID ready. It will be required for physical verification at {contest.venue || 'the venue'}.
               </p>
             </div>
           </div>
@@ -671,7 +671,7 @@ export default function ContestDetailPage({
                 )}
               </div>
               <h3 className="text-lg sm:text-xl font-black text-onyx mt-1 break-words">
-                Official Match Arena: HackerRank Platform
+                Official Match Arena: External Platform
               </h3>
             </div>
 
@@ -731,7 +731,7 @@ export default function ContestDetailPage({
                     <span>Participation Link Displayed In</span>
                   </p>
                   <p className="text-[11px] text-onyx/70 leading-relaxed">
-                    To maintain contest integrity, the HackerRank arena URL is revealed strictly to registered coders exactly 1 hour prior to kickoff.
+                    To maintain contest integrity, the external arena URL will be published by the organizers strictly to registered coders before kickoff.
                   </p>
                 </div>
 
@@ -764,7 +764,7 @@ export default function ContestDetailPage({
             ) : isLinkUnlocked ? (
               isRegistered ? (
                 <p>
-                  The arena is unlocked. Click <strong>Enter Contest Arena</strong> above to enter HackerRank. Make sure your Participant ID ({userRegistration?.participantId}) is handy.
+                  The arena is unlocked. Click <strong>Enter Contest Arena</strong> above to open the external contest platform. Make sure your Participant ID ({userRegistration?.participantId}) is handy.
                 </p>
               ) : (
                 <p className="text-tomato-jam font-bold">
