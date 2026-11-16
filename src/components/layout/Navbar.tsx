@@ -241,36 +241,52 @@ export function Navbar() {
       </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-16">
-          {/* Logo */}
-          <Link
-            href="/dashboard"
-            className="navbar-logo flex items-center gap-2 sm:gap-3 cursor-pointer min-w-0"
-          >
-            <div className="flex items-center justify-center w-9 sm:w-10 h-9 sm:h-10 shrink-0">
-              <img
-                src="/pheonix_mod1.png"
-                alt="Phoenix Logo"
-                className="w-9 sm:w-10 h-9 sm:h-10 object-contain drop-shadow-sm scale-[3]"
-                width="40"
-                height="40"
-                fetchPriority="high"
-              />
-            </div>
-            <div className="pr-1 sm:pr-2 min-w-0">
-              <div className="flex items-center gap-1 sm:gap-1.5">
-                <span className="font-extrabold text-base sm:text-xl tracking-tight text-onyx whitespace-nowrap">
-                  Cybernix <span className="text-tomato-jam">Nexus</span>
-                </span>
-                <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider bg-golden-sand/20 text-onyx px-1 sm:px-1.5 py-0.5 rounded border border-onyx/12 shrink-0">
-                  NSEC
-                </span>
+        <div className="flex items-center justify-between min-h-14 sm:h-16">
+          <div className="flex flex-col items-start">
+            {/* Logo */}
+            <Link
+              href="/dashboard"
+              className="navbar-logo flex items-center gap-2 sm:gap-3 cursor-pointer min-w-0"
+            >
+              <div className="flex items-center justify-center w-9 sm:w-10 h-9 sm:h-10 shrink-0">
+                <img
+                  src="/pheonix_mod1.png"
+                  alt="Phoenix Logo"
+                  className="w-9 sm:w-10 h-9 sm:h-10 object-contain drop-shadow-sm scale-[3]"
+                  width="40"
+                  height="40"
+                  fetchPriority="high"
+                />
               </div>
-              <p className="text-[8px] sm:text-[9px] text-onyx/70 font-bold uppercase tracking-wider -mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-                NSEC PHOENIX CLUB . cybernix
-              </p>
-            </div>
-          </Link>
+              <div className="pr-1 sm:pr-2 min-w-0">
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <span className="font-extrabold text-base sm:text-xl tracking-tight text-onyx whitespace-nowrap">
+                    Cybernix <span className="text-tomato-jam">Nexus</span>
+                  </span>
+                  <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider bg-golden-sand/20 text-onyx px-1 sm:px-1.5 py-0.5 rounded border border-onyx/12 shrink-0">
+                    NSEC
+                  </span>
+                </div>
+                <p className="text-[8px] sm:text-[9px] text-onyx/70 font-bold uppercase tracking-wider -mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                  NSEC PHOENIX CLUB . cybernix
+                </p>
+              </div>
+            </Link>
+            <a
+              href="https://www.codecrafters.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="CP Event Partner - CodeCrafters"
+              aria-label="CodeCrafters - CP Event Partner"
+              className="md:hidden ml-11"
+            >
+              <img
+                src="/sponsors/codecrafters/Lockup-Horizontal-Dark.svg"
+                alt="CodeCrafters - CP Event Partner"
+                className="h-3 w-auto object-contain"
+              />
+            </a>
+          </div>
 
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-1">
@@ -460,24 +476,6 @@ export function Navbar() {
             })}
 
             <div className="pt-2 mt-2 border-t border-onyx/10 flex flex-col gap-2">
-              <a
-                href="https://www.codecrafters.io"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="CP Event Partner - CodeCrafters"
-                className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-golden-sand/20 border border-onyx/12 text-onyx text-xs font-bold hover:bg-golden-sand/30 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase font-black tracking-wider text-tomato-jam">Partner:</span>
-                  <img
-                    src="/sponsors/codecrafters/Lockup-Horizontal-Dark.svg"
-                    alt="CodeCrafters"
-                    className="h-4 w-auto object-contain"
-                  />
-                </div>
-                <span className="text-[10px] text-onyx/70">codecrafters.io ↗</span>
-              </a>
-
               <button
                 type="button"
                 onClick={() => {
