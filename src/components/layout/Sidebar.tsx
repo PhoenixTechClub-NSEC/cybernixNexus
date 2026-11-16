@@ -200,27 +200,47 @@ export function Sidebar() {
         </div>
 
         <div className="space-y-8">
-          {/* Brand Logo */}
-          <Link
-            href="/dashboard"
-            className="sidebar-logo flex items-center gap-3 px-3 pr-6 mb-6 cursor-pointer"
-          >
-            <div className="flex items-center justify-center w-10 h-10 shrink-0">
-              <img
-                src="/pheonix_mod1.png"
-                alt="Phoenix Logo"
-                className="w-10 h-10 object-contain drop-shadow-md scale-[3] brightness-0 invert"
-              />
+          {/* Brand Logo & Partner */}
+          <div className="px-3 pr-6 mb-6 space-y-3">
+            <Link
+              href="/dashboard"
+              className="sidebar-logo flex items-center gap-3 cursor-pointer"
+            >
+              <div className="flex items-center justify-center w-10 h-10 shrink-0">
+                <img
+                  src="/pheonix_mod1.png"
+                  alt="Phoenix Logo"
+                  className="w-10 h-10 object-contain drop-shadow-md scale-[3] brightness-0 invert"
+                />
+              </div>
+              <div className="pr-4">
+                <span className="font-extrabold text-2xl tracking-tight text-white flex items-center gap-1">
+                  Cybernix <span className="text-golden-sand">Nexus</span>
+                </span>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-golden-sand/60 block mt-0.5">
+                  NSEC PHOENIX CLUB | cybernix
+                </span>
+              </div>
+            </Link>
+
+            {/* CodeCrafters Partner */}
+            <div className="pt-2 border-t border-white/10 flex items-center">
+              <a
+                href="https://www.codecrafters.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="CP Event Partner - CodeCrafters"
+                aria-label="CodeCrafters - CP Event Partner"
+                className="group flex items-center opacity-80 hover:opacity-100 transition-all duration-200"
+              >
+                <img
+                  src="/sponsors/codecrafters/Lockup-Horizontal-White.svg"
+                  alt="CodeCrafters - CP Event Partner"
+                  className="h-4 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                />
+              </a>
             </div>
-            <div className="pr-4">
-              <span className="font-extrabold text-2xl tracking-tight text-white flex items-center gap-1">
-                Cybernix <span className="text-golden-sand">Nexus</span>
-              </span>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-golden-sand/60 block mt-0.5">
-                NSEC PHOENIX CLUB | cybernix
-              </span>
-            </div>
-          </Link>
+          </div>
 
           <nav className="space-y-1.5" ref={navRef}>
             {navItems.map((item) => {
