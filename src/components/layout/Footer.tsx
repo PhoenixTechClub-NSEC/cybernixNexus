@@ -25,7 +25,7 @@ export function Footer() {
           setTotalStudents(data.summary.totalStudents);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const { contextSafe } = useGSAP({ scope: footerRef });
@@ -125,9 +125,9 @@ export function Footer() {
   return (
     <footer
       ref={footerRef}
-      className="border-t border-onyx/12 bg-white/80 backdrop-blur-md mt-auto"
+      className="border border-onyx/10 bg-white/70 backdrop-blur-md rounded-2xl sm:rounded-3xl mt-auto shadow-2xs overflow-hidden"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Col 1: Brand & Club info */}
           <div className="space-y-3 md:col-span-1">
@@ -157,6 +157,27 @@ export function Footer() {
                   {dept}
                 </span>
               ))}
+            </div>
+
+            {/* Official Event Partner Sponsor Box */}
+            <div className="pt-2">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-onyx/60 block mb-1.5">
+                Event Partner
+              </span>
+              <a
+                href="https://www.codecrafters.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="CodeCrafters - Official CP Event Partner"
+                className="group inline-flex items-center gap-2.5 px-3 py-2 rounded-xl bg-golden-sand/15 hover:bg-golden-sand/30 border border-onyx/12 transition-all duration-200"
+              >
+                <img
+                  src="/sponsors/codecrafters/Lockup-Horizontal-Dark.svg"
+                  alt="CodeCrafters Logo"
+                  className="h-4 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                />
+                <ExternalLink className="w-3 h-3 text-onyx/50 group-hover:text-tomato-jam transition-colors" />
+              </a>
             </div>
           </div>
 
@@ -278,7 +299,7 @@ export function Footer() {
           <div className="flex items-center gap-4 mt-2 sm:mt-0">
             <span className="inline-flex items-center gap-1 text-tomato-jam font-medium">
               <span className="w-2 h-2 rounded-full bg-tomato-jam"></span>
-              Live Synced: {totalStudents > 0 ? totalStudents : '14+'} Registered Coders
+              Live Synced: {totalStudents > 0 ? totalStudents : '100+'} Registered Coders
             </span>
           </div>
         </div>

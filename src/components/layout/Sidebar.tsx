@@ -231,19 +231,12 @@ export function Sidebar() {
                 rel="noopener noreferrer"
                 title="CP Event Partner - CodeCrafters"
                 aria-label="CodeCrafters - CP Event Partner"
-                className="group flex items-center opacity-80 hover:opacity-100 transition-all duration-200"
+                className="group flex items-center opacity-85 hover:opacity-100 transition-all duration-200"
               >
-                {/* Full Lockup on larger screens */}
                 <img
                   src="/sponsors/codecrafters/Lockup-Horizontal-White.svg"
                   alt="CodeCrafters - CP Event Partner"
-                  className="hidden sm:block h-4 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                />
-                {/* Logo mark only on small mobile screens */}
-                <img
-                  src="/sponsors/codecrafters/White.svg"
-                  alt="CodeCrafters - CP Event Partner"
-                  className="block sm:hidden h-5 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  className="h-4 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
                 />
               </a>
             </div>

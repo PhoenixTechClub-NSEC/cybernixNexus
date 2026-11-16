@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
 import { Search, Bell, Plus, Loader2 } from 'lucide-react';
 import { useUser } from '@/components/providers/UserProvider';
 
@@ -125,8 +126,11 @@ export default function MainLayout({
             </div>
           </header>
 
-          {/* Main Page Content (No Footer) */}
+          {/* Main Page Content */}
           <main className="flex-1 w-full">{children}</main>
+
+          {/* Layout Footer */}
+          <Footer />
         </div>
       </div>
 

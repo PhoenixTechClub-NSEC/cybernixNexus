@@ -299,25 +299,13 @@ export function Navbar() {
             })}
           </nav>
 
-          {/* Mobile Streak & CP Score Pills (compact, visible only on sm-lg) */}
-          <div className="flex md:hidden items-center gap-1.5 sm:gap-2">
-            {/* Mobile Streak Pill */}
-            <div className="flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded-full bg-golden-sand/15 border border-onyx/12 text-onyx text-[9px] sm:text-[10px] font-bold shadow-2xs shrink-0">
-              <Flame className="w-3 h-3 fill-tomato-jam text-tomato-jam" />
-              <span className="whitespace-nowrap">{CURRENT_USER.currentStreak}d</span>
-            </div>
-
-            {/* Mobile CP Score Pill */}
-            <div className="flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded-lg bg-golden-sand/10 border border-onyx/12 text-onyx text-[9px] sm:text-[10px] font-bold shadow-2xs shrink-0">
-              <span>⭐</span>
-              <span className="whitespace-nowrap">{(CURRENT_USER.cpScore / 1000).toFixed(1)}k</span>
-            </div>
-
-            {/* Mobile Menu Button */}
+          {/* Mobile Right: Menu Button */}
+          <div className="flex md:hidden items-center">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-onyx/70 hover:bg-golden-sand/12 cursor-pointer transition-colors"
+              className="p-2 rounded-lg text-onyx/70 hover:bg-golden-sand/12 cursor-pointer transition-colors"
               title="Menu"
+              aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -471,7 +459,25 @@ export function Navbar() {
               );
             })}
 
-            <div className="pt-2 mt-2 border-t border-onyx/10">
+            <div className="pt-2 mt-2 border-t border-onyx/10 flex flex-col gap-2">
+              <a
+                href="https://www.codecrafters.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="CP Event Partner - CodeCrafters"
+                className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-golden-sand/20 border border-onyx/12 text-onyx text-xs font-bold hover:bg-golden-sand/30 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-black tracking-wider text-tomato-jam">Partner:</span>
+                  <img
+                    src="/sponsors/codecrafters/Lockup-Horizontal-Dark.svg"
+                    alt="CodeCrafters"
+                    className="h-4 w-auto object-contain"
+                  />
+                </div>
+                <span className="text-[10px] text-onyx/70">codecrafters.io ↗</span>
+              </a>
+
               <button
                 type="button"
                 onClick={() => {
