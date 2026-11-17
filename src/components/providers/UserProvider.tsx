@@ -12,6 +12,7 @@ const INITIAL_EMPTY_USER: UserProfile = {
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
   email: '',
   bio: 'NSEC Student Programmer',
+  role: 'STUDENT',
   department: 'CSE',
   year: '1st Year',
   collegeRank: 0,
@@ -135,6 +136,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           avatar: dbImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
           email: s.user?.email || '',
           bio: s.bio || `${s.department} '${String(gradYear).slice(2)} @ NSEC`,
+          role: s.user?.role || data.user?.role || 'STUDENT',
           department: s.department || 'CSE',
           year: yearString,
           rollNumber: s.rollNumber || '',
@@ -210,6 +212,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             ...prev,
             name: data.user.name || data.user.email?.split('@')[0] || 'NSEC Student',
             email: data.user.email || '',
+            role: data.user.role || prev.role || 'STUDENT',
             avatar: data.user.image || prev.avatar,
           };
           try {

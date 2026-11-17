@@ -17,6 +17,7 @@ import {
   ChevronRight,
   LogOut,
   Settings,
+  ShieldCheck,
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -53,12 +54,17 @@ export function Navbar() {
   const streakFlameRef = useRef<SVGSVGElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
+  const isAdminOrSuperAdmin = CURRENT_USER.role === 'ADMIN' || CURRENT_USER.role === 'SUPERADMIN';
+
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: Award },
     { name: 'Rankings', href: '/rankings', icon: Trophy },
     { name: 'Editorials', href: '/editorials', icon: BookOpen },
     { name: 'Profile', href: '/profile', icon: User },
     { name: 'Contests', href: '/contests', icon: Calendar },
+    ...(isAdminOrSuperAdmin
+      ? [{ name: 'Admin Hub', href: '/admin', icon: ShieldCheck }]
+      : []),
   ];
 
   // Smooth Mount Entrance Animations (60fps GPU transforms)

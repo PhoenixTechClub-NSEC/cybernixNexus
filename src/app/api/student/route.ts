@@ -27,7 +27,7 @@ export async function GET() {
           include: {
             stats: true,
             user: {
-              select: { email: true, image: true, name: true },
+              select: { email: true, image: true, name: true, role: true },
             },
             syncJobs: {
               take: 5,
@@ -53,7 +53,7 @@ export async function GET() {
         include: {
           stats: true,
           user: {
-            select: { email: true, image: true, name: true },
+            select: { email: true, image: true, name: true, role: true },
           },
           syncJobs: {
             take: 5,
@@ -77,14 +77,14 @@ export async function GET() {
       let dbUser = userId
         ? await prisma.user.findUnique({
             where: { id: userId },
-            select: { email: true, image: true, name: true },
+            select: { email: true, image: true, name: true, role: true },
           })
         : null;
 
       if (!dbUser && sessionUser.email) {
         dbUser = await prisma.user.findUnique({
           where: { email: sessionUser.email },
-          select: { email: true, image: true, name: true },
+          select: { email: true, image: true, name: true, role: true },
         });
       }
 

@@ -54,6 +54,7 @@ export interface UserProfile {
   avatar: string;
   email: string;
   bio: string;
+  role?: 'STUDENT' | 'ADMIN' | 'SUPERADMIN';
   department: Department;
   year: string;
   rollNumber?: string;
