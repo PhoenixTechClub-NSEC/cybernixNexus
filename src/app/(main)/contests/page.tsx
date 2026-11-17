@@ -94,11 +94,14 @@ export default function ContestsPage() {
     }
   };
 
-  const flagshipContest = useMemo(() => contests.find((c) => c.isInternal) || contests[0] || null, [contests]);
+  const flagshipContest = useMemo(() => {
+    return contests.find((c) => Boolean(c.isInternal || c.platform === 'NSEC Internal' || c.url?.startsWith('/contests/'))) || contests[0] || null;
+  }, [contests]);
 
   const filteredContests = useMemo(() => contests.filter((cnt) => {
+    const isInternal = Boolean(cnt.isInternal || cnt.platform === 'NSEC Internal' || cnt.url?.startsWith('/contests/'));
     if (filter === 'ALL') return true;
-    if (filter === 'Internal') return cnt.isInternal;
+    if (filter === 'Internal') return isInternal;
     return cnt.platform === filter;
   }), [contests, filter]);
 
@@ -163,7 +166,7 @@ export default function ContestsPage() {
             </div>
 
             <div className="shrink-0 flex items-center gap-3 w-full md:w-auto">
-              {flagshipContest.isInternal ? (
+              {Boolean(flagshipContest.isInternal || flagshipContest.platform === 'NSEC Internal' || flagshipContest.url?.startsWith('/contests/')) ? (
                 <Link
                   href={`/contests/${flagshipContest.id}`}
                   className="w-full md:w-auto px-6 sm:px-8 py-3.5 rounded-2xl font-black text-sm shadow-lg transition-transform cursor-pointer inline-flex items-center justify-center gap-2 bg-tomato-jam text-white hover:scale-105 shadow-tomato-jam/30 text-center"
@@ -256,7 +259,7 @@ export default function ContestsPage() {
                         {c.registeredCount || 0} registered
                       </span>
 
-                      {c.isInternal ? (
+                      {Boolean(c.isInternal || c.platform === 'NSEC Internal' || c.url?.startsWith('/contests/')) ? (
                         <Link
                           href={`/contests/${c.id}`}
                           className={`px-3 py-1 rounded-xl text-xs font-bold cursor-pointer transition-colors ${

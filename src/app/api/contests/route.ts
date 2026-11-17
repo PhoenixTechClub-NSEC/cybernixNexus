@@ -305,7 +305,8 @@ export async function GET(req: Request) {
 
     const formattedDbContests = dbContests.map((c) => {
       const isReg = currentStudentId ? c.registrations.some((r) => r.studentId === currentStudentId) : false;
-      const safeUrl = c.isInternal
+      const isInternal = Boolean(c.isInternal || c.hostedInternal || c.platform === 'NSEC Internal');
+      const safeUrl = isInternal
         ? `/contests/${c.id}`
         : (c.url || '#');
 
@@ -321,10 +322,10 @@ export async function GET(req: Request) {
         prize: c.prize || 'TBD',
         hostedInternal: c.hostedInternal ?? false,
         displayRegisteredUsers: c.displayRegisteredUsers ?? true,
-        isInternal: c.isInternal,
+        isInternal,
         url: safeUrl,
         description: c.description || '',
-        badge: c.badge || (c.isInternal ? 'Flagship Match' : 'Rated Match'),
+        badge: c.badge || (isInternal ? 'Flagship Match' : 'Rated Match'),
         ratedFor: c.ratedFor || 'All Users',
         isRegisteredByMe: isReg,
       };
