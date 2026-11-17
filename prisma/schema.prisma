@@ -71,6 +71,7 @@ model Student {
   leetcode             String?
   codeforces           String?
   codechef             String?
+  hackerrank           String?
   github               String?
   linkedin             String?
   profileComplete      Boolean               @default(false)
@@ -266,6 +267,7 @@ model ContestRegistration {
   academicYear    String?
   email           String?
   phoneNumber     String?
+  hackerrank      String?
   createdAt       DateTime           @default(now())
   dqReason        String?
   finishTime      DateTime?

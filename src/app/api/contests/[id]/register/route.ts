@@ -43,23 +43,24 @@ export async function POST(
     }
 
     const body = (await req.json()) as {
-      username?: string;
       fullName?: string;
       studentIdNumber?: string;
       academicYear?: string;
       email?: string;
       phoneNumber?: string;
+      hackerrank?: string;
     };
 
-    const username = (body.username || student.username || sessionUser.email?.split('@')[0] || '').trim().toLowerCase();
+    const username = (student.username || sessionUser.email?.split('@')[0] || '').trim().toLowerCase();
     const fullName = (body.fullName || student.name || sessionUser.name || '').trim();
-    const studentIdNumber = (body.studentIdNumber || student.rollNumber || '').trim();
-    const academicYear = (body.academicYear || `${student.graduationYear}` || '').trim();
+    const studentIdNumber = (body.studentIdNumber || (student.rollNumber && !student.rollNumber.startsWith('TEMP-') ? student.rollNumber : '') || '').trim();
+    const academicYear = (body.academicYear || '').trim();
     const email = (body.email || sessionUser.email || '').trim();
     const phoneNumber = (body.phoneNumber || '').trim();
+    const hackerrank = (body.hackerrank || student.hackerrank || '').trim();
 
     if (!username) {
-      return NextResponse.json({ success: false, error: 'Username is required.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Username is not set for your profile. Please update your profile username first.' }, { status: 400 });
     }
     if (!fullName) {
       return NextResponse.json({ success: false, error: 'Full name is required.' }, { status: 400 });
@@ -76,24 +77,70 @@ export async function POST(
     if (!phoneNumber) {
       return NextResponse.json({ success: false, error: 'Phone number is required.' }, { status: 400 });
     }
-
-    // If username is specified and different, ensure it's not taken by another student
-    if (username && username !== student.username) {
-      const existingUser = await prisma.student.findUnique({
-        where: { username },
-      });
-      if (existingUser && existingUser.id !== student.id) {
-        return NextResponse.json(
-          { success: false, error: `The username '@${username}' is already taken. Please choose another.` },
-          { status: 400 }
-        );
-      }
-      // Update student username
-      await prisma.student.update({
-        where: { id: student.id },
-        data: { username },
-      });
+    if (!hackerrank) {
+      return NextResponse.json({ success: false, error: 'HackerRank Username is required.' }, { status: 400 });
     }
+
+    // Check duplicate studentIdNumber across other students in Student table
+    const duplicateRoll = await prisma.student.findFirst({
+      where: {
+        rollNumber: studentIdNumber,
+        id: { not: student.id },
+      },
+    });
+    if (duplicateRoll) {
+      return NextResponse.json(
+        { success: false, error: 'This Student ID / Roll Number is already registered with another account.' },
+        { status: 400 }
+      );
+    }
+
+    // Check duplicate HackerRank username across other students in Student table
+    const duplicateHrStudent = await prisma.student.findFirst({
+      where: {
+        hackerrank: { equals: hackerrank, mode: 'insensitive' },
+        id: { not: student.id },
+      },
+    });
+    if (duplicateHrStudent) {
+      return NextResponse.json(
+        { success: false, error: `The HackerRank username "${hackerrank}" is already linked to another student account.` },
+        { status: 400 }
+      );
+    }
+
+    // Check duplicate HackerRank in this contest's registrations
+    const duplicateHrContest = await prisma.contestRegistration.findFirst({
+      where: {
+        contestId,
+        hackerrank: { equals: hackerrank, mode: 'insensitive' },
+        studentId: { not: student.id },
+      },
+    });
+    if (duplicateHrContest) {
+      return NextResponse.json(
+        { success: false, error: `The HackerRank username "${hackerrank}" is already used for this contest.` },
+        { status: 400 }
+      );
+    }
+
+    // Parse graduation year from academicYear if possible to sync with Student profile
+    let gradYearUpdate: number | undefined;
+    if (academicYear.includes('1st')) gradYearUpdate = 2029;
+    else if (academicYear.includes('2nd')) gradYearUpdate = 2028;
+    else if (academicYear.includes('3rd')) gradYearUpdate = 2027;
+    else if (academicYear.includes('4th')) gradYearUpdate = 2026;
+
+    // Sync fields back to Student profile so they cannot put duplicate things later
+    await prisma.student.update({
+      where: { id: student.id },
+      data: {
+        name: fullName,
+        rollNumber: studentIdNumber,
+        hackerrank,
+        ...(gradYearUpdate ? { graduationYear: gradYearUpdate } : {}),
+      },
+    });
 
     // Check if contest exists
     const contest = await prisma.contest.findUnique({ where: { id: contestId } });
@@ -172,6 +219,7 @@ export async function POST(
         academicYear,
         email,
         phoneNumber,
+        hackerrank,
       },
     });
 

@@ -55,6 +55,7 @@ interface UserRegistration {
   academicYear: string;
   email: string;
   phoneNumber?: string;
+  hackerrank?: string;
   createdAt: string;
 }
 
@@ -64,6 +65,7 @@ interface CurrentUserProfile {
   email: string;
   studentIdNumber: string;
   academicYear: string;
+  hackerrank?: string;
 }
 
 interface RegisteredUser {
@@ -145,6 +147,7 @@ export default function ContestDetailPage({
   const [academicYear, setAcademicYear] = useState('1st Year');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [hackerrank, setHackerrank] = useState('');
 
   const fetchContestData = useCallback(async () => {
     try {
@@ -192,6 +195,9 @@ export default function ContestDetailPage({
         if (currentUserProfile.academicYear) {
           setAcademicYear((prev) => prev || currentUserProfile.academicYear || '1st Year');
         }
+        if (currentUserProfile.hackerrank) {
+          setHackerrank((prev) => prev || currentUserProfile.hackerrank || '');
+        }
       } else if (session?.user) {
         const emailPrefix = session.user.email ? session.user.email.split('@')[0] : '';
         setUsername((prev) => prev || emailPrefix);
@@ -213,7 +219,7 @@ export default function ContestDetailPage({
     e.preventDefault();
     setFormError(null);
 
-    if (!username.trim() || !fullName.trim() || !studentIdNumber.trim() || !academicYear.trim() || !email.trim() || !phoneNumber.trim()) {
+    if (!username.trim() || !fullName.trim() || !studentIdNumber.trim() || !academicYear.trim() || !email.trim() || !phoneNumber.trim() || !hackerrank.trim()) {
       setFormError('Please fill out all required fields.');
       return;
     }
@@ -224,12 +230,12 @@ export default function ContestDetailPage({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: username.trim(),
           fullName,
           studentIdNumber,
           academicYear,
           email,
           phoneNumber,
+          hackerrank: hackerrank.trim(),
         }),
       });
 
@@ -575,6 +581,12 @@ export default function ContestDetailPage({
                   <span className="text-onyx/50 font-bold block text-[11px]">Academic Year</span>
                   <span className="font-black text-onyx text-xs sm:text-sm break-words">{userRegistration.academicYear}</span>
                 </div>
+                {userRegistration.hackerrank && (
+                  <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-onyx/8 min-w-0">
+                    <span className="text-onyx/50 font-bold block text-[11px]">HackerRank</span>
+                    <span className="font-black text-[#00665E] text-xs sm:text-sm break-words">@{userRegistration.hackerrank}</span>
+                  </div>
+                )}
                 <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-onyx/8 min-w-0">
                   <span className="text-onyx/50 font-bold block text-[11px]">Venue Check-in</span>
                   <span className="font-black text-onyx text-xs sm:text-sm break-words">{contest.venue || 'TBD'}</span>
@@ -878,7 +890,7 @@ export default function ContestDetailPage({
             <form onSubmit={handleRegisterSubmit} className="space-y-3.5 sm:space-y-4">
               <div>
                 <label className="block text-xs font-bold text-onyx mb-1">
-                  Username <span className="text-tomato-jam">*</span>
+                  Username <span className="text-onyx/40 text-[10px] font-medium">(Fixed Profile Identity)</span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-onyx/40">
@@ -886,13 +898,13 @@ export default function ContestDetailPage({
                   </span>
                   <input
                     type="text"
-                    required
-                    placeholder="your_username"
+                    readOnly
+                    disabled
                     value={username}
-                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
-                    className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-white border border-onyx/15 focus:border-tomato-jam text-xs sm:text-sm font-bold text-onyx outline-hidden"
+                    className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-onyx/5 border border-onyx/10 text-xs sm:text-sm font-bold text-onyx/70 cursor-not-allowed select-none outline-hidden"
                   />
                 </div>
+                <p className="text-[10px] text-onyx/50 mt-1">Username is permanently linked to your profile and cannot be modified.</p>
               </div>
 
               <div>
@@ -929,6 +941,7 @@ export default function ContestDetailPage({
                     Academic Year <span className="text-tomato-jam">*</span>
                   </label>
                   <select
+                    required
                     value={academicYear}
                     onChange={(e) => setAcademicYear(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl bg-white border border-onyx/15 focus:border-tomato-jam text-xs sm:text-sm font-bold text-onyx outline-hidden"
@@ -970,6 +983,26 @@ export default function ContestDetailPage({
                     className="w-full px-4 py-2.5 rounded-xl bg-white border border-onyx/15 focus:border-tomato-jam text-xs sm:text-sm font-bold text-onyx outline-hidden"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-onyx mb-1">
+                  HackerRank Username <span className="text-tomato-jam">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-600 font-mono">
+                    HR
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. your_hackerrank_handle"
+                    value={hackerrank}
+                    onChange={(e) => setHackerrank(e.target.value.trim())}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-onyx/15 focus:border-tomato-jam text-xs sm:text-sm font-bold text-onyx outline-hidden"
+                  />
+                </div>
+                <p className="text-[10px] text-onyx/50 mt-1">This will sync to your profile and prevent duplicate submissions.</p>
               </div>
 
               <div className="pt-3 sm:pt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3">

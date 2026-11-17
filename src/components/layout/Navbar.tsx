@@ -438,12 +438,17 @@ export function Navbar() {
           ref={mobileMenuRef}
           className="md:hidden border-t border-onyx/12 bg-white px-4 pt-2 pb-6 space-y-3 will-change-transform"
         >
-          <div className="flex items-center justify-between py-2 border-b border-pine-teal/15" suppressHydrationWarning>
+          <Link
+            href="/profile"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center justify-between py-2 border-b border-pine-teal/15 hover:bg-golden-sand/10 rounded-lg px-1 transition-colors"
+            suppressHydrationWarning
+          >
             <div className="flex items-center gap-2" suppressHydrationWarning>
               <img
                 src={CURRENT_USER.avatar}
                 alt={CURRENT_USER.name}
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-8 h-8 rounded-full object-cover ring-2 ring-tomato-jam/30"
               />
               <div>
                 <p className="text-sm font-bold text-onyx">{CURRENT_USER.name}</p>
@@ -458,7 +463,7 @@ export function Navbar() {
                 {CURRENT_USER.cpScore.toLocaleString()}
               </p>
             </div>
-          </div>
+          </Link>
 
           <nav className="flex flex-col gap-1">
             {navItems.map((item) => {
@@ -481,14 +486,40 @@ export function Navbar() {
               );
             })}
 
-            <div className="pt-2 mt-2 border-t border-onyx/10 flex flex-col gap-2">
+            <div className="pt-2 mt-2 border-t border-onyx/10 flex flex-col gap-1">
+              <Link
+                href="/profile"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
+                  pathname === '/profile'
+                    ? 'bg-golden-sand/20 text-tomato-jam font-semibold'
+                    : 'text-onyx/70 hover:bg-golden-sand/12'
+                }`}
+              >
+                <User className={`w-5 h-5 ${pathname === '/profile' ? 'text-tomato-jam' : 'text-onyx/70'}`} />
+                <span>View Profile</span>
+              </Link>
+
+              <Link
+                href="/settings"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
+                  pathname === '/settings'
+                    ? 'bg-golden-sand/20 text-tomato-jam font-semibold'
+                    : 'text-onyx/70 hover:bg-golden-sand/12'
+                }`}
+              >
+                <Settings className={`w-5 h-5 ${pathname === '/settings' ? 'text-tomato-jam' : 'text-onyx/70'}`} />
+                <span>Settings</span>
+              </Link>
+
               <button
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false);
                   logout();
                 }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold text-tomato-jam hover:bg-tomato-jam/10 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-3 px-3 py-2.5 mt-1 rounded-lg text-sm font-bold text-tomato-jam hover:bg-tomato-jam/10 transition-colors cursor-pointer"
               >
                 <LogOut className="w-5 h-5" />
                 <span>Sign Out</span>

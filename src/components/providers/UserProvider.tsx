@@ -143,6 +143,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           graduationYear: gradYear,
           github: s.github || '',
           linkedin: s.linkedin || '',
+          hackerrank: s.hackerrank || '',
           collegeRank: s.stats?.ranking ?? 0,
           deptRank: s.stats?.departmentRanking ?? 0,
           level,
@@ -189,6 +190,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
               globalRank: (s.stats as any)?.codechefGlobalRank || null,
               badge: getCodechefBadge(s.stats?.codechefRating || 0, (s.stats as any)?.codechefStars),
             },
+            ...(s.hackerrank
+              ? [
+                  {
+                    platform: 'HackerRank' as const,
+                    handle: s.hackerrank,
+                    rating: 0,
+                    solvedCount: 0,
+                    weight: 1.0,
+                    profileUrl: `https://www.hackerrank.com/profile/${s.hackerrank}`,
+                  },
+                ]
+              : []),
           ],
           badges: s.badges || [],
           dsaTopics,

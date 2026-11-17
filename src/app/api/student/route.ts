@@ -252,6 +252,7 @@ export async function POST(request: Request) {
       leetcode,
       codeforces,
       codechef,
+      hackerrank,
       github,
       linkedin,
       username,
@@ -294,6 +295,23 @@ export async function POST(request: Request) {
       if (existingUsername) {
         return NextResponse.json(
           { message: 'This username is already taken. Please choose a different one.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Check for duplicate hackerrank (excluding current user)
+    if (hackerrank && typeof hackerrank === 'string' && hackerrank.trim()) {
+      const existingHackerRank = await prisma.student.findFirst({
+        where: {
+          hackerrank: { equals: hackerrank.trim(), mode: 'insensitive' },
+          userId: { not: userId },
+        },
+      });
+
+      if (existingHackerRank) {
+        return NextResponse.json(
+          { message: 'This HackerRank username is already linked to another account.' },
           { status: 400 }
         );
       }
@@ -383,6 +401,7 @@ export async function POST(request: Request) {
         leetcode: typeof leetcode === 'string' && leetcode.trim() ? leetcode.trim() : null,
         codeforces: typeof codeforces === 'string' && codeforces.trim() ? codeforces.trim() : null,
         codechef: typeof codechef === 'string' && codechef.trim() ? codechef.trim() : null,
+        hackerrank: typeof hackerrank === 'string' && hackerrank.trim() ? hackerrank.trim() : null,
         github: typeof github === 'string' && github.trim() ? github.trim() : null,
         linkedin: typeof linkedin === 'string' && linkedin.trim() ? linkedin.trim() : null,
         username: typeof username === 'string' && username.trim() ? username.trim().toLowerCase() : null,
@@ -397,6 +416,7 @@ export async function POST(request: Request) {
         leetcode: typeof leetcode === 'string' && leetcode.trim() ? leetcode.trim() : null,
         codeforces: typeof codeforces === 'string' && codeforces.trim() ? codeforces.trim() : null,
         codechef: typeof codechef === 'string' && codechef.trim() ? codechef.trim() : null,
+        ...(typeof hackerrank === 'string' ? { hackerrank: hackerrank.trim() || null } : {}),
         ...(typeof github === 'string' ? { github: github.trim() || null } : {}),
         ...(typeof linkedin === 'string' ? { linkedin: linkedin.trim() || null } : {}),
         ...(typeof username === 'string' ? { username: username.trim().toLowerCase() || null } : {}),

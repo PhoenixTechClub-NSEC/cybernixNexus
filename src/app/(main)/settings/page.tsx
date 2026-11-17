@@ -20,7 +20,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 
-const STANDARD_PLATFORMS = ['LeetCode', 'Codeforces', 'CodeChef'] as const;
+const STANDARD_PLATFORMS = ['LeetCode', 'Codeforces', 'CodeChef', 'HackerRank'] as const;
 
 export default function SettingsPage() {
   const { user, updateUser, refreshUser } = useUser();
@@ -40,12 +40,14 @@ export default function SettingsPage() {
     LeetCode: '',
     Codeforces: '',
     CodeChef: '',
+    HackerRank: '',
   });
 
   const initialHandlesRef = useRef<Record<string, string>>({
     LeetCode: '',
     Codeforces: '',
     CodeChef: '',
+    HackerRank: '',
   });
   const initialNameRef = useRef<string>(user.name);
   const initialDpUrlRef = useRef<string>(user.avatar);
@@ -103,6 +105,7 @@ export default function SettingsPage() {
             LeetCode: s.leetcode || '',
             Codeforces: s.codeforces || '',
             CodeChef: s.codechef || '',
+            HackerRank: s.hackerrank || '',
           };
           setPlatformHandles(handles);
           initialHandlesRef.current = handles;
@@ -205,13 +208,15 @@ export default function SettingsPage() {
       LeetCode: platformHandles['LeetCode'] || '',
       Codeforces: platformHandles['Codeforces'] || '',
       CodeChef: platformHandles['CodeChef'] || '',
+      HackerRank: platformHandles['HackerRank'] || '',
     };
 
     const initial = initialHandlesRef.current;
     const hasHandleChanges =
       currentHandles.LeetCode.trim() !== (initial.LeetCode || '').trim() ||
       currentHandles.Codeforces.trim() !== (initial.Codeforces || '').trim() ||
-      currentHandles.CodeChef.trim() !== (initial.CodeChef || '').trim();
+      currentHandles.CodeChef.trim() !== (initial.CodeChef || '').trim() ||
+      currentHandles.HackerRank.trim() !== (initial.HackerRank || '').trim();
 
     const hasAcademicChanges =
       department !== initialDeptRef.current ||
@@ -243,6 +248,7 @@ export default function SettingsPage() {
           leetcode: currentHandles.LeetCode,
           codeforces: currentHandles.Codeforces,
           codechef: currentHandles.CodeChef,
+          hackerrank: currentHandles.HackerRank,
           name,
           avatar: dpUrl.trim() || null,
           department,
@@ -300,6 +306,18 @@ export default function SettingsPage() {
           solvedCount: getExisting('CodeChef')?.solvedCount ?? 0,
           weight: 1.0,
         },
+        ...(currentHandles.HackerRank.trim()
+          ? [
+              {
+                platform: 'HackerRank' as const,
+                handle: currentHandles.HackerRank.trim(),
+                rating: 0,
+                solvedCount: 0,
+                weight: 1.0,
+                profileUrl: `https://www.hackerrank.com/profile/${currentHandles.HackerRank.trim()}`,
+              },
+            ]
+          : []),
       ];
 
       updateUser({
@@ -606,8 +624,16 @@ export default function SettingsPage() {
               ) : (
                 <div key={plat} className="space-y-2">
                   <label className="flex items-center gap-2 text-xs font-bold text-onyx uppercase tracking-wider">
-                    <span className={`font-extrabold text-sm ${plat === 'LeetCode' ? 'text-golden-sand' : 'text-pine-teal'}`}>
-                      {plat.charAt(0)}
+                    <span
+                      className={`font-extrabold text-sm ${
+                        plat === 'LeetCode'
+                          ? 'text-[#F89F1B]'
+                          : plat === 'HackerRank'
+                          ? 'text-[#00665E]'
+                          : 'text-pine-teal'
+                      }`}
+                    >
+                      {plat === 'HackerRank' ? 'HR' : plat.charAt(0)}
                     </span>{' '}
                     {plat} Username / Handle
                   </label>
@@ -709,6 +735,7 @@ export default function SettingsPage() {
                   <option value="Codeforces">Codeforces (requires verification)</option>
                   <option value="LeetCode">LeetCode</option>
                   <option value="CodeChef">CodeChef</option>
+                  <option value="HackerRank">HackerRank</option>
                   <option value="GFG">GeeksforGeeks</option>
                 </select>
               </div>

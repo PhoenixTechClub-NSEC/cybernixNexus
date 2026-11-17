@@ -61,6 +61,7 @@ export interface UserProfile {
   graduationYear?: number;
   github?: string;
   linkedin?: string;
+  hackerrank?: string;
   collegeRank: number;
   deptRank: number;
   level: number;

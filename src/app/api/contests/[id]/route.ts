@@ -61,7 +61,7 @@ export async function GET(
     if (sessionUser?.id) {
       const student = await prisma.student.findUnique({
         where: { userId: sessionUser.id },
-        select: { id: true, name: true, username: true, rollNumber: true, graduationYear: true },
+        select: { id: true, name: true, username: true, rollNumber: true, graduationYear: true, hackerrank: true },
       });
 
       if (student) {
@@ -76,6 +76,7 @@ export async function GET(
             student.graduationYear === 2027 ? '3rd Year' :
             student.graduationYear === 2026 ? '4th Year' : '1st Year'
           ) : '1st Year',
+          hackerrank: student.hackerrank || '',
         };
 
         const reg = contest.registrations.find((r) => r.studentId === student.id);
@@ -87,6 +88,7 @@ export async function GET(
             academicYear: reg.academicYear || `${student.graduationYear}`,
             email: reg.email || sessionUser.email,
             phoneNumber: reg.phoneNumber,
+            hackerrank: reg.hackerrank || student.hackerrank || null,
             createdAt: reg.createdAt,
           };
         }

@@ -8,6 +8,7 @@ interface UpdateHandlesRequestBody {
   leetcode?: string | null;
   codeforces?: string | null;
   codechef?: string | null;
+  hackerrank?: string | null;
   github?: string | null;
   linkedin?: string | null;
   name?: string;
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
       leetcode,
       codeforces,
       codechef,
+      hackerrank,
       github,
       linkedin,
       name,
@@ -96,6 +98,21 @@ export async function POST(request: Request) {
       if (existing && existing.id !== student.id) {
         return NextResponse.json(
           { error: 'A student profile with this roll number already exists.' },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Check duplicate HackerRank handle if user is attempting to change it
+    if (typeof hackerrank === 'string' && hackerrank.trim() && hackerrank.trim().toLowerCase() !== (student.hackerrank || '').toLowerCase()) {
+      const existing = await prisma.student.findFirst({
+        where: {
+          hackerrank: { equals: hackerrank.trim(), mode: 'insensitive' },
+        },
+      });
+      if (existing && existing.id !== student.id) {
+        return NextResponse.json(
+          { error: 'This HackerRank username is already linked to another account.' },
           { status: 409 }
         );
       }
@@ -160,6 +177,7 @@ export async function POST(request: Request) {
         leetcode: newLc || null,
         codeforces: newCf || null,
         codechef: newCc || null,
+        ...(typeof hackerrank === 'string' ? { hackerrank: hackerrank.trim() || null } : {}),
         ...(typeof github === 'string' ? { github: github.trim() || null } : {}),
         ...(typeof linkedin === 'string' ? { linkedin: linkedin.trim() || null } : {}),
         ...(name ? { name: name.trim() } : {}),
