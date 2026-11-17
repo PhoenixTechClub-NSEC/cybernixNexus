@@ -12,6 +12,7 @@ import {
   Calendar,
   Settings,
   LogOut,
+  ShieldCheck,
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -53,12 +54,17 @@ export function Sidebar() {
     { dependencies: [pathname], scope: sidebarRef }
   );
 
+  const isAdminOrSuperAdmin = CURRENT_USER.role === 'ADMIN' || CURRENT_USER.role === 'SUPERADMIN';
+
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Rankings', href: '/rankings', icon: Trophy },
     { name: 'Editorials', href: '/editorials', icon: BookOpen },
     { name: 'My Profile', href: '/profile', icon: User },
     { name: 'Contests', href: '/contests', icon: Calendar },
+    ...(isAdminOrSuperAdmin
+      ? [{ name: 'Admin Hub', href: '/admin', icon: ShieldCheck }]
+      : []),
   ];
 
 

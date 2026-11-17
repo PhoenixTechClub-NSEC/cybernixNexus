@@ -125,18 +125,20 @@ export const authOptions: NextAuthOptions = {
           if (token.picture) {
             session.user.image = token.picture as string;
           }
-          // profileComplete and studentId are stored in the JWT by the jwt callback
+          // profileComplete, studentId, and role are stored in the JWT by the jwt callback
           (session.user as any).profileComplete = token.profileComplete ?? false;
           (session.user as any).studentId = token.studentId ?? null;
+          (session.user as any).role = token.role || 'STUDENT';
 
           // Only hit the DB when token.sub is absent (e.g. legacy session without it)
           if (!token.sub && session.user.email) {
             const dbUser = await prisma.user.findUnique({
               where: { email: session.user.email },
-              select: { id: true, image: true, student: { select: { profileComplete: true, id: true } } },
+              select: { id: true, role: true, image: true, student: { select: { profileComplete: true, id: true } } },
             });
             if (dbUser) {
               (session.user as any).id = dbUser.id;
+              (session.user as any).role = dbUser.role || 'STUDENT';
               (session.user as any).studentId = dbUser.student?.id ?? null;
               (session.user as any).profileComplete = dbUser.student?.profileComplete ?? false;
               if (dbUser.image) session.user.image = dbUser.image;
@@ -162,12 +164,14 @@ export const authOptions: NextAuthOptions = {
                 where: { email: user.email },
                 select: {
                   id: true,
+                  role: true,
                   image: true,
                   student: { select: { id: true, profileComplete: true } },
                 },
               });
               if (dbUser) {
                 token.sub = dbUser.id;
+                token.role = dbUser.role;
                 token.profileComplete = dbUser.student?.profileComplete ?? false;
                 token.studentId = dbUser.student?.id ?? null;
                 if (dbUser.image) token.picture = dbUser.image;
@@ -183,14 +187,15 @@ export const authOptions: NextAuthOptions = {
               console.error('[NextAuth JWT] Error finding user by email:', e);
             }
           }
-        } else if (trigger === 'update' && token.sub) {
-          // Explicit session update (e.g. after profile completion) — refresh claims from DB
+        } else if ((trigger === 'update' || !token.role) && token.sub) {
+          // Explicit session update (e.g. after profile completion or role change) — refresh claims from DB
           try {
             const dbUser = await prisma.user.findUnique({
               where: { id: token.sub },
-              select: { image: true, student: { select: { id: true, profileComplete: true } } },
+              select: { role: true, image: true, student: { select: { id: true, profileComplete: true } } },
             });
             if (dbUser) {
+              token.role = dbUser.role;
               token.profileComplete = dbUser.student?.profileComplete ?? false;
               token.studentId = dbUser.student?.id ?? null;
               if (dbUser.image) token.picture = dbUser.image;

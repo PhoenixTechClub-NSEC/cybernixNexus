@@ -20,6 +20,7 @@ export interface ContestEvent {
   ratedFor: string;
   url: string;
   type: 'major' | 'regular';
+  isInternal?: boolean;
 }
 
 export function ContestCalendar() {
