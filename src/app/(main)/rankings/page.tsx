@@ -96,8 +96,11 @@ export default function RankingsPage() {
       if (!res.ok) {
         throw new Error('Sync failed');
       }
+      const { stats } = await res.json();
       await loadData();
-      setToastMessage('Leaderboard standings synchronized with Codeforces, LeetCode & CodeChef!');
+      setToastMessage(Object.keys(stats?.errors ?? {}).length > 0
+        ? 'Some platforms could not sync. Their saved stats were kept.'
+        : 'Leaderboard standings synchronized with Codeforces, LeetCode & CodeChef!');
     } catch {
       setToastMessage('Sync failed. Please try again later.');
     } finally {

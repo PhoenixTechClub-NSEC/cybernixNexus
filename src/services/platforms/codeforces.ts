@@ -9,6 +9,7 @@ export async function fetchCodeforcesStats(handle: string): Promise<CodeforcesFe
   }
 
   const trimmedHandle = handle.trim();
+  const signal = AbortSignal.timeout(8000);
 
   try {
     // Fetch user info (rating, maxRating, rank, maxRank, avatar, contribution)
@@ -16,7 +17,7 @@ export async function fetchCodeforcesStats(handle: string): Promise<CodeforcesFe
     const infoResponse = await fetch(infoUrl, {
       method: 'GET',
       headers: { 'User-Agent': 'CybernixNexus-PlatformFetcher/1.0' },
-      signal: AbortSignal.timeout(8000),
+      signal,
       next: { revalidate: 3600 },
     });
 
@@ -43,7 +44,7 @@ export async function fetchCodeforcesStats(handle: string): Promise<CodeforcesFe
     const statusResponse = await fetch(statusUrl, {
       method: 'GET',
       headers: { 'User-Agent': 'CybernixNexus-PlatformFetcher/1.0' },
-      signal: AbortSignal.timeout(8000),
+      signal,
       next: { revalidate: 3600 },
     });
 

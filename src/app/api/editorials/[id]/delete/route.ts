@@ -1,26 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { recalculateStudentScore, withStudentScoreTransaction } from '@/lib/student-score';
+import { revalidateTag } from 'next/cache';
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const body = await request.json();
-    const { publisherId } = body;
-
-    if (!publisherId) {
-      return NextResponse.json(
-        { success: false, message: 'Unable to process this request. Please try again.' },
-        { status: 400 }
-      );
+    const session = await getServerSession(authOptions);
+    if (!session?.user.id) {
+      return NextResponse.json({ success: false, message: 'Please sign in to delete an editorial.' }, { status: 401 });
     }
+    const { id } = await params;
 
     // Check if editorial exists
     const editorial = await prisma.editorial.findUnique({
       where: { id },
-      include: { author: true },
+      select: { authorId: true, author: { select: { userId: true } } },
     });
 
     if (!editorial) {
@@ -31,37 +30,22 @@ export async function DELETE(
     }
 
     // Check if user is the author
-    if (editorial.authorId !== publisherId) {
+    if (editorial.author.userId !== session.user.id) {
       return NextResponse.json(
         { success: false, message: 'You do not have permission to delete this editorial.' },
         { status: 403 }
       );
     }
 
-    // Delete all comments associated with the editorial first
-    await prisma.editorialComment.deleteMany({
-      where: { editorialId: id },
+    await withStudentScoreTransaction(editorial.authorId, async (tx) => {
+      await tx.editorial.delete({ where: { id, author: { userId: session.user.id } } });
+      await recalculateStudentScore(tx, editorial.authorId);
     });
-
-    // Delete editorial
-    await prisma.editorial.delete({
-      where: { id },
-    });
-
-    // Deduct 50 points for deleting an editorial
-    const EDITORIAL_POINTS = 50;
-    await prisma.studentStats.update({
-      where: { studentId: editorial.authorId },
-      data: {
-        totalScore: {
-          decrement: EDITORIAL_POINTS,
-        },
-      },
-    });
+    revalidateTag('dashboard', { expire: 0 });
 
     return NextResponse.json({
       success: true,
-      message: 'Editorial deleted successfully. 50 points have been deducted.',
+      message: 'Editorial deleted successfully.',
     });
   } catch (error) {
     console.error('Editorial delete error:', error);

@@ -102,8 +102,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
           if (actRes.ok) {
             const actData = await actRes.json();
             if (actData.success) {
-              currentStreak = actData.currentStreak || currentStreak;
-              maxStreak = actData.maxStreak || maxStreak;
+              currentStreak = actData.currentStreak ?? currentStreak;
+              maxStreak = actData.maxStreak ?? maxStreak;
             }
           }
         } catch {

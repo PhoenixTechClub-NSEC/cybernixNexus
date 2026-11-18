@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
 export async function PUT(
@@ -6,14 +8,20 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const body = await request.json();
-    const { title, summary, content, codeSnippet, codeLanguage, tags, difficulty, platform, publisherId } = body;
+    const session = await getServerSession(authOptions);
+    if (!session?.user.id) {
+      return NextResponse.json({ success: false, message: 'Please sign in to edit an editorial.' }, { status: 401 });
+    }
 
-    // Validate required fields
-    if (!title || !summary || !content || !publisherId) {
+    const { id } = await params;
+    const body = await request.json().catch(() => null);
+    const { title, summary, content, codeSnippet, codeLanguage, tags, difficulty, platform } = body ?? {};
+
+    if ([title, summary, content].some((value) => typeof value !== 'string' || !value.trim()) ||
+        [codeSnippet, codeLanguage, difficulty, platform].some((value) => value != null && typeof value !== 'string') ||
+        (tags != null && (!Array.isArray(tags) || tags.some((tag) => typeof tag !== 'string')))) {
       return NextResponse.json(
-        { success: false, message: 'Please fill in all required fields.' },
+        { success: false, message: 'Please provide a valid title, summary, and explanation.' },
         { status: 400 }
       );
     }
@@ -21,7 +29,7 @@ export async function PUT(
     // Check if editorial exists
     const editorial = await prisma.editorial.findUnique({
       where: { id },
-      include: { author: true },
+      include: { author: { select: { userId: true } } },
     });
 
     if (!editorial) {
@@ -32,7 +40,7 @@ export async function PUT(
     }
 
     // Check if user is the author
-    if (editorial.authorId !== publisherId) {
+    if (editorial.author.userId !== session.user.id) {
       return NextResponse.json(
         { success: false, message: 'You do not have permission to edit this editorial.' },
         { status: 403 }
@@ -41,11 +49,11 @@ export async function PUT(
 
     // Update editorial
     const updatedEditorial = await prisma.editorial.update({
-      where: { id },
+      where: { id, author: { userId: session.user.id } },
       data: {
-        title,
-        summary,
-        content,
+        title: title.trim(),
+        summary: summary.trim(),
+        content: content.trim(),
         codeSnippet: codeSnippet || editorial.codeSnippet,
         codeLanguage: codeLanguage || editorial.codeLanguage,
         tags: tags || editorial.tags,
@@ -54,6 +62,7 @@ export async function PUT(
         updatedAt: new Date(),
       },
       include: {
+        _count: { select: { likes: true } },
         author: {
           include: {
             user: true,
@@ -90,7 +99,7 @@ export async function PUT(
         content: updatedEditorial.content,
         codeSnippet: updatedEditorial.codeSnippet,
         codeLanguage: updatedEditorial.codeLanguage,
-        likesCount: 0,
+        likesCount: updatedEditorial._count.likes,
         commentsCount: updatedEditorial.comments.length,
         comments: updatedEditorial.comments.map((c) => ({
           id: c.id,

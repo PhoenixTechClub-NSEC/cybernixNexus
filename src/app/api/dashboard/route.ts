@@ -66,6 +66,9 @@ const getCachedDashboardData = unstable_cache(
         },
         stats: {
           leetcodeSolved: student.stats?.leetcodeSolved ?? 0,
+          leetcodeEasySolved: student.stats?.leetcodeEasySolved ?? null,
+          leetcodeMediumSolved: student.stats?.leetcodeMediumSolved ?? null,
+          leetcodeHardSolved: student.stats?.leetcodeHardSolved ?? null,
           leetcodeRating: student.stats?.leetcodeRating ?? null,
           codeforcesRating: student.stats?.codeforcesRating ?? null,
           codeforcesMaxRating: student.stats?.codeforcesMaxRating ?? null,
@@ -261,6 +264,9 @@ export async function GET(request: Request) {
           },
           stats: {
             leetcodeSolved: dbUser.stats?.leetcodeSolved ?? 0,
+            leetcodeEasySolved: dbUser.stats?.leetcodeEasySolved ?? null,
+            leetcodeMediumSolved: dbUser.stats?.leetcodeMediumSolved ?? null,
+            leetcodeHardSolved: dbUser.stats?.leetcodeHardSolved ?? null,
             leetcodeRating: dbUser.stats?.leetcodeRating ?? null,
             codeforcesRating: dbUser.stats?.codeforcesRating ?? null,
             codeforcesMaxRating: dbUser.stats?.codeforcesMaxRating ?? null,

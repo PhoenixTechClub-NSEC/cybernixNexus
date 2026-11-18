@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { formatTimeAgo } from '@/lib/contest';
+import { formatTimeAgo, requiresRegistrationForm } from '@/lib/contest';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,6 +58,7 @@ export async function GET(
     let currentUserRegistration = null;
     let currentUserProfile = null;
 
+    const requiresForm = requiresRegistrationForm(contest);
     if (sessionUser?.id) {
       const student = await prisma.student.findUnique({
         where: { userId: sessionUser.id },
@@ -65,6 +66,7 @@ export async function GET(
       });
 
       if (student) {
+        const reg = contest.registrations.find((r) => r.studentId === student.id);
         currentUserProfile = {
           username: student.username || (sessionUser.email ? sessionUser.email.split('@')[0] : ''),
           fullName: student.name || sessionUser.name || '',
@@ -77,10 +79,10 @@ export async function GET(
             student.graduationYear === 2026 ? '4th Year' : '1st Year'
           ) : '1st Year',
           hackerrank: student.hackerrank || '',
+          hasReservedSpot: Boolean(reg),
         };
 
-        const reg = contest.registrations.find((r) => r.studentId === student.id);
-        if (reg) {
+        if (reg && (!requiresForm || reg.participantId)) {
           currentUserRegistration = {
             participantId: reg.participantId,
             fullName: reg.fullName || student.name,
@@ -96,7 +98,8 @@ export async function GET(
     }
 
     const maxParticipants = contest.maxParticipants ?? 50;
-    const spotsLeft = Math.max(0, maxParticipants - contest.registeredCount);
+    const registeredCount = Math.max(contest.registeredCount, contest.registrations.length);
+    const spotsLeft = Math.max(0, maxParticipants - registeredCount);
 
     const now = new Date();
     const startTime = new Date(contest.startTime);
@@ -130,7 +133,7 @@ export async function GET(
         platform: contest.platform,
         startTime: contest.startTime,
         duration: contest.duration,
-        registeredCount: contest.registeredCount,
+        registeredCount,
         maxParticipants,
         spotsLeft,
         isInternal: contest.isInternal,

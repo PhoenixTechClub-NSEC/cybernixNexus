@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { EDITORIAL_POINTS, recalculateStudentScore, withStudentScoreTransaction } from '@/lib/student-score';
+import { revalidateTag } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -170,54 +172,38 @@ export async function POST(req: Request) {
       );
     }
 
-    const newEditorial = await prisma.editorial.create({
-      data: {
-        title: title.trim(),
-        problemUrl: problemUrl?.trim() || '',
-        platform: platform || 'Codeforces',
-        difficulty: difficulty || 'Medium',
-        tags: Array.isArray(tags) && tags.length > 0 ? tags : ['Algorithms'],
-        summary: summary?.trim() || content.slice(0, 150) + (content.length > 150 ? '...' : ''),
-        content: content.trim(),
-        codeSnippet: codeSnippet?.trim() || '// Solution snippet',
-        codeLanguage: codeLanguage || 'cpp',
-        authorId: student.id,
-      },
-      include: {
-        author: {
-          include: {
-            user: { select: { image: true } },
-            stats: { select: { totalScore: true } },
+    const newEditorial = await withStudentScoreTransaction(student.id, async (tx) => {
+      const editorial = await tx.editorial.create({
+        data: {
+          title: title.trim(),
+          problemUrl: problemUrl?.trim() || '',
+          platform: platform || 'Codeforces',
+          difficulty: difficulty || 'Medium',
+          tags: Array.isArray(tags) && tags.length > 0 ? tags : ['Algorithms'],
+          summary: summary?.trim() || content.slice(0, 150) + (content.length > 150 ? '...' : ''),
+          content: content.trim(),
+          codeSnippet: codeSnippet?.trim() || '// Solution snippet',
+          codeLanguage: codeLanguage || 'cpp',
+          authorId: student.id,
+        },
+        include: {
+          author: {
+            include: {
+              user: { select: { image: true } },
+            },
           },
         },
-      },
-    });
+      });
 
-    // Award 50 points for publishing an editorial
-    const EDITORIAL_POINTS = 50;
-    await prisma.studentStats.upsert({
-      where: { studentId: student.id },
-      create: {
-        studentId: student.id,
-        totalScore: EDITORIAL_POINTS,
-        codeforcesRating: 0,
-        codechefRating: 0,
-        leetcodeRating: 0,
-        codeforcesSolved: 0,
-        codechefSolved: 0,
-        leetcodeSolved: 0,
-      },
-      update: {
-        totalScore: {
-          increment: EDITORIAL_POINTS,
-        },
-      },
+      const totalScore = await recalculateStudentScore(tx, student.id);
+      return { ...editorial, author: { ...editorial.author, stats: { totalScore } } };
     });
+    revalidateTag('dashboard', { expire: 0 });
 
     return NextResponse.json({
       success: true,
       editorial: newEditorial,
-      message: 'Editorial published successfully! You earned 50 points.',
+      message: `Editorial published successfully! You earned ${EDITORIAL_POINTS} points.`,
     });
   } catch (error: unknown) {
     console.error('[POST /api/editorials Error]:', error);
