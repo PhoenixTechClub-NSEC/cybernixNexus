@@ -37,20 +37,22 @@ export async function GET() {
       });
     }
 
-    // Fetch past 21 days of DailySnapshots for this student
+    const dayMs = 24 * 60 * 60 * 1000;
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const firstDay = new Date(today.getTime() - 20 * dayMs);
     const snapshots = await prisma.dailySnapshot.findMany({
-      where: { studentId: student.id },
-      orderBy: { date: 'asc' },
-      take: 21,
+      where: { studentId: student.id, date: { gte: firstDay, lte: today } },
+      select: { date: true, leetcodeSolved: true, codeforcesSolved: true },
     });
 
-    // Extract arrays for 7-day windows
-    const leetcodeAll = snapshots.map((s) => s.leetcodeSolved);
-    const codeforcesAll = snapshots.map((s) => s.codeforcesSolved);
-
-    // Fill to length 21 if fewer snapshots exist
-    while (leetcodeAll.length < 21) leetcodeAll.unshift(0);
-    while (codeforcesAll.length < 21) codeforcesAll.unshift(0);
+    const leetcodeAll = Array<number>(21).fill(0);
+    const codeforcesAll = Array<number>(21).fill(0);
+    for (const snapshot of snapshots) {
+      const index = (snapshot.date.getTime() - firstDay.getTime()) / dayMs;
+      leetcodeAll[index] = snapshot.leetcodeSolved;
+      codeforcesAll[index] = snapshot.codeforcesSolved;
+    }
 
     const twoWeeksAgoLC = leetcodeAll.slice(0, 7);
     const lastWeekLC = leetcodeAll.slice(7, 14);

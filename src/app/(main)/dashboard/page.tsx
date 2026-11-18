@@ -242,7 +242,7 @@ export default function DashboardPage() {
   // Goals Checklist State
   // Dynamic Goals tailored to live verified student metrics
   const dynamicGoals = React.useMemo(() => {
-    const streakTarget = Math.max(7, Math.ceil(((CURRENT_USER.currentStreak || 1) + 1) / 7) * 7);
+    const streakTarget = Math.max(7, Math.ceil(((CURRENT_USER.currentStreak ?? 0) + 1) / 7) * 7);
     const hardSolved = CURRENT_USER.solvedByDifficulty?.hard || 0;
     const hardTarget = Math.max(10, Math.ceil(((hardSolved || 1) + 1) / 10) * 10);
     const nextTier = CURRENT_USER.tier === 'Phoenix' ? 'Ascendant' : CURRENT_USER.tier === 'Flame' ? 'Phoenix' : CURRENT_USER.tier === 'Ember' ? 'Flame' : 'Ember';
@@ -463,7 +463,7 @@ export default function DashboardPage() {
           <div className="relative z-10 max-w-md sm:max-w-lg space-y-2">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
               <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-golden-sand/20 text-tomato-jam border border-pine-teal/30 inline-block">
-                🔥 {CURRENT_USER.currentStreak || 1}-Day Streak
+                🔥 {CURRENT_USER.currentStreak ?? 0}-Day Streak
               </span>
               <span className="text-[10px] sm:text-xs text-pine-teal font-semibold">
                 {CURRENT_USER.department} Dept • Rank #{CURRENT_USER.collegeRank} College

@@ -1,4 +1,22 @@
 import crypto from 'crypto';
+import type { Contest, Prisma } from '@prisma/client';
+import prisma from '@/lib/prisma';
+
+export function withContestRegistration<T>(
+  contestId: string,
+  register: (tx: Prisma.TransactionClient) => Promise<T>,
+): Promise<T> {
+  return prisma.$transaction(async (tx) => {
+    // Serialize capacity checks and registration writes for the same contest.
+    await tx.$queryRaw`SELECT "id" FROM "Contest" WHERE "id" = ${contestId} FOR UPDATE`;
+    return register(tx);
+  });
+}
+
+export function requiresRegistrationForm(contest: Pick<Contest, 'isInternal' | 'hostedInternal' | 'platform' | 'url'>): boolean {
+  return contest.isInternal || contest.hostedInternal || contest.platform === 'NSEC Internal' ||
+    Boolean(contest.url?.startsWith('/contests/'));
+}
 
 /**
  * Generates a unique 12-character alphanumeric Participant ID in 4-4-4 format.

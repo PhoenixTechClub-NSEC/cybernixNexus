@@ -1,3 +1,4 @@
+import { requiresRegistrationForm, withContestRegistration } from '@/lib/contest';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -94,10 +95,10 @@ export async function GET(req: Request) {
       venue?: string | null;
       prize?: string | null;
       maxParticipants?: number | null;
-      hostedInternal?: boolean;
+      hostedInternal: boolean;
       isLinkPublished?: boolean;
       displayRegisteredUsers?: boolean;
-      registrations: Array<{ studentId: string }>;
+      registrations: Array<{ studentId: string; participantId: string | null }>;
     }> = [];
 
     try {
@@ -106,7 +107,7 @@ export async function GET(req: Request) {
         orderBy: { startTime: 'asc' },
         include: {
           registrations: {
-            select: { studentId: true },
+            select: { studentId: true, participantId: true },
           },
         },
       });
@@ -304,8 +305,10 @@ export async function GET(req: Request) {
     }
 
     const formattedDbContests = dbContests.map((c) => {
-      const isReg = currentStudentId ? c.registrations.some((r) => r.studentId === currentStudentId) : false;
-      const isInternal = Boolean(c.isInternal || c.hostedInternal || c.platform === 'NSEC Internal');
+      const isInternal = requiresRegistrationForm(c);
+      const isReg = Boolean(currentStudentId && c.registrations.some(
+        (r) => r.studentId === currentStudentId && (!isInternal || r.participantId),
+      ));
       const safeUrl = isInternal
         ? `/contests/${c.id}`
         : (c.url || '#');
@@ -369,66 +372,72 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Invalid session payload' }, { status: 401 });
     }
 
-    let student = await prisma.student.findUnique({ where: { userId } });
-    if (!student) {
-      const dbUser = await prisma.user.findUnique({ where: { id: userId } });
-      student = await prisma.student.create({
-        data: {
+    const body = (await req.json().catch(() => null)) as { contestId?: unknown } | null;
+    const contestId = body?.contestId;
+    if (typeof contestId !== 'string' || !contestId.trim()) {
+      return NextResponse.json({ success: false, error: 'contestId is required' }, { status: 400 });
+    }
+
+    return await withContestRegistration(contestId, async (tx) => {
+      const contest = await tx.contest.findUnique({
+        where: { id: contestId },
+        include: { _count: { select: { registrations: true } } },
+      });
+      if (!contest) {
+        return NextResponse.json({ success: false, error: 'Contest not found in database' }, { status: 404 });
+      }
+
+      const student = await tx.student.findUnique({ where: { userId } });
+      const existingReg = student && await tx.contestRegistration.findUnique({
+        where: { contestId_studentId: { contestId, studentId: student.id } },
+      });
+      if (requiresRegistrationForm(contest)) {
+        return NextResponse.json(
+          { success: false, error: 'Complete the registration form on the contest details page.' },
+          { status: 400 },
+        );
+      }
+
+      if (existingReg) {
+        return NextResponse.json({
+          success: true,
+          message: 'Already registered for this contest',
+          isRegistered: true,
+        });
+      }
+
+      if (contest.registrationDeadline && contest.registrationDeadline < new Date()) {
+        return NextResponse.json({ success: false, error: 'Contest registration has closed.' }, { status: 400 });
+      }
+
+      if (Math.max(contest.registeredCount, contest._count.registrations) >= (contest.maxParticipants ?? 50)) {
+        return NextResponse.json({ success: false, error: 'Contest registration is full.' }, { status: 400 });
+      }
+
+      const applicant = student ?? await tx.student.upsert({
+        where: { userId },
+        update: {},
+        create: {
           userId,
-          name: dbUser?.name || 'NSEC Student',
-          rollNumber: `TEMP-${Date.now().toString().slice(-6)}`,
+          name: sessionUser.name || 'NSEC Student',
+          rollNumber: `TEMP-${userId}`,
           department: 'CSE',
           graduationYear: 2026,
         },
       });
-    }
+      await tx.contestRegistration.create({
+        data: { contestId, studentId: applicant.id },
+      });
+      await tx.contest.update({
+        where: { id: contestId },
+        data: { registeredCount: { increment: 1 } },
+      });
 
-    const body = (await req.json()) as { contestId?: string };
-    const { contestId } = body;
-
-    if (!contestId) {
-      return NextResponse.json({ success: false, error: 'contestId is required' }, { status: 400 });
-    }
-
-    // Check if contest exists in DB
-    const contest = await prisma.contest.findUnique({ where: { id: contestId } });
-    if (!contest) {
-      return NextResponse.json({ success: false, error: 'Contest not found in database' }, { status: 404 });
-    }
-
-    const existingReg = await prisma.contestRegistration.findUnique({
-      where: {
-        contestId_studentId: {
-          contestId,
-          studentId: student.id,
-        },
-      },
-    });
-
-    if (existingReg) {
       return NextResponse.json({
         success: true,
-        message: 'Already registered for this contest',
+        message: `Successfully registered for ${contest.title}!`,
         isRegistered: true,
       });
-    }
-
-    await prisma.contestRegistration.create({
-      data: {
-        contestId,
-        studentId: student.id,
-      },
-    });
-
-    await prisma.contest.update({
-      where: { id: contestId },
-      data: { registeredCount: { increment: 1 } },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: `Successfully registered for ${contest.title}!`,
-      isRegistered: true,
     });
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : 'Failed to register for contest';

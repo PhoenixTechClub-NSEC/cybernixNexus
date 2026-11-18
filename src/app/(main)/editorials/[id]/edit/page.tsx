@@ -132,10 +132,7 @@ export default function EditEditorialPage() {
       const res = await fetch(`/api/editorials/${editorialId}/edit`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          publisherId: CURRENT_USER?.id,
-        }),
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();

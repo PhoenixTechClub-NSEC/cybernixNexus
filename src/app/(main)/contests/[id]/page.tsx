@@ -66,6 +66,7 @@ interface CurrentUserProfile {
   studentIdNumber: string;
   academicYear: string;
   hackerrank?: string;
+  hasReservedSpot?: boolean;
 }
 
 interface RegisteredUser {
@@ -633,7 +634,7 @@ export default function ContestDetailPage({
               <div className="w-full md:w-auto text-center px-6 py-3.5 rounded-2xl bg-rose-50 text-rose-700 font-black text-sm border border-rose-200">
                 Registrations Closed
               </div>
-            ) : spotsLeft <= 0 ? (
+            ) : spotsLeft <= 0 && !currentUserProfile?.hasReservedSpot ? (
               <div className="w-full md:w-auto text-center px-6 py-3.5 rounded-2xl bg-onyx/10 text-onyx/60 font-black text-sm">
                 Registrations Full ({spotsTotal}/{spotsTotal})
               </div>

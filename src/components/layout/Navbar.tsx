@@ -48,7 +48,7 @@ export function Navbar() {
       .catch(() => { });
   }, []);
 
-  const streakMultiplier = (1 + (CURRENT_USER.currentStreak || 1) * 0.01).toFixed(2);
+  const streakMultiplier = (1 + (CURRENT_USER.currentStreak ?? 0) * 0.01).toFixed(2);
 
   const headerRef = useRef<HTMLElement>(null);
   const streakFlameRef = useRef<SVGSVGElement>(null);

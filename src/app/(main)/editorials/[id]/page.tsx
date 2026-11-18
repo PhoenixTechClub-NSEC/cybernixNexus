@@ -135,8 +135,6 @@ export default function EditorialDetailPage() {
     try {
       const res = await fetch(`/api/editorials/${editorialId}/delete`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ publisherId: CURRENT_USER?.id }),
       });
 
       if (res.ok) {

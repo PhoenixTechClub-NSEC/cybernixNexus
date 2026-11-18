@@ -1,46 +1,11 @@
 import prisma from '@/lib/prisma';
+import { calculateTotalScore, countEditorialPoints, withStudentScoreTransaction } from '@/lib/student-score';
 import { fetchLeetCodeStats } from './leetcode';
 import { fetchCodeforcesStats } from './codeforces';
 import { fetchCodechefStats } from './codechef';
 import { PlatformStatsResult, LeetCodeFetchResult, CodeforcesFetchResult } from './types';
 
-
-//will change the logic later using the formula discussed
-//-Satyaki
-export function calculateTotalScore(stats: {
-  leetcodeSolved: number;
-  leetcodeEasySolved?: number;
-  leetcodeMediumSolved?: number;
-  leetcodeHardSolved?: number;
-  leetcodeRating: number | null;
-  codeforcesRating: number | null;
-  codeforcesSolved: number;
-  codechefRating: number | null;
-  codechefSolved?: number;
-  streakDays?: number;
-}): number {
-  const easy = stats.leetcodeEasySolved ?? Math.round(Math.max(0, stats.leetcodeSolved) * 0.4);
-  const medium = stats.leetcodeMediumSolved ?? Math.round(Math.max(0, stats.leetcodeSolved) * 0.5);
-  const hard = stats.leetcodeHardSolved ?? Math.round(Math.max(0, stats.leetcodeSolved) * 0.1);
-
-  // LeetCode: (Easy * 10 + Medium * 30 + Hard * 75) * 1.5 Weight
-  const lcRawPoints = easy * 10 + medium * 30 + hard * 75;
-  const lcPoints = lcRawPoints * 1.5;
-
-  // Codeforces: Solved * 35 (reflecting higher difficulty) * 1.75 Weight
-  const cfSolvedPoints = Math.max(0, stats.codeforcesSolved) * 35 * 1.75;
-
-  // CodeChef: Solved * 20 * 1.25 Weight + Rating bonus
-  const ccSolvedPoints = Math.max(0, stats.codechefSolved ?? 0) * 20 * 1.25;
-  const ccRatingPoints = stats.codechefRating ? Math.max(0, stats.codechefRating - 500) * 0.5 * 1.25 : 0;
-  const ccPoints = ccSolvedPoints + ccRatingPoints;
-
-  // Streak Multiplier bonus: +0.01x per active streak day up to 1.60x (60 days)
-  const streak = Math.max(0, stats.streakDays ?? 0);
-  const streakMultiplier = Math.min(1.6, 1.0 + streak * 0.01);
-
-  return Math.round((lcPoints + cfSolvedPoints + ccPoints) * streakMultiplier);
-}
+export { calculateTotalScore } from '@/lib/student-score';
 
 export async function recalculateRankings(): Promise<void> {
   const allStats = await prisma.studentStats.findMany({
@@ -207,63 +172,34 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       codechefLastError = null;
     }
 
-    const totalScore = calculateTotalScore({
+    const platformStats = {
       leetcodeSolved,
       leetcodeEasySolved,
       leetcodeMediumSolved,
       leetcodeHardSolved,
       leetcodeRating,
       codeforcesRating,
+      codeforcesMaxRating,
+      codeforcesRank,
+      codeforcesMaxRank,
       codeforcesSolved,
+      codeforcesAvatar,
+      codeforcesContribution,
       codechefRating,
       codechefSolved,
-    });
-
-    await prisma.studentStats.upsert({
-      where: { studentId: student.id },
-      create: {
-        studentId: student.id,
-        leetcodeSolved,
-        leetcodeEasySolved,
-        leetcodeMediumSolved,
-        leetcodeHardSolved,
-        leetcodeRating,
-        codeforcesRating,
-        codeforcesMaxRating,
-        codeforcesRank,
-        codeforcesMaxRank,
-        codeforcesSolved,
-        codeforcesAvatar,
-        codeforcesContribution,
-        codechefRating,
-        codechefSolved,
-        codechefStars,
-        codechefGlobalRank,
-        codechefFailCount,
-        codechefLastError,
-        totalScore,
-      },
-      update: {
-        leetcodeSolved,
-        leetcodeEasySolved,
-        leetcodeMediumSolved,
-        leetcodeHardSolved,
-        leetcodeRating,
-        codeforcesRating,
-        codeforcesMaxRating,
-        codeforcesRank,
-        codeforcesMaxRank,
-        codeforcesSolved,
-        codeforcesAvatar,
-        codeforcesContribution,
-        codechefRating,
-        codechefSolved,
-        codechefStars,
-        codechefGlobalRank,
-        codechefFailCount,
-        codechefLastError,
-        totalScore,
-      },
+      codechefStars,
+      codechefGlobalRank,
+      codechefFailCount,
+      codechefLastError,
+    };
+    const platformScore = calculateTotalScore(platformStats);
+    await withStudentScoreTransaction(student.id, async (tx) => {
+      const totalScore = platformScore + await countEditorialPoints(tx, student.id);
+      await tx.studentStats.upsert({
+        where: { studentId: student.id },
+        create: { studentId: student.id, ...platformStats, totalScore },
+        update: { ...platformStats, totalScore },
+      });
     });
 
     // Collect all historical daily solves from platforms
@@ -293,72 +229,52 @@ export async function syncStudentStats(studentId: string): Promise<PlatformStats
       }
     }
 
-    // Upsert historical DailySnapshots in chunks of 10 to avoid exhausting Supabase Postgres connection pool
-    const entries = Array.from(dailyMap.entries());
-    const SNAPSHOT_CHUNK_SIZE = 10;
-    for (let i = 0; i < entries.length; i += SNAPSHOT_CHUNK_SIZE) {
-      const chunk = entries.slice(i, i + SNAPSHOT_CHUNK_SIZE);
-      await Promise.all(
-        chunk.map(([dateStr, counts]) => {
-          const [year, month, day] = dateStr.split('-').map(Number);
-          const snapDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
-          const dayScore = counts.lc * 10 + counts.cf * 15;
-          return prisma.dailySnapshot.upsert({
-            where: {
-              studentId_date: {
-                studentId: student.id,
-                date: snapDate,
-              },
-            },
-            create: {
-              studentId: student.id,
-              date: snapDate,
-              leetcodeSolved: counts.lc,
-              codeforcesSolved: counts.cf,
-              codechefRating: 0,
-              codechefSolved: 0,
-              totalScore: dayScore,
-            },
-            update: {
-              leetcodeSolved: counts.lc,
-              codeforcesSolved: counts.cf,
-              totalScore: dayScore,
-            },
-          });
-        })
-      );
-    }
-
-    // Create or update today's DailySnapshot in normalized UTC
     const now = new Date();
-    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
-    const todayStr = now.toISOString().split('T')[0];
-    const todayActivity = dailyMap.get(todayStr) || { lc: 0, cf: 0 };
+    const todayKey = now.toISOString().slice(0, 10);
+    const refreshLeetCode = lcRes.status === 'fulfilled' && lcRes.value.submissionCalendar !== undefined;
+    const refreshCodeforces = cfRes.status === 'fulfilled' && cfRes.value.dailySubmissions !== undefined;
 
-    await prisma.dailySnapshot.upsert({
-      where: {
-        studentId_date: {
-          studentId: student.id,
-          date: today,
-        },
-      },
-      create: {
-        studentId: student.id,
-        date: today,
-        leetcodeSolved: todayActivity.lc,
-        codeforcesSolved: todayActivity.cf,
-        codechefRating: codechefRating ?? 0,
-        codechefSolved: codechefSolved,
-        totalScore,
-      },
-      update: {
-        leetcodeSolved: todayActivity.lc,
-        codeforcesSolved: todayActivity.cf,
-        codechefRating: codechefRating ?? 0,
-        codechefSolved: codechefSolved,
-        totalScore,
-      },
-    });
+    // Preserve saved activity when a platform fails or omits its calendar.
+    const dates = [...new Set([...dailyMap.keys(), todayKey])];
+    const previous = refreshLeetCode && refreshCodeforces
+      ? []
+      : await prisma.dailySnapshot.findMany({
+          where: { studentId: student.id, date: { in: dates.map((date) => new Date(date)) } },
+          select: { date: true, leetcodeSolved: true, codeforcesSolved: true },
+        });
+    const previousByDate = new Map(previous.map((snapshot) => [snapshot.date.toISOString().slice(0, 10), snapshot]));
+
+    const SNAPSHOT_CHUNK_SIZE = 10;
+    for (let i = 0; i < dates.length; i += SNAPSHOT_CHUNK_SIZE) {
+      await Promise.all(dates.slice(i, i + SNAPSHOT_CHUNK_SIZE).map((dateKey) => {
+        const date = new Date(dateKey);
+        const counts = dailyMap.get(dateKey);
+        const saved = previousByDate.get(dateKey);
+        const leetcodeSolved = refreshLeetCode ? counts?.lc ?? 0 : saved?.leetcodeSolved ?? 0;
+        const codeforcesSolved = refreshCodeforces ? counts?.cf ?? 0 : saved?.codeforcesSolved ?? 0;
+        const isToday = dateKey === todayKey;
+        const snapshotScore = isToday ? platformScore : leetcodeSolved * 10 + codeforcesSolved * 15;
+        const codechefActivity = isToday ? { codechefRating: codechefRating ?? 0, codechefSolved } : {};
+
+        return prisma.dailySnapshot.upsert({
+          where: { studentId_date: { studentId: student.id, date } },
+          create: {
+            studentId: student.id,
+            date,
+            leetcodeSolved,
+            codeforcesSolved,
+            totalScore: snapshotScore,
+            ...codechefActivity,
+          },
+          update: {
+            ...(refreshLeetCode ? { leetcodeSolved } : {}),
+            ...(refreshCodeforces ? { codeforcesSolved } : {}),
+            totalScore: snapshotScore,
+            ...(ccRes.status === 'fulfilled' ? codechefActivity : {}),
+          },
+        });
+      }));
+    }
 
     // Recalculate rankings across all students
     await recalculateRankings();
